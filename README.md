@@ -3,7 +3,7 @@
 Osobisty panel PWA: wdzięczność, wydatki, godziny pracy, myśli i cele, anty-prokrastynacja.
 Stos: **React (Vite) + Supabase** (Auth + Postgres + Storage, plan darmowy).
 
-Stan budowy: **krok 1 z 14 — schemat bazy + RLS. Gotowe i przetestowane.**
+Stan budowy: **krok 3 z 14 — PWA + tryb ciemny/jasny + dolna nawigacja. Gotowe.**
 
 ---
 
@@ -110,8 +110,8 @@ inaczej przestaje działać edytor tabel w panelu Supabase i Twój własny wglą
 ## Kolejność budowy
 
 - [x] **1. Schemat bazy + RLS**
-- [ ] 2. Rejestracja/logowanie + ochrona tras + ekran powitalny
-- [ ] 3. PWA (manifest, ikony, service worker, skróty) + tryb ciemny + nawigacja
+- [x] **2. Rejestracja/logowanie + ochrona tras + ekran powitalny**
+- [x] **3. PWA (manifest, ikony, service worker, skróty) + tryb ciemny + nawigacja**
 - [ ] 4. Wdzięczność
 - [ ] 5. Godziny pracy (przed Wydatkami — stawka godzinowa jest potrzebna do przelicznika)
 - [ ] 6. Wydatki (budżet, prognoza, przelicznik, paragony, spłaty)

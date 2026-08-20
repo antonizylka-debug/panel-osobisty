@@ -1,0 +1,12 @@
+{
+  "name": "panel-osobisty-db-tests",
+  "private": true,
+  "type": "module",
+  "description": "Testy migracji i RLS na PGlite (Postgres w WASM) - bez Dockera i bez ruszania produkcyjnego Supabase.",
+  "scripts": {
+    "test": "node rls.test.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.5"
+  }
+}

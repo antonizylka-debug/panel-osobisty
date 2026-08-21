@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EMOTIONS, EMOTION_LABEL, fetchSessions, createSession, updateSession } from './api'
 import { formatDatePl } from '../../lib/date'
 import { Card, CardHead, EmptyState, BarChart, Sheet, Fab } from '../../components/ui'
+import { IconCheck } from '../../components/icons'
 
 const TIMER_CHOICES = [10, 15, 25]
 
@@ -43,19 +44,22 @@ export default function ProcrastinationPage() {
     <div className="page-pad">
       <h1 className="page-title">Zrób to teraz</h1>
       <p className="page-lede">
-        Prokrastynacja to unikanie emocji, nie lenistwo. Cztery pytania i ruszasz.
+        Lista zadań, a gdy przy którymś utkniesz — cztery pytania, żeby ruszyć.
       </p>
       {error && <p className="form-error" role="alert">{error}</p>}
 
 
       <Card>
         <CardHead
-          title="Wróciły na listę"
-          hint={openTasks.length ? `${openTasks.length} czeka` : 'Nic nie czeka'}
+          title="Do zrobienia"
+          hint={openTasks.length ? `${openTasks.length} na liście` : 'Pusto'}
           action={<button className="chip" onClick={() => setPatternsOpen(true)}>Moje wzorce</button>}
         />
+
+        <QuickAdd onAdded={load} />
+
         {openTasks.length === 0 ? (
-          <EmptyState>Czysto. Jak coś zaczniesz odkładać, wróć tutaj.</EmptyState>
+          <EmptyState>Nic nie czeka. Dopisz zadanie powyżej.</EmptyState>
         ) : (
           <ul className="row-list">
             {openTasks.map((s) => (
@@ -86,7 +90,7 @@ export default function ProcrastinationPage() {
         </Card>
       )}
 
-      <Fab onClick={() => setWizardOpen(true)}>Coś odkładam</Fab>
+      <Fab onClick={() => setWizardOpen(true)}>Utknąłem</Fab>
 
       <WizardSheet
         open={wizardOpen}
@@ -112,21 +116,76 @@ export default function ProcrastinationPage() {
   )
 }
 
+/** Dopisanie zadania jednym polem — bez przechodzenia przez cztery kroki. */
+function QuickAdd({ onAdded }) {
+  const [task, setTask] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  async function submit(e) {
+    e.preventDefault()
+    if (!task.trim()) return
+    setBusy(true)
+    setError('')
+    try {
+      await createSession({ task: task.trim() })
+      setTask('')
+      onAdded()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <form className="quick-add" onSubmit={submit}>
+      <input
+        type="text"
+        value={task}
+        onChange={(e) => setTask(e.target.value)}
+        placeholder="Dopisz zadanie…"
+        maxLength={200}
+      />
+      <button className="stepper-btn is-plus" type="submit" disabled={busy || !task.trim()}
+        aria-label="Dodaj zadanie">+</button>
+      {error && <p className="form-error" style={{ flexBasis: '100%' }} role="alert">{error}</p>}
+    </form>
+  )
+}
+
 function OpenTaskRow({ session, onChanged }) {
   const [timerOpen, setTimerOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  async function markDone() {
+    setBusy(true)
+    try {
+      await updateSession(session.id, { completed: true })
+      onChanged()
+    } finally { setBusy(false) }
+  }
 
   return (
     <>
       <li>
-        <button className="row-item" onClick={() => setTimerOpen(true)}>
+        <div className="todo-row">
+          <button className="todo-check" onClick={markDone} disabled={busy}
+            aria-label={`Odhacz: ${session.task}`}>
+            <IconCheck />
+          </button>
+
           <div className="row-main">
             <span className="row-title">{session.task}</span>
-            <span className="row-sub">
-              {session.micro_step ? `Pierwszy krok: ${session.micro_step}` : 'Zacznij od małego kroku'}
-            </span>
+            {session.micro_step && (
+              <span className="row-sub">Pierwszy krok: {session.micro_step}</span>
+            )}
           </div>
-          <span className="badge is-accent">Start</span>
-        </button>
+
+          <button className="chip" onClick={() => setTimerOpen(true)}>
+            {session.timer_minutes} min
+          </button>
+        </div>
       </li>
       {timerOpen && (
         <TimerOverlay

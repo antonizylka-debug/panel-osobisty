@@ -713,6 +713,49 @@ a { color: var(--accent); }
   border-radius: 18px; font-size: .95rem; font-weight: 600; line-height: 1.5;
 }
 
+/* --- lista zadan --- */
+.quick-add {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: .75rem;
+}
+.quick-add input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-weight: 500;
+  padding: .8rem 1rem;
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.quick-add input::placeholder { color: var(--ink-faint); font-weight: 400; }
+.quick-add input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+
+.todo-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  background: var(--surface-2);
+  border-radius: 18px;
+  padding: .75rem 1rem;
+}
+.todo-check {
+  width: 28px; height: 28px; flex: none;
+  border-radius: 10px;
+  border: 2px solid var(--line-hard);
+  background: transparent;
+  color: transparent;
+  display: grid; place-items: center;
+  cursor: pointer;
+}
+.todo-check:hover { border-color: var(--accent); color: var(--accent); }
+.todo-check:disabled { opacity: .5; cursor: default; }
+.todo-check svg { width: 16px; height: 16px; }
+
 /* --- kroki kreatora --- */
 .wizard-progress { display: flex; gap: .3rem; margin-bottom: 1.25rem; }
 .wizard-dot { flex: 1; height: 4px; border-radius: 999px; background: var(--surface-2); }

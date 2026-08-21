@@ -5,7 +5,7 @@ import DebtsSection from '../debts/DebtsSection'
 import CsvImportSheet from './CsvImportSheet'
 import { fetchExpenses, fetchBudgets, saveBudget, deleteExpense, receiptUrl, CATEGORIES } from './api'
 import { fetchDebts, fetchPayments } from '../debts/api'
-import { fetchRealHourlyRate } from '../work/api'
+import { fetchRealHourlyRate, fetchRange } from '../work/api'
 import { todayISO, addDaysISO, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { Card, CardHead, ProgressBar, BarChart, EmptyState, Sheet, Segmented, StatRow, Fab } from '../../components/ui'
@@ -26,6 +26,7 @@ export default function ExpensesPage() {
   const [debts, setDebts] = useState([])
   const [payments, setPayments] = useState([])
   const [hourlyRate, setHourlyRate] = useState(null)
+  const [workDays, setWorkDays] = useState([])
   const [addOpen, setAddOpen] = useState(location.pathname.endsWith('/nowy'))
   const [budgetOpen, setBudgetOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
@@ -37,14 +38,16 @@ export default function ExpensesPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [exp, bud, dbt, pay, rate] = await Promise.all([
+      const [exp, bud, dbt, pay, rate, days] = await Promise.all([
         fetchExpenses({ from: addDaysISO(today, -120), to: today }),
         fetchBudgets(monthStart(today)),
         fetchDebts(),
         fetchPayments(),
         fetchRealHourlyRate(addDaysISO(today, -30)),
+        fetchRange(monthStart(today), today),
       ])
-      setExpenses(exp); setBudgets(bud); setDebts(dbt); setPayments(pay); setHourlyRate(rate)
+      setExpenses(exp); setBudgets(bud); setDebts(dbt); setPayments(pay)
+      setHourlyRate(rate); setWorkDays(days)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -143,6 +146,26 @@ export default function ExpensesPage() {
       : monthTotal / Number(overallBudget.limit_amount) >= 0.8 ? 'warn' : 'accent'
     : 'accent'
 
+  // Ile realnie zostalo z tego, co w tym miesiacu zarobiles.
+  const left = useMemo(() => {
+    const earned = workDays.reduce((s, d) => s + Number(d.pay_amount ?? 0), 0)
+    const installments = debts
+      .filter((d) => d.active)
+      .reduce((s, d) => s + Number(d.monthly_payment), 0)
+    const remaining = earned - monthTotal - installments
+
+    const day = Number(today.slice(8))
+    const daysLeft = Math.max(1, daysInMonth(today) - day + 1)
+
+    return {
+      earned,
+      installments,
+      remaining,
+      daysLeft,
+      perDay: remaining > 0 ? remaining / daysLeft : 0,
+    }
+  }, [workDays, debts, monthTotal, today])
+
   if (loading) return <div className="page-pad"><p className="page-lede">Wczytywanie…</p></div>
 
   return (
@@ -179,6 +202,50 @@ export default function ExpensesPage() {
         <div className="converter is-muted mt-1">
           Przy obecnym tempie w tym tygodniu wydasz ok. {formatPLN(weekForecast, { short: true })}
         </div>
+      </Card>
+
+      <Card>
+        <CardHead
+          title="Zostało z zarobionego"
+          hint={`Zarobione ${formatPLN(left.earned, { short: true })} · wydane ${formatPLN(monthTotal, { short: true })}${left.installments > 0 ? ` · raty ${formatPLN(left.installments, { short: true })}` : ''}`}
+        />
+        <p className={'big-number ' + (left.remaining >= 0 ? 'is-positive' : 'is-negative')}>
+          {formatPLN(left.remaining)}
+        </p>
+
+        {left.earned > 0 && (
+          <div style={{ marginTop: '.8rem' }}>
+            <ProgressBar
+              value={Math.min(monthTotal + left.installments, left.earned)}
+              max={left.earned}
+              tone={
+                (monthTotal + left.installments) / left.earned >= 1 ? 'danger'
+                  : (monthTotal + left.installments) / left.earned >= 0.8 ? 'warn' : 'accent'
+              }
+            />
+            <p className="muted" style={{ marginTop: '.4rem' }}>
+              Rozdysponowane {Math.round(((monthTotal + left.installments) / left.earned) * 100)}% zarobku
+            </p>
+          </div>
+        )}
+
+        {left.remaining > 0 ? (
+          <div className="converter mt-1">
+            Na co jeszcze możesz:
+            <span style={{ display: 'block', fontWeight: 600, marginTop: '.35rem' }}>
+              {formatPLN(left.perDay, { short: true })} dziennie przez {left.daysLeft} dni do końca miesiąca
+              {hourlyRate && ` · to ${formatHours(left.remaining / hourlyRate)} Twojej pracy`}
+            </span>
+          </div>
+        ) : left.earned > 0 ? (
+          <div className="converter is-muted mt-1">
+            Wydałeś więcej, niż zarobiłeś w tym miesiącu — brakuje {formatPLN(Math.abs(left.remaining))}.
+          </div>
+        ) : (
+          <div className="converter is-muted mt-1">
+            Zapisz dniówki w Godzinach pracy, a policzę, ile realnie Ci zostaje.
+          </div>
+        )}
       </Card>
 
       <StatRow

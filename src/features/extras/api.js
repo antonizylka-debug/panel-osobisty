@@ -75,6 +75,17 @@ export async function createHabit({ name, target, unit, step }) {
   if (error) throw error
 }
 
+export async function updateHabit(id, { name, target, unit, step }) {
+  const patch = {}
+  if (name !== undefined) patch.name = name
+  if (target !== undefined) patch.target = target
+  if (unit !== undefined) patch.unit = unit || null
+  if (step !== undefined) patch.step = step ?? 1
+
+  const { error } = await supabase.from('habits').update(patch).eq('id', id)
+  if (error) throw error
+}
+
 export async function deactivateHabit(id) {
   const { error } = await supabase.from('habits').update({ active: false }).eq('id', id)
   if (error) throw error

@@ -1,5 +1,8 @@
-import { useState } from 'react'
-import { toggleHabit, setHabitProgress, setHabitRest, habitStreak, createHabit, deactivateHabit } from './api'
+import { useEffect, useState } from 'react'
+import {
+  toggleHabit, setHabitProgress, setHabitRest, habitStreak,
+  createHabit, updateHabit, deactivateHabit,
+} from './api'
 import { Card, CardHead, EmptyState, Sheet, ProgressBar } from '../../components/ui'
 import { IconCheck, IconRest } from '../../components/icons'
 
@@ -7,15 +10,14 @@ import { IconCheck, IconRest } from '../../components/icons'
 function num(v) {
   return Number(v).toLocaleString('pl-PL', { maximumFractionDigits: 2 })
 }
+const parse = (v) => (v === '' || v == null ? null : Number(String(v).replace(',', '.')))
 
 export default function HabitsCard({ habits, logs, today, onChanged }) {
   const [manageOpen, setManageOpen] = useState(false)
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState('')
 
-  const todayLogs = new Map(
-    logs.filter((l) => l.date === today).map((l) => [l.habit_id, l])
-  )
+  const todayLogs = new Map(logs.filter((l) => l.date === today).map((l) => [l.habit_id, l]))
   const doneCount = [...todayLogs.values()].filter((l) => l.done).length
 
   async function run(habitId, fn) {
@@ -44,11 +46,9 @@ export default function HabitsCard({ habits, logs, today, onChanged }) {
             {habits.map((h) => {
               const log = todayLogs.get(h.id)
               const streak = habitStreak(h.id, logs, today)
-              const hasTarget = h.target != null
-
               const isRest = !!log?.is_rest
 
-              if (!hasTarget) {
+              if (h.target == null) {
                 const done = !!log?.done
                 return (
                   <li key={h.id}>
@@ -85,6 +85,10 @@ export default function HabitsCard({ habits, logs, today, onChanged }) {
               const step = Number(h.step)
               const done = value >= target
 
+              const commit = (next) => run(h.id, () =>
+                setHabitProgress({ habitId: h.id, date: today, value: next, target })
+              )
+
               return (
                 <li key={h.id}>
                   <div className={'habit-progress' + (done ? ' is-done' : '') + (isRest ? ' is-rest' : '')}>
@@ -115,34 +119,29 @@ export default function HabitsCard({ habits, logs, today, onChanged }) {
                     <div className="habit-stepper">
                       <button
                         className="stepper-btn"
-                        onClick={() => run(h.id, () => setHabitProgress({
-                          habitId: h.id, date: today, value: value - step, target,
-                        }))}
+                        onClick={() => commit(value - step)}
                         disabled={busy === h.id || value <= 0}
-                        aria-label={`Odejmij ${num(step)}${h.unit ? ' ' + h.unit : ''}`}
+                        aria-label={`Odejmij ${num(step)}`}
                       >−</button>
 
-                      <span className="stepper-value">
-                        {num(value)}{h.unit ? ` ${h.unit}` : ''}
-                      </span>
+                      <ProgressInput
+                        value={value}
+                        unit={h.unit}
+                        disabled={busy === h.id}
+                        onCommit={commit}
+                      />
 
                       <button
                         className="stepper-btn is-plus"
-                        onClick={() => run(h.id, () => setHabitProgress({
-                          habitId: h.id, date: today, value: value + step, target,
-                        }))}
+                        onClick={() => commit(value + step)}
                         disabled={busy === h.id}
-                        aria-label={`Dodaj ${num(step)}${h.unit ? ' ' + h.unit : ''}`}
+                        aria-label={`Dodaj ${num(step)}`}
                       >+</button>
 
                       {!done && (
-                        <button
-                          className="chip"
-                          onClick={() => run(h.id, () => setHabitProgress({
-                            habitId: h.id, date: today, value: target, target,
-                          }))}
-                          disabled={busy === h.id}
-                        >Cały</button>
+                        <button className="chip" onClick={() => commit(target)} disabled={busy === h.id}>
+                          Cały
+                        </button>
                       )}
                     </div>
                   </div>
@@ -163,92 +162,56 @@ export default function HabitsCard({ habits, logs, today, onChanged }) {
   )
 }
 
-function ManageSheet({ open, habits, onClose, onChanged }) {
-  const [name, setName] = useState('')
-  const [withProgress, setWithProgress] = useState(false)
-  const [target, setTarget] = useState('')
-  const [unit, setUnit] = useState('')
-  const [step, setStep] = useState('1')
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
+/** Pole do wpisania dokladnej wartosci — 10 000 krokow nie da sie wyklikac. */
+function ProgressInput({ value, unit, disabled, onCommit }) {
+  const [draft, setDraft] = useState('')
+  const [editing, setEditing] = useState(false)
 
-  function reset() {
-    setName(''); setWithProgress(false); setTarget(''); setUnit(''); setStep('1'); setError('')
-  }
+  useEffect(() => { if (!editing) setDraft(num(value)) }, [value, editing])
 
-  async function submit(e) {
-    e.preventDefault()
-    setError('')
-    if (!name.trim()) return setError('Podaj nazwę nawyku.')
-
-    let targetNum = null
-    let stepNum = 1
-    if (withProgress) {
-      targetNum = Number(String(target).replace(',', '.'))
-      stepNum = Number(String(step).replace(',', '.'))
-      if (!Number.isFinite(targetNum) || targetNum <= 0) return setError('Podaj cel większy od zera.')
-      if (!Number.isFinite(stepNum) || stepNum <= 0) return setError('Podaj krok większy od zera.')
+  function commit() {
+    setEditing(false)
+    const parsed = parse(draft)
+    if (parsed == null || Number.isNaN(parsed) || parsed < 0) {
+      setDraft(num(value))
+      return
     }
-
-    setBusy(true)
-    try {
-      await createHabit({ name: name.trim(), target: targetNum, unit: unit.trim(), step: stepNum })
-      reset()
-      onChanged()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setBusy(false)
-    }
+    if (parsed !== value) onCommit(parsed)
   }
 
   return (
-    <Sheet open={open} title="Nawyki" onClose={() => { reset(); onClose() }}>
+    <div className="stepper-field">
+      <input
+        type="text"
+        inputMode="decimal"
+        value={draft}
+        disabled={disabled}
+        onFocus={(e) => { setEditing(true); e.target.select() }}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); e.target.blur() }
+          if (e.key === 'Escape') { setEditing(false); setDraft(num(value)); e.target.blur() }
+        }}
+        aria-label="Wpisz dokładną wartość"
+      />
+      {unit && <span className="stepper-unit">{unit}</span>}
+    </div>
+  )
+}
+
+function ManageSheet({ open, habits, onClose, onChanged }) {
+  const [editing, setEditing] = useState(null)
+
+  return (
+    <Sheet open={open} title="Nawyki" onClose={() => { setEditing(null); onClose() }}>
       <div className="stack">
-        <form className="stack" onSubmit={submit}>
-          <label className="field">
-            <span>Nowy nawyk</span>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-              placeholder="np. Wypić 2 litry wody" />
-          </label>
-
-          <div className="switch-row">
-            <div>
-              <div className="switch-label">Licz postęp</div>
-              <div className="switch-hint">
-                Zamiast ptaszka dostaniesz pasek i przyciski − / +
-              </div>
-            </div>
-            <button type="button" className={'switch' + (withProgress ? ' is-on' : '')}
-              onClick={() => setWithProgress((v) => !v)} aria-pressed={withProgress}
-              aria-label="Licz postęp" />
-          </div>
-
-          {withProgress && (
-            <div className="field-grid">
-              <label className="field">
-                <span>Cel dzienny</span>
-                <input type="text" inputMode="decimal" value={target}
-                  onChange={(e) => setTarget(e.target.value)} placeholder="2" />
-              </label>
-              <label className="field">
-                <span>Jednostka</span>
-                <input type="text" value={unit} onChange={(e) => setUnit(e.target.value)}
-                  placeholder="l, str., km" />
-              </label>
-              <label className="field field-wide">
-                <span>Ile dodaje jedno kliknięcie</span>
-                <input type="text" inputMode="decimal" value={step}
-                  onChange={(e) => setStep(e.target.value)} placeholder="0,5" />
-              </label>
-            </div>
-          )}
-
-          {error && <p className="form-error" role="alert">{error}</p>}
-          <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
-            {busy ? 'Dodawanie…' : 'Dodaj'}
-          </button>
-        </form>
+        <HabitForm
+          key={editing?.id ?? 'new'}
+          habit={editing}
+          onCancel={() => setEditing(null)}
+          onSaved={() => { setEditing(null); onChanged() }}
+        />
 
         <ul className="row-list">
           {habits.map((h) => (
@@ -256,12 +219,13 @@ function ManageSheet({ open, habits, onClose, onChanged }) {
               <div className="row-item" style={{ cursor: 'default' }}>
                 <div className="row-main">
                   <span className="row-title">{h.name}</span>
-                  {h.target != null && (
-                    <span className="row-sub">
-                      cel {num(h.target)}{h.unit ? ` ${h.unit}` : ''} · krok {num(h.step)}
-                    </span>
-                  )}
+                  <span className="row-sub">
+                    {h.target != null
+                      ? `cel ${num(h.target)}${h.unit ? ` ${h.unit}` : ''} · krok ${num(h.step)}`
+                      : 'zwykły ptaszek'}
+                  </span>
                 </div>
+                <button className="chip" onClick={() => setEditing(h)}>Zmień</button>
                 <button className="chip" style={{ color: 'var(--danger)' }}
                   onClick={async () => { await deactivateHabit(h.id); onChanged() }}>
                   Usuń
@@ -272,5 +236,96 @@ function ManageSheet({ open, habits, onClose, onChanged }) {
         </ul>
       </div>
     </Sheet>
+  )
+}
+
+function HabitForm({ habit, onCancel, onSaved }) {
+  const isEdit = !!habit
+  const [name, setName] = useState(habit?.name ?? '')
+  const [withProgress, setWithProgress] = useState(habit?.target != null)
+  const [target, setTarget] = useState(habit?.target != null ? String(habit.target) : '')
+  const [unit, setUnit] = useState(habit?.unit ?? '')
+  const [step, setStep] = useState(habit?.step != null ? String(habit.step) : '1')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function submit(e) {
+    e.preventDefault()
+    setError('')
+    if (!name.trim()) return setError('Podaj nazwę nawyku.')
+
+    let targetNum = null
+    let stepNum = 1
+    if (withProgress) {
+      targetNum = parse(target)
+      stepNum = parse(step)
+      if (targetNum == null || !(targetNum > 0)) return setError('Podaj cel większy od zera.')
+      if (stepNum == null || !(stepNum > 0)) return setError('Podaj krok większy od zera.')
+    }
+
+    setBusy(true)
+    try {
+      const payload = { name: name.trim(), target: targetNum, unit: unit.trim(), step: stepNum }
+      if (isEdit) await updateHabit(habit.id, payload)
+      else await createHabit(payload)
+
+      if (!isEdit) { setName(''); setWithProgress(false); setTarget(''); setUnit(''); setStep('1') }
+      onSaved()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <form className="stack" onSubmit={submit}>
+      <label className="field">
+        <span>{isEdit ? `Zmieniasz: ${habit.name}` : 'Nowy nawyk'}</span>
+        <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+          placeholder="np. Kroki" />
+      </label>
+
+      <div className="switch-row">
+        <div>
+          <div className="switch-label">Licz postęp</div>
+          <div className="switch-hint">Wpisujesz konkretną liczbę zamiast odhaczać</div>
+        </div>
+        <button type="button" className={'switch' + (withProgress ? ' is-on' : '')}
+          onClick={() => setWithProgress((v) => !v)} aria-pressed={withProgress}
+          aria-label="Licz postęp" />
+      </div>
+
+      {withProgress && (
+        <div className="field-grid">
+          <label className="field">
+            <span>Cel dzienny</span>
+            <input type="text" inputMode="decimal" value={target}
+              onChange={(e) => setTarget(e.target.value)} placeholder="10000" />
+          </label>
+          <label className="field">
+            <span>Jednostka</span>
+            <input type="text" value={unit} onChange={(e) => setUnit(e.target.value)}
+              placeholder="kroków, l, str." />
+          </label>
+          <label className="field field-wide">
+            <span>Ile dodaje jedno kliknięcie +</span>
+            <input type="text" inputMode="decimal" value={step}
+              onChange={(e) => setStep(e.target.value)} placeholder="500" />
+          </label>
+        </div>
+      )}
+
+      {error && <p className="form-error" role="alert">{error}</p>}
+
+      <div className={isEdit ? 'onboard-actions' : ''}>
+        {isEdit && (
+          <button type="button" className="btn btn-ghost" onClick={onCancel}>Anuluj</button>
+        )}
+        <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
+          {busy ? 'Zapisywanie…' : isEdit ? 'Zapisz zmiany' : 'Dodaj'}
+        </button>
+      </div>
+    </form>
   )
 }

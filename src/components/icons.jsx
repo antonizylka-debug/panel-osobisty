@@ -79,3 +79,39 @@ export function IconMoon(props) {
     </svg>
   )
 }
+
+export function IconMic(props) {
+  return (
+    <svg {...common} {...props}>
+      <rect x="9" y="2.5" width="6" height="11" rx="3" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0" />
+      <path d="M12 17.5V21" />
+    </svg>
+  )
+}
+
+export function IconCheck(props) {
+  return (
+    <svg {...common} strokeWidth={3.2} {...props}>
+      <polyline points="4 12.5 9.5 18 20 6.5" />
+    </svg>
+  )
+}
+
+export function IconSearch(props) {
+  return (
+    <svg {...common} {...props}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M16.2 16.2 21 21" />
+    </svg>
+  )
+}
+
+export function IconSettings(props) {
+  return (
+    <svg {...common} {...props}>
+      <circle cx="12" cy="12" r="3.2" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 8.9 19.3a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.7 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9.1a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9.1a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.56 1.03Z" />
+    </svg>
+  )
+}

@@ -2,8 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-const ACCENT = '#0E6E63'
-const BG = '#F2F5F4'
+const ACCENT = '#15A46B'
+const BG = '#EAECED'
 
 export default defineConfig({
   plugins: [

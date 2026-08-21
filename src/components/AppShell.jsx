@@ -1,8 +1,10 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, Link } from 'react-router-dom'
 import { useTheme } from '../theme/ThemeContext'
+import { useAuth } from '../auth/AuthContext'
+import { useLocalReminder } from '../features/reminders/useLocalReminder'
 import {
   IconStart, IconGratitude, IconExpenses, IconWorkHours, IconJournal, IconDoItNow,
-  IconSun, IconMoon,
+  IconSun, IconMoon, IconSearch, IconSettings,
 } from './icons'
 
 const TABS = [
@@ -16,18 +18,29 @@ const TABS = [
 
 export default function AppShell() {
   const { resolved, toggle } = useTheme()
+  const { user } = useAuth()
+
+  useLocalReminder(user)
 
   return (
     <div className="shell">
       <header className="shell-top">
         <span className="shell-brand">Panel Osobisty</span>
-        <button
-          className="theme-toggle"
-          onClick={toggle}
-          aria-label={resolved === 'dark' ? 'Przełącz na jasny motyw' : 'Przełącz na ciemny motyw'}
-        >
-          {resolved === 'dark' ? <IconSun /> : <IconMoon />}
-        </button>
+        <div style={{ display: 'flex', gap: '.5rem' }}>
+          <Link className="theme-toggle" to="/szukaj" aria-label="Szukaj">
+            <IconSearch />
+          </Link>
+          <button
+            className="theme-toggle"
+            onClick={toggle}
+            aria-label={resolved === 'dark' ? 'Przełącz na jasny motyw' : 'Przełącz na ciemny motyw'}
+          >
+            {resolved === 'dark' ? <IconSun /> : <IconMoon />}
+          </button>
+          <Link className="theme-toggle" to="/ustawienia" aria-label="Ustawienia">
+            <IconSettings />
+          </Link>
+        </div>
       </header>
 
       <main className="shell-main">

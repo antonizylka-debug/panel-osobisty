@@ -11,8 +11,17 @@ import CheckEmailPage from './pages/CheckEmailPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import OnboardingPage from './pages/OnboardingPage'
-import HomePage from './pages/HomePage'
-import ComingSoonPage from './pages/ComingSoonPage'
+
+import StartPage from './features/start/StartPage'
+import GratitudePage from './features/gratitude/GratitudePage'
+import WorkPage from './features/work/WorkPage'
+import ExpensesPage from './features/expenses/ExpensesPage'
+import JournalPage from './features/journal/JournalPage'
+import ProcrastinationPage from './features/procrastination/ProcrastinationPage'
+import WeeklyReviewPage from './features/extras/WeeklyReviewPage'
+import FavoritesPage from './features/extras/FavoritesPage'
+import SearchPage from './features/extras/SearchPage'
+import SettingsPage from './features/settings/SettingsPage'
 
 export default function App() {
   return (
@@ -35,14 +44,18 @@ export default function App() {
               <Route path="/powitanie" element={<OnboardingPage />} />
 
               <Route element={<AppShell />}>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/wdziecznosc" element={<ComingSoonPage tab="Wdzięczność" step={4} />} />
-                <Route path="/godziny-pracy" element={<ComingSoonPage tab="Godziny pracy" step={5} />} />
-                <Route path="/godziny-pracy/nowy" element={<ComingSoonPage tab="Zapisz godziny" step={5} />} />
-                <Route path="/wydatki" element={<ComingSoonPage tab="Wydatki" step={6} />} />
-                <Route path="/wydatki/nowy" element={<ComingSoonPage tab="Dodaj wydatek" step={6} />} />
-                <Route path="/mysli-i-cele" element={<ComingSoonPage tab="Myśli i cele" step={7} />} />
-                <Route path="/zrob-to-teraz" element={<ComingSoonPage tab="Zrób to teraz" step={8} />} />
+                <Route path="/" element={<StartPage />} />
+                <Route path="/wdziecznosc" element={<GratitudePage />} />
+                <Route path="/godziny-pracy" element={<WorkPage />} />
+                <Route path="/godziny-pracy/nowy" element={<WorkPage />} />
+                <Route path="/wydatki" element={<ExpensesPage />} />
+                <Route path="/wydatki/nowy" element={<ExpensesPage />} />
+                <Route path="/mysli-i-cele" element={<JournalPage />} />
+                <Route path="/zrob-to-teraz" element={<ProcrastinationPage />} />
+                <Route path="/przeglad-tygodnia" element={<WeeklyReviewPage />} />
+                <Route path="/ulubione" element={<FavoritesPage />} />
+                <Route path="/szukaj" element={<SearchPage />} />
+                <Route path="/ustawienia" element={<SettingsPage />} />
               </Route>
             </Route>
 

@@ -3,7 +3,7 @@
 Osobisty panel PWA: wdzięczność, wydatki, godziny pracy, myśli i cele, anty-prokrastynacja.
 Stos: **React (Vite) + Supabase** (Auth + Postgres + Storage, plan darmowy).
 
-Stan budowy: **krok 3 z 14 — PWA + tryb ciemny/jasny + dolna nawigacja. Gotowe.**
+Stan budowy: **13 z 14 kroków gotowych.** Zostaje tryb offline (krok 11).
 
 ---
 
@@ -112,14 +112,14 @@ inaczej przestaje działać edytor tabel w panelu Supabase i Twój własny wglą
 - [x] **1. Schemat bazy + RLS**
 - [x] **2. Rejestracja/logowanie + ochrona tras + ekran powitalny**
 - [x] **3. PWA (manifest, ikony, service worker, skróty) + tryb ciemny + nawigacja**
-- [ ] 4. Wdzięczność
-- [ ] 5. Godziny pracy (przed Wydatkami — stawka godzinowa jest potrzebna do przelicznika)
-- [ ] 6. Wydatki (budżet, prognoza, przelicznik, paragony, spłaty)
-- [ ] 7. Myśli i cele (notatki głosowe, pytania do refleksji)
-- [ ] 8. Zrób to teraz
-- [ ] 9. Dodatki: przegląd tygodnia, plan dnia, nawyki, ulubione, wyszukiwarka
-- [ ] 10. Ekran Start
+- [x] **4. Wdzięczność**
+- [x] **5. Godziny pracy**
+- [x] **6. Wydatki (budżet, prognoza, przelicznik, paragony, spłaty)**
+- [x] **7. Myśli i cele (notatki głosowe, pytania do refleksji)**
+- [x] **8. Zrób to teraz**
+- [x] **9. Dodatki: przegląd tygodnia, plan dnia, nawyki, ulubione, wyszukiwarka**
+- [x] **10. Ekran Start**
 - [ ] 11. Tryb offline (IndexedDB ↔ Supabase)
-- [ ] 12. Import wyciągu CSV
-- [ ] 13. Przypomnienia (push + mail)
-- [ ] 14. Ustawienia konta + eksport danych
+- [x] **12. Import wyciągu CSV**
+- [x] **13. Przypomnienia (lokalne powiadomienia)**
+- [x] **14. Ustawienia konta + eksport danych**

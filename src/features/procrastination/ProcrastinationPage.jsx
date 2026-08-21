@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EMOTIONS, EMOTION_LABEL, fetchSessions, createSession, updateSession } from './api'
 import { formatDatePl } from '../../lib/date'
-import { Card, CardHead, EmptyState, BarChart, Sheet } from '../../components/ui'
+import { Card, CardHead, EmptyState, BarChart, Sheet, Fab } from '../../components/ui'
 
 const TIMER_CHOICES = [10, 15, 25]
 
@@ -47,15 +47,12 @@ export default function ProcrastinationPage() {
       </p>
       {error && <p className="form-error" role="alert">{error}</p>}
 
-      <div className="action-bar">
-        <button className="btn btn-primary" onClick={() => setWizardOpen(true)}>Coś odkładam</button>
-        <button className="btn btn-ghost" onClick={() => setPatternsOpen(true)}>Moje wzorce</button>
-      </div>
 
       <Card>
         <CardHead
           title="Wróciły na listę"
           hint={openTasks.length ? `${openTasks.length} czeka` : 'Nic nie czeka'}
+          action={<button className="chip" onClick={() => setPatternsOpen(true)}>Moje wzorce</button>}
         />
         {openTasks.length === 0 ? (
           <EmptyState>Czysto. Jak coś zaczniesz odkładać, wróć tutaj.</EmptyState>
@@ -88,6 +85,8 @@ export default function ProcrastinationPage() {
           </ul>
         </Card>
       )}
+
+      <Fab onClick={() => setWizardOpen(true)}>Coś odkładam</Fab>
 
       <WizardSheet
         open={wizardOpen}

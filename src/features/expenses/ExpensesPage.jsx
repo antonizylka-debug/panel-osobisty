@@ -8,7 +8,7 @@ import { fetchDebts, fetchPayments } from '../debts/api'
 import { fetchRealHourlyRate } from '../work/api'
 import { todayISO, addDaysISO, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
-import { Card, CardHead, ProgressBar, BarChart, EmptyState, Sheet, Segmented, StatRow } from '../../components/ui'
+import { Card, CardHead, ProgressBar, BarChart, EmptyState, Sheet, Segmented, StatRow, Fab } from '../../components/ui'
 
 function monthStart(iso) { return iso.slice(0, 8) + '01' }
 function daysInMonth(iso) {
@@ -152,10 +152,6 @@ export default function ExpensesPage() {
       </div>
       {error && <p className="form-error" role="alert">{error}</p>}
 
-      <div className="action-bar">
-        <button className="btn btn-primary" onClick={() => setAddOpen(true)}>Dodaj wydatek</button>
-        <button className="btn btn-ghost" onClick={() => setImportOpen(true)}>Import CSV</button>
-      </div>
 
       <Card>
         <CardHead
@@ -261,7 +257,11 @@ export default function ExpensesPage() {
       <DebtsSection debts={debts} payments={payments} onChanged={load} />
 
       <Card>
-        <CardHead title="Lista" hint={`${visible.length} pozycji`} />
+        <CardHead
+          title="Lista"
+          hint={`${visible.length} pozycji`}
+          action={<button className="chip" onClick={() => setImportOpen(true)}>Import CSV</button>}
+        />
         <div className="chip-row" style={{ marginBottom: '.75rem' }}>
           {[
             { v: 'all', l: 'Wszystkie' },
@@ -311,6 +311,8 @@ export default function ExpensesPage() {
         onClose={() => setImportOpen(false)}
         onDone={() => { setImportOpen(false); load() }}
       />
+
+      <Fab onClick={() => setAddOpen(true)}>Dodaj wydatek</Fab>
     </div>
   )
 }

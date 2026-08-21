@@ -5,7 +5,7 @@ import {
 } from './api'
 import { useSpeech } from './useSpeech'
 import { formatDatePl } from '../../lib/date'
-import { Card, CardHead, EmptyState, Sheet, Segmented } from '../../components/ui'
+import { Card, CardHead, EmptyState, Sheet, Segmented, Fab } from '../../components/ui'
 import { IconGratitude, IconMic } from '../../components/icons'
 
 export default function JournalPage() {
@@ -57,22 +57,21 @@ export default function JournalPage() {
       <h1 className="page-title">Myśli i cele</h1>
       {error && <p className="form-error" role="alert">{error}</p>}
 
-      <div className="action-bar">
-        <button className="btn btn-primary" onClick={() => setAddOpen(true)}>Nowy wpis</button>
-        <button className="btn btn-ghost" onClick={() => setShowArchive(true)}>
-          Archiwum ({archived.length})
-        </button>
-      </div>
 
       <Card>
         <CardHead
           title="Twoje wpisy"
           hint={`${visible.length} widocznych`}
           action={
-            <button className={'chip' + (onlyFavorites ? ' is-active' : '')}
-              onClick={() => setOnlyFavorites((v) => !v)} aria-pressed={onlyFavorites}>
-              Ulubione
-            </button>
+            <div className="chip-row">
+              <button className={'chip' + (onlyFavorites ? ' is-active' : '')}
+                onClick={() => setOnlyFavorites((v) => !v)} aria-pressed={onlyFavorites}>
+                Ulubione
+              </button>
+              <button className="chip" onClick={() => setShowArchive(true)}>
+                Archiwum ({archived.length})
+              </button>
+            </div>
           }
         />
 
@@ -160,6 +159,8 @@ export default function JournalPage() {
           </div>
         )}
       </Sheet>
+
+      <Fab onClick={() => setAddOpen(true)}>Nowy wpis</Fab>
 
       <Sheet open={showArchive} title="Archiwum osiągniętych celów" onClose={() => setShowArchive(false)}>
         {archived.length === 0 ? (

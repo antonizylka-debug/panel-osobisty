@@ -233,8 +233,10 @@ a { color: var(--accent); }
 .onboard-actions .btn-primary { flex: 1; }
 
 /* ---------- powloka aplikacji ---------- */
+/* height, nie min-height: inaczej powloka rosnie z trescia i dolny pasek
+   nawigacji ucieka pod ekran zamiast zostac przyklejony. */
 .shell {
-  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -265,7 +267,9 @@ a { color: var(--accent); }
 
 .shell-main {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .page-pad {
@@ -579,6 +583,38 @@ a { color: var(--accent); }
 /* --- pasek akcji --- */
 .action-bar { display: flex; gap: .6rem; margin-bottom: 1rem; }
 .action-bar .btn { flex: 1; }
+
+/* --- glowna akcja ekranu (plywajaca) --- */
+.fab {
+  position: fixed;
+  right: 1rem;
+  bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+
+  font: inherit;
+  font-weight: 700;
+  font-size: .95rem;
+  letter-spacing: -.01em;
+  padding: .9rem 1.4rem .9rem 1.1rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-ink);
+  cursor: pointer;
+  box-shadow: 0 4px 12px -2px rgba(20,23,26,.3), 0 12px 28px -8px rgba(20,23,26,.35);
+}
+.fab:hover { filter: brightness(1.15); }
+.fab:active { transform: translateY(1px); }
+.fab-plus { font-size: 1.4rem; line-height: 1; font-weight: 400; }
+
+@media (prefers-reduced-motion: reduce) { .fab:active { transform: none; } }
+
+/* Zeby plywajacy przycisk nie zaslanial ostatniej pozycji listy. */
+.page-pad { padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px)); }
 
 /* --- siatka formularza --- */
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }

@@ -122,3 +122,16 @@ export function StatRow({ items }) {
     </div>
   )
 }
+
+/**
+ * Glowna akcja ekranu. Plywa nad paskiem nawigacji, zeby nie mylila sie
+ * z zakladkami — przycisk w rzedzie obok innego czytal sie jak nawigacja.
+ */
+export function Fab({ onClick, children }) {
+  return (
+    <button type="button" className="fab" onClick={onClick}>
+      <span className="fab-plus" aria-hidden="true">+</span>
+      {children}
+    </button>
+  )
+}

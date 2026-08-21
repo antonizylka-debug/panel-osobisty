@@ -125,7 +125,7 @@ export default function WorkDayForm({ date, entry, onSaved }) {
               <span>Przepracowane godziny</span>
               <input
                 type="number"
-                step="0.25"
+                step="any"
                 min="0"
                 max="24"
                 placeholder={autoHours != null ? String(autoHours) : '—'}
@@ -159,12 +159,12 @@ export default function WorkDayForm({ date, entry, onSaved }) {
           <div className="field-grid">
             <label className="field">
               <span>Nad biznesem (h)</span>
-              <input type="number" step="0.25" min="0" max="24" placeholder="0"
+              <input type="number" step="any" min="0" max="24" placeholder="0"
                 value={form.business_hours} onChange={set('business_hours')} />
             </label>
             <label className="field">
               <span>Dla siebie (h)</span>
-              <input type="number" step="0.25" min="0" max="24" placeholder="0"
+              <input type="number" step="any" min="0" max="24" placeholder="0"
                 value={form.personal_hours} onChange={set('personal_hours')} />
             </label>
           </div>

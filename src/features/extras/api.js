@@ -26,7 +26,7 @@ export async function toggleHabit({ habitId, date, done }) {
   if (done) {
     const { error } = await supabase
       .from('habit_logs')
-      .upsert({ habit_id: habitId, date, done: true }, { onConflict: 'habit_id,date' })
+      .upsert({ habit_id: habitId, date, done: true, value: 0 }, { onConflict: 'habit_id,date' })
     if (error) throw error
   } else {
     const { error } = await supabase
@@ -38,8 +38,40 @@ export async function toggleHabit({ habitId, date, done }) {
   }
 }
 
-export async function createHabit(name) {
-  const { error } = await supabase.from('habits').insert({ name })
+/**
+ * Zapis postepu nawyku liczbowego. Nawyk liczy sie za zrobiony dopiero
+ * po osiagnieciu celu — na tym opiera sie streak.
+ * Wartosc 0 kasuje wpis, zeby dzien nie liczyl sie jako zaczety.
+ */
+export async function setHabitProgress({ habitId, date, value, target }) {
+  const clamped = Math.max(0, Math.round(value * 100) / 100)
+
+  if (clamped === 0) {
+    const { error } = await supabase
+      .from('habit_logs')
+      .delete()
+      .eq('habit_id', habitId)
+      .eq('date', date)
+    if (error) throw error
+    return
+  }
+
+  const { error } = await supabase
+    .from('habit_logs')
+    .upsert(
+      { habit_id: habitId, date, value: clamped, done: clamped >= Number(target) },
+      { onConflict: 'habit_id,date' }
+    )
+  if (error) throw error
+}
+
+export async function createHabit({ name, target, unit, step }) {
+  const { error } = await supabase.from('habits').insert({
+    name,
+    target: target ?? null,
+    unit: unit || null,
+    step: step ?? 1,
+  })
   if (error) throw error
 }
 

@@ -618,6 +618,35 @@ a { color: var(--accent); }
 .habit-check svg { width: 15px; height: 15px; }
 .habit-streak { font-size: .72rem; font-weight: 700; color: var(--ink-faint); }
 
+/* --- nawyk z celem liczbowym --- */
+.habit-progress {
+  background: var(--surface-2);
+  border-radius: 18px;
+  padding: .85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+.habit-progress-head { display: flex; align-items: center; gap: .75rem; }
+.habit-progress.is-done .habit-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+.habit-progress.is-done .row-title { color: var(--ink-mid); }
+
+.habit-stepper { display: flex; align-items: center; gap: .5rem; }
+.stepper-btn {
+  width: 40px; height: 40px; flex: none;
+  border: none; border-radius: 13px;
+  background: var(--surface); color: var(--ink);
+  font-size: 1.35rem; font-weight: 700; line-height: 1;
+  cursor: pointer; box-shadow: var(--shadow-float);
+}
+.stepper-btn:disabled { opacity: .4; cursor: default; box-shadow: none; }
+.stepper-btn.is-plus { background: var(--primary); color: var(--primary-ink); }
+.stepper-value {
+  flex: 1; text-align: center;
+  font-weight: 800; font-size: .95rem;
+  font-variant-numeric: tabular-nums;
+}
+
 /* --- timer pelnoekranowy --- */
 .timer-overlay {
   position: fixed; inset: 0; z-index: 100;

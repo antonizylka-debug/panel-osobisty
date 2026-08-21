@@ -66,7 +66,8 @@ console.log('  stub gotowy')
 
 // ---------------------------------------------------------------------------
 console.log('\n== MIGRACJE ==')
-for (const f of ['0001_schema.sql', '0002_rls.sql', '0003_storage.sql', '0004_new_user_defaults.sql']) {
+for (const f of ['0001_schema.sql', '0002_rls.sql', '0003_storage.sql', '0004_new_user_defaults.sql',
+                 '0005_habit_progress.sql', '0006_default_uid_fix.sql']) {
   try {
     await db.exec(readFileSync(`${MIG}/${f}`, 'utf8'))
     ok(f)
@@ -227,6 +228,55 @@ await expectErr('B nie wgra pliku do folderu A',
   const r = await db.query(`select * from storage.objects where bucket_id = 'receipts'`)
   r.rows.length === 0 ? ok('B nie widzi paragonow A') : bad('B widzi paragony A')
 }
+
+// ---------------------------------------------------------------------------
+console.log('\n== TABELE "JEDEN WIERSZ NA KONTO" ==')
+// Regresja: user_id jest kluczem glownym i przez pomylke nie mial
+// default auth.uid(), przez co zapis z apki lecial na RLS.
+await expectOk('A zapisuje cel oszczednosciowy bez podawania user_id',
+  `${asUser(A)} insert into public.savings_goal (title, target_amount, current_amount)
+   values ('Start biznesu', 20000, 0);`)
+await expectOk('A zapisuje glowny cel bez podawania user_id',
+  `${asUser(A)} insert into public.main_goal (title) values ('Zostac przedsiebiorca')
+   on conflict (user_id) do update set title = excluded.title;`)
+{
+  await db.exec(asUser(A))
+  const s = await db.query(`select user_id, target_amount from public.savings_goal`)
+  s.rows.length === 1 && s.rows[0].user_id === A
+    ? ok('cel oszczednosciowy zapisany na wlasciwe konto')
+    : bad('zly user_id w savings_goal: ' + JSON.stringify(s.rows))
+
+  await db.exec(asUser(B))
+  const other = await db.query(`select * from public.savings_goal`)
+  other.rows.length === 0 ? ok('B nie widzi celu A') : bad('B widzi cel A')
+}
+
+// ---------------------------------------------------------------------------
+console.log('\n== NAWYKI Z POSTEPEM ==')
+{
+  await db.exec(asUser(A))
+  const seeded = await db.query(
+    `select name, target, unit, step from public.habits where target is not null order by name`
+  )
+  seeded.rows.length === 2
+    ? ok(`nowe konto dostaje ${seeded.rows.length} nawyki z celem liczbowym`)
+    : bad(`oczekiwano 2 nawykow z celem, jest ${seeded.rows.length}`)
+}
+await expectOk('nawyk z postepem zapisuje wartosc czastkowa',
+  `${asUser(A)} insert into public.habit_logs (habit_id, date, value, done)
+   select id, '2026-08-21', 1.5, false from public.habits where target = 2 limit 1;`)
+{
+  await db.exec(asUser(A))
+  const v = await db.query(`select value, done from public.habit_logs where value > 0`)
+  Number(v.rows[0]?.value) === 1.5 && v.rows[0]?.done === false
+    ? ok('czesciowy postep (1,5 z 2) zapisany, nawyk jeszcze nieodhaczony')
+    : bad('zly zapis postepu: ' + JSON.stringify(v.rows))
+}
+await expectErr('ujemny postep odrzucony',
+  `${asUser(A)} insert into public.habit_logs (habit_id, date, value)
+   select id, '2026-08-19', -5 from public.habits limit 1;`, 'habit_logs_value_ck')
+await expectErr('cel nawyku musi byc dodatni',
+  `${asUser(A)} insert into public.habits (name, target) values ('Zly nawyk', 0);`, 'habits_target_ck')
 
 console.log('\n== KASOWANIE KONTA ==')
 {

@@ -66,7 +66,6 @@ export default function ExpensesPage() {
 
   const monthTotal = thisMonth.reduce((s, e) => s + Number(e.amount), 0)
   const overallBudget = budgets.find((b) => !b.category)
-  const categoryBudgets = budgets.filter((b) => b.category)
 
   const byContext = useMemo(() => {
     let priv = 0, workSelf = 0, workOther = 0
@@ -93,6 +92,23 @@ export default function ExpensesPage() {
     const day = Number(today.slice(8))
     return day > 0 ? (monthTotal / day) * daysInMonth(today) : 0
   }, [monthTotal, today])
+
+  // Rozbicie na kategorie — od razu widoczne, posortowane od najwiekszej.
+  const byCategory = useMemo(() => {
+    const map = new Map()
+    for (const e of thisMonth) {
+      const key = e.category || 'Bez kategorii'
+      map.set(key, (map.get(key) ?? 0) + Number(e.amount))
+    }
+    return [...map.entries()]
+      .map(([name, amount]) => ({
+        name,
+        amount,
+        share: monthTotal > 0 ? amount / monthTotal : 0,
+        limit: budgets.find((b) => b.category === name)?.limit_amount ?? null,
+      }))
+      .sort((a, b) => b.amount - a.amount)
+  }, [thisMonth, monthTotal, budgets])
 
   const subscriptions = useMemo(() => expenses.filter((e) => e.type === 'subscription'), [expenses])
   const subsMonthly = subscriptions.reduce((s, e) => {
@@ -177,31 +193,44 @@ export default function ExpensesPage() {
         ]}
       />
 
-      {categoryBudgets.length > 0 && (
-        <Card>
-          <CardHead title="Limity kategorii" />
+      <Card>
+        <CardHead
+          title="Na co idą pieniądze"
+          hint="Ten miesiąc, od największej pozycji"
+          action={<button className="chip" onClick={() => setBudgetOpen(true)}>Limity</button>}
+        />
+        {byCategory.length === 0 ? (
+          <EmptyState>Dodaj pierwszy wydatek, a pokażę rozbicie.</EmptyState>
+        ) : (
           <ul className="row-list">
-            {categoryBudgets.map((b) => {
-              const spent = thisMonth.filter((e) => e.category === b.category).reduce((s, e) => s + Number(e.amount), 0)
-              const ratio = spent / Number(b.limit_amount)
+            {byCategory.map((c) => {
+              const ratio = c.limit ? c.amount / Number(c.limit) : null
               return (
-                <li key={b.id}>
+                <li key={c.name}>
                   <div className="entry">
                     <div className="entry-head">
-                      <span className="row-title">{b.category}</span>
-                      <span className="row-value">{formatPLN(spent, { short: true })} / {formatPLN(b.limit_amount, { short: true })}</span>
+                      <span className="row-title">{c.name}</span>
+                      <span className="row-value">{formatPLN(c.amount)}</span>
                     </div>
                     <div style={{ marginTop: '.5rem' }}>
-                      <ProgressBar value={spent} max={Number(b.limit_amount)}
-                        tone={ratio >= 1 ? 'danger' : ratio >= 0.8 ? 'warn' : 'accent'} />
+                      <ProgressBar
+                        value={c.amount}
+                        max={c.limit ? Number(c.limit) : monthTotal}
+                        tone={ratio == null ? 'accent' : ratio >= 1 ? 'danger' : ratio >= 0.8 ? 'warn' : 'accent'}
+                      />
                     </div>
+                    <p className="row-sub" style={{ marginTop: '.4rem' }}>
+                      {Math.round(c.share * 100)}% wszystkich wydatków
+                      {c.limit && ` · limit ${formatPLN(c.limit, { short: true })}`}
+                      {hourlyRate && ` · ${formatHours(c.amount / hourlyRate)} pracy`}
+                    </p>
                   </div>
                 </li>
               )
             })}
           </ul>
-        </Card>
-      )}
+        )}
+      </Card>
 
       <Card>
         <CardHead title="Wydatki w czasie" hint="Ostatnie dwa tygodnie" />

@@ -18,6 +18,7 @@ import WorkPage from './features/work/WorkPage'
 import ExpensesPage from './features/expenses/ExpensesPage'
 import JournalPage from './features/journal/JournalPage'
 import ProcrastinationPage from './features/procrastination/ProcrastinationPage'
+import BodyPage from './features/body/BodyPage'
 import WeeklyReviewPage from './features/extras/WeeklyReviewPage'
 import FavoritesPage from './features/extras/FavoritesPage'
 import SearchPage from './features/extras/SearchPage'
@@ -50,6 +51,7 @@ export default function App() {
                 <Route path="/godziny-pracy/nowy" element={<WorkPage />} />
                 <Route path="/wydatki" element={<ExpensesPage />} />
                 <Route path="/wydatki/nowy" element={<ExpensesPage />} />
+                <Route path="/cialo" element={<BodyPage />} />
                 <Route path="/mysli-i-cele" element={<JournalPage />} />
                 <Route path="/zrob-to-teraz" element={<ProcrastinationPage />} />
                 <Route path="/przeglad-tygodnia" element={<WeeklyReviewPage />} />

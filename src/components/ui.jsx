@@ -77,11 +77,14 @@ export function Sheet({ open, title, onClose, children }) {
 }
 
 /** Prosty wykres slupkowy na SVG — bez zewnetrznych bibliotek. */
-export function BarChart({ data, height = 120, format = (v) => v, tone = 'accent' }) {
+export function BarChart({ data, height = 120, format = (v) => v, tone = 'accent', minSlots = 8 }) {
   if (!data.length) return <EmptyState>Za mało danych na wykres.</EmptyState>
 
   const max = Math.max(...data.map((d) => d.value), 1)
-  const barW = 100 / data.length
+  // Przy jednym-dwoch slupkach nie rozciagamy ich na cala karte — trzymamy
+  // stala szerokosc slotu, zeby pojedynczy pomiar nie wygladal jak plakat.
+  const slots = Math.max(data.length, minSlots)
+  const barW = 100 / slots
 
   return (
     <div className="chart">
@@ -101,7 +104,7 @@ export function BarChart({ data, height = 120, format = (v) => v, tone = 'accent
           )
         })}
       </svg>
-      <div className="chart-labels">
+      <div className="chart-labels" style={{ gridTemplateColumns: `repeat(${slots}, 1fr)` }}>
         {data.map((d, i) => (
           <span key={i} title={format(d.value)}>{d.label}</span>
         ))}

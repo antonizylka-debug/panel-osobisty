@@ -80,15 +80,39 @@ export async function deactivateHabit(id) {
   if (error) throw error
 }
 
-/** Ile dni z rzedu odhaczony, liczac wstecz od dzis. */
+/** Dzien odpoczynku — nie liczy sie jako zrobione, ale nie lamie serii. */
+export async function setHabitRest({ habitId, date, isRest }) {
+  if (!isRest) {
+    const { error } = await supabase
+      .from('habit_logs').delete().eq('habit_id', habitId).eq('date', date)
+    if (error) throw error
+    return
+  }
+  const { error } = await supabase
+    .from('habit_logs')
+    .upsert(
+      { habit_id: habitId, date, done: false, value: 0, is_rest: true },
+      { onConflict: 'habit_id,date' }
+    )
+  if (error) throw error
+}
+
+/**
+ * Ile dni z rzedu odhaczony, liczac wstecz od dzis.
+ * Dni odpoczynku sa przeskakiwane — nie dodaja do serii, ale jej nie zeruja.
+ */
 export function habitStreak(habitId, logs, today) {
-  const done = new Set(logs.filter((l) => l.habit_id === habitId && l.done).map((l) => l.date))
+  const mine = logs.filter((l) => l.habit_id === habitId)
+  const done = new Set(mine.filter((l) => l.done).map((l) => l.date))
+  const rest = new Set(mine.filter((l) => l.is_rest).map((l) => l.date))
+
   let streak = 0
   let cursor = today
   // Dzisiaj jeszcze nieodhaczone nie zeruje serii — liczymy od wczoraj.
-  if (!done.has(cursor)) cursor = addDaysISO(cursor, -1)
-  while (done.has(cursor)) {
-    streak++
+  if (!done.has(cursor) && !rest.has(cursor)) cursor = addDaysISO(cursor, -1)
+
+  while (done.has(cursor) || rest.has(cursor)) {
+    if (done.has(cursor)) streak++
     cursor = addDaysISO(cursor, -1)
   }
   return streak

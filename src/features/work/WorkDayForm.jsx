@@ -104,19 +104,19 @@ export default function WorkDayForm({ date, entry, onSaved }) {
           <div className="field-grid">
             <label className="field">
               <span>Pobudka</span>
-              <input type="time" value={form.wake_time} onChange={set('wake_time')} />
+              <input type="time" lang="pl" step="60" value={form.wake_time} onChange={set('wake_time')} />
             </label>
             <label className="field">
               <span>Wyjazd z domu</span>
-              <input type="time" value={form.left_home_time} onChange={set('left_home_time')} />
+              <input type="time" lang="pl" step="60" value={form.left_home_time} onChange={set('left_home_time')} />
             </label>
             <label className="field">
               <span>Wyjazd z bazy</span>
-              <input type="time" value={form.left_base_time} onChange={set('left_base_time')} />
+              <input type="time" lang="pl" step="60" value={form.left_base_time} onChange={set('left_base_time')} />
             </label>
             <label className="field">
               <span>Powrót</span>
-              <input type="time" value={form.return_time} onChange={set('return_time')} />
+              <input type="time" lang="pl" step="60" value={form.return_time} onChange={set('return_time')} />
             </label>
           </div>
 

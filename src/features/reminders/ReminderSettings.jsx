@@ -69,7 +69,7 @@ export default function ReminderSettings() {
           <div className="switch-hint">O tej porze przyjdzie przypomnienie</div>
         </div>
         <input
-          type="time"
+          type="time" lang="pl" step="60"
           className="chip"
           style={{ padding: '.4rem .7rem' }}
           value={settings.reminder_time?.slice(0, 5) ?? '20:00'}

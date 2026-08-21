@@ -98,6 +98,28 @@ export function IconCheck(props) {
   )
 }
 
+export function IconBody(props) {
+  return (
+    <svg {...common} {...props}>
+      <path d="M6 5.5h12" />
+      <path d="M4.5 3.5v4M19.5 3.5v4" />
+      <path d="M9 5.5v6.5a3 3 0 0 0 6 0V5.5" />
+      <path d="M12 14.5v6" />
+      <path d="M8.5 20.5h7" />
+    </svg>
+  )
+}
+
+export function IconRest(props) {
+  return (
+    <svg {...common} {...props}>
+      <path d="M4 11h12v4a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4Z" />
+      <path d="M16 12h1.8a2.2 2.2 0 1 1 0 4.4H16" />
+      <path d="M7 4.5v2M10.5 4.5v2M14 4.5v2" />
+    </svg>
+  )
+}
+
 export function IconSearch(props) {
   return (
     <svg {...common} {...props}>

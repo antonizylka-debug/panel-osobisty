@@ -306,7 +306,7 @@ function WizardSheet({ open, onClose, onDone }) {
           <div className="field-grid">
             <label className="field">
               <span>Kiedy</span>
-              <input type="time" value={when} onChange={(e) => setWhen(e.target.value)} />
+              <input type="time" lang="pl" step="60" value={when} onChange={(e) => setWhen(e.target.value)} />
             </label>
             <label className="field">
               <span>Gdzie</span>

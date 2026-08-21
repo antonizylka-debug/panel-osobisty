@@ -8,15 +8,32 @@ function systemPrefersDark() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
+export const ACCENTS = [
+  { value: 'lime',    label: 'Limonkowy',  swatch: '#15A46B' },
+  { value: 'violet',  label: 'Fioletowy',  swatch: '#6D4AE0' },
+  { value: 'amber',   label: 'Bursztyn',   swatch: '#B7791F' },
+  { value: 'cyan',    label: 'Cyjan',      swatch: '#0E7C99' },
+  { value: 'rose',    label: 'Różowy',     swatch: '#C2415F' },
+  { value: 'crimson', label: 'Karmazyn',   swatch: '#C0392B' },
+  { value: 'ocean',   label: 'Oceaniczny', swatch: '#2563C7' },
+  { value: 'earth',   label: 'Ziemia',     swatch: '#8A6A45' },
+]
+
 export function ThemeProvider({ children }) {
   const { user, profile } = useAuth()
   const [theme, setThemeState] = useState('system')
+  const [accent, setAccentState] = useState('lime')
   const [systemDark, setSystemDark] = useState(systemPrefersDark)
 
   // Startowa wartosc przychodzi z profilu (zapamietana dla konta).
   useEffect(() => {
     if (profile?.theme) setThemeState(profile.theme)
-  }, [profile?.theme])
+    if (profile?.accent) setAccentState(profile.accent)
+  }, [profile?.theme, profile?.accent])
+
+  useEffect(() => {
+    document.documentElement.dataset.accent = accent
+  }, [accent])
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -49,7 +66,20 @@ export function ThemeProvider({ children }) {
     setTheme(resolved === 'dark' ? 'light' : 'dark')
   }, [resolved, setTheme])
 
-  const value = useMemo(() => ({ theme, resolved, setTheme, toggle }), [theme, resolved, setTheme, toggle])
+  const setAccent = useCallback(
+    async (next) => {
+      setAccentState(next)
+      if (!user) return
+      const { error } = await supabase.from('profiles').update({ accent: next }).eq('user_id', user.id)
+      if (error) console.error('Nie udało się zapisać koloru:', error.message)
+    },
+    [user]
+  )
+
+  const value = useMemo(
+    () => ({ theme, resolved, setTheme, toggle, accent, setAccent }),
+    [theme, resolved, setTheme, toggle, accent, setAccent]
+  )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }

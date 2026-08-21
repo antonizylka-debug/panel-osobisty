@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { toggleHabit, setHabitProgress, habitStreak, createHabit, deactivateHabit } from './api'
+import { toggleHabit, setHabitProgress, setHabitRest, habitStreak, createHabit, deactivateHabit } from './api'
 import { Card, CardHead, EmptyState, Sheet, ProgressBar } from '../../components/ui'
-import { IconCheck } from '../../components/icons'
+import { IconCheck, IconRest } from '../../components/icons'
 
 /** 1.5 -> "1,5"; 2 -> "2" (bez zbednego przecinka) */
 function num(v) {
@@ -46,20 +46,36 @@ export default function HabitsCard({ habits, logs, today, onChanged }) {
               const streak = habitStreak(h.id, logs, today)
               const hasTarget = h.target != null
 
+              const isRest = !!log?.is_rest
+
               if (!hasTarget) {
                 const done = !!log?.done
                 return (
                   <li key={h.id}>
-                    <button
-                      className={'habit-row' + (done ? ' is-done' : '')}
-                      onClick={() => run(h.id, () => toggleHabit({ habitId: h.id, date: today, done: !done }))}
-                      disabled={busy === h.id}
-                      aria-pressed={done}
-                    >
+                    <div className={'habit-row' + (done ? ' is-done' : '') + (isRest ? ' is-rest' : '')}>
                       <span className="habit-check"><IconCheck /></span>
-                      <div className="row-main"><span className="row-title">{h.name}</span></div>
+                      <div className="row-main">
+                        <span className="row-title">{h.name}</span>
+                        {isRest && <span className="row-sub">Dzień odpoczynku</span>}
+                      </div>
                       {streak > 0 && <span className="habit-streak">{streak} dni</span>}
-                    </button>
+                      <div className="habit-actions">
+                        <button
+                          className={'habit-act' + (done ? ' is-on' : '')}
+                          onClick={() => run(h.id, () => toggleHabit({ habitId: h.id, date: today, done: !done }))}
+                          disabled={busy === h.id}
+                          aria-pressed={done}
+                          aria-label={done ? 'Cofnij odhaczenie' : 'Odhacz'}
+                        ><IconCheck /></button>
+                        <button
+                          className={'habit-act' + (isRest ? ' is-rest-on' : '')}
+                          onClick={() => run(h.id, () => setHabitRest({ habitId: h.id, date: today, isRest: !isRest }))}
+                          disabled={busy === h.id}
+                          aria-pressed={isRest}
+                          aria-label={isRest ? 'Cofnij dzień odpoczynku' : 'Dzień odpoczynku'}
+                        ><IconRest /></button>
+                      </div>
+                    </div>
                   </li>
                 )
               }
@@ -71,16 +87,27 @@ export default function HabitsCard({ habits, logs, today, onChanged }) {
 
               return (
                 <li key={h.id}>
-                  <div className={'habit-progress' + (done ? ' is-done' : '')}>
+                  <div className={'habit-progress' + (done ? ' is-done' : '') + (isRest ? ' is-rest' : '')}>
                     <div className="habit-progress-head">
                       <span className="habit-check" aria-hidden="true"><IconCheck /></span>
                       <div className="row-main">
                         <span className="row-title">{h.name}</span>
                         <span className="row-sub">
-                          {num(value)} z {num(target)}{h.unit ? ` ${h.unit}` : ''}
-                          {streak > 0 && ` · ${streak} dni z rzędu`}
+                          {isRest ? 'Dzień odpoczynku' : (
+                            <>
+                              {num(value)} z {num(target)}{h.unit ? ` ${h.unit}` : ''}
+                              {streak > 0 && ` · ${streak} dni z rzędu`}
+                            </>
+                          )}
                         </span>
                       </div>
+                      <button
+                        className={'habit-act' + (isRest ? ' is-rest-on' : '')}
+                        onClick={() => run(h.id, () => setHabitRest({ habitId: h.id, date: today, isRest: !isRest }))}
+                        disabled={busy === h.id}
+                        aria-pressed={isRest}
+                        aria-label={isRest ? 'Cofnij dzień odpoczynku' : 'Dzień odpoczynku'}
+                      ><IconRest /></button>
                     </div>
 
                     <ProgressBar value={value} max={target} />

@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthContext'
 import { useLocalReminder } from '../features/reminders/useLocalReminder'
 import {
   IconStart, IconGratitude, IconExpenses, IconWorkHours, IconJournal, IconDoItNow,
-  IconSun, IconMoon, IconSearch, IconSettings,
+  IconBody, IconSun, IconMoon, IconSearch, IconSettings,
 } from './icons'
 
 const TABS = [
@@ -12,6 +12,7 @@ const TABS = [
   { to: '/wdziecznosc', label: 'Wdzięczność', Icon: IconGratitude },
   { to: '/wydatki', label: 'Wydatki', Icon: IconExpenses },
   { to: '/godziny-pracy', label: 'Godziny', Icon: IconWorkHours },
+  { to: '/cialo', label: 'Ciało', Icon: IconBody },
   { to: '/mysli-i-cele', label: 'Myśli', Icon: IconJournal },
   { to: '/zrob-to-teraz', label: 'Teraz', Icon: IconDoItNow },
 ]
@@ -26,7 +27,7 @@ export default function AppShell() {
     <div className="shell">
       <header className="shell-top">
         <span className="shell-brand">Panel Osobisty</span>
-        <div style={{ display: 'flex', gap: '.5rem' }}>
+        <div style={{ display: 'flex', gap: '.5rem', marginLeft: 'auto' }}>
           <Link className="theme-toggle" to="/szukaj" aria-label="Szukaj">
             <IconSearch />
           </Link>
@@ -47,7 +48,9 @@ export default function AppShell() {
         <Outlet />
       </main>
 
+      {/* Ten sam element na telefonie (dolny pasek) i na desktopie (boczne menu) */}
       <nav className="bottom-nav" aria-label="Nawigacja główna">
+        <span className="side-brand">Panel Osobisty</span>
         {TABS.map(({ to, label, Icon, end }) => (
           <NavLink
             key={to}

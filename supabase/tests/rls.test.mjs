@@ -67,7 +67,7 @@ console.log('  stub gotowy')
 // ---------------------------------------------------------------------------
 console.log('\n== MIGRACJE ==')
 for (const f of ['0001_schema.sql', '0002_rls.sql', '0003_storage.sql', '0004_new_user_defaults.sql',
-                 '0005_habit_progress.sql', '0006_default_uid_fix.sql']) {
+                 '0005_habit_progress.sql', '0006_default_uid_fix.sql', '0007_body_and_ui.sql']) {
   try {
     await db.exec(readFileSync(`${MIG}/${f}`, 'utf8'))
     ok(f)

@@ -13,11 +13,22 @@ export function AuthProvider({ children }) {
       setProfile(null)
       return
     }
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('profiles')
-      .select('user_id, display_name, theme, onboarded')
+      .select('user_id, display_name, theme, accent, onboarded')
       .eq('user_id', userId)
       .maybeSingle()
+
+    // Kolumna accent doszla w migracji 0007. Jesli baza jej jeszcze nie ma,
+    // apka ma dzialac dalej zamiast pokazywac biala strone.
+    if (error?.message?.includes('accent')) {
+      console.warn('Baza bez kolumny accent — uruchom migrację 0007_body_and_ui.sql')
+      ;({ data, error } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, theme, onboarded')
+        .eq('user_id', userId)
+        .maybeSingle())
+    }
 
     if (error) {
       console.error('Nie udało się wczytać profilu:', error.message)

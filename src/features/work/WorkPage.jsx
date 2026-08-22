@@ -93,6 +93,26 @@ export default function WorkPage() {
     [scope]
   )
 
+  // Srednia liczona tylko z dni, w ktorych faktycznie byly godziny —
+  // dzielenie przez 7 czy 30 zanizaloby ja o dni wolne.
+  const averages = useMemo(() => {
+    const now = new Date()
+    const dow = (now.getDay() + 6) % 7
+    const monday = isoDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow))
+
+    function avgSince(from, label) {
+      const days = month.filter((d) => d.date >= from && Number(d.hours_worked ?? 0) > 0)
+      const total = days.reduce((s, d) => s + Number(d.hours_worked), 0)
+      return { label, days: days.length, total, avg: days.length ? total / days.length : 0 }
+    }
+
+    return [
+      avgSince(monday, 'Ten tydzień'),
+      avgSince(addDaysISO(today, -13), 'Ostatnie 2 tygodnie'),
+      avgSince(monthStart(today), 'Ten miesiąc'),
+    ]
+  }, [month, today])
+
   const pendingTotal = pending.reduce((s, d) => s + Number(d.pay_amount ?? 0), 0)
 
   if (loading) return <div className="page-pad"><p className="page-lede">Wczytywanie…</p></div>
@@ -146,6 +166,36 @@ export default function WorkPage() {
           <div className="converter mt-1">Realna stawka w tym okresie: {formatPLN(realRate)}/h</div>
         )}
         <p className="muted mt-1">Dni wolnych, urlopu i L4: {totals.offDays}</p>
+      </Card>
+
+      <Card>
+        <CardHead title="Średnia godzin" hint="Tylko dni, w których pracowałeś" />
+        <ul className="row-list">
+          {averages.map((a) => (
+            <li key={a.label}>
+              <div className="row-item" style={{ cursor: 'default' }}>
+                <div className="row-main">
+                  <span className="row-title">{a.label}</span>
+                  <span className="row-sub">
+                    {a.days > 0
+                      ? `${a.days} ${a.days === 1 ? 'dzień' : 'dni'} · łącznie ${formatHours(a.total)}`
+                      : 'brak dni pracujących'}
+                  </span>
+                </div>
+                <span className="row-value">{a.days > 0 ? formatHours(a.avg) : '—'}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+        {averages[0].days > 0 && averages[2].days > 0 && (
+          <div className="converter mt-1">
+            {averages[0].avg > averages[2].avg
+              ? `W tym tygodniu robisz o ${formatHours(averages[0].avg - averages[2].avg)} dziennie więcej niż średnio w miesiącu.`
+              : averages[0].avg < averages[2].avg
+                ? `W tym tygodniu robisz o ${formatHours(averages[2].avg - averages[0].avg)} dziennie mniej niż średnio w miesiącu.`
+                : 'Trzymasz równe tempo względem miesiąca.'}
+          </div>
+        )}
       </Card>
 
       <Card>

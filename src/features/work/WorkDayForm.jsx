@@ -13,7 +13,7 @@ const DAY_TYPES = [
 const empty = {
   wake_time: '', left_home_time: '', left_base_time: '', return_time: '',
   hours_worked: '', pay_amount: '', business_hours: '', personal_hours: '',
-  day_type: 'work',
+  day_type: 'work', pay_status: 'pending', pay_date: '',
 }
 
 function fromEntry(entry) {
@@ -28,6 +28,8 @@ function fromEntry(entry) {
     business_hours: entry.business_hours ?? '',
     personal_hours: entry.personal_hours ?? '',
     day_type: entry.day_type ?? 'work',
+    pay_status: entry.pay_status ?? 'pending',
+    pay_date: entry.pay_date ?? '',
   }
 }
 
@@ -81,6 +83,8 @@ export default function WorkDayForm({ date, entry, onSaved }) {
         business_hours: form.business_hours === '' ? null : Number(form.business_hours),
         personal_hours: form.personal_hours === '' ? null : Number(form.personal_hours),
         day_type: form.day_type,
+        pay_status: form.pay_status,
+        pay_date: form.pay_status === 'paid' ? (form.pay_date || date) : null,
       })
       onSaved(saved)
       setJustSaved(true)
@@ -154,6 +158,27 @@ export default function WorkDayForm({ date, entry, onSaved }) {
               />
             </label>
           </div>
+
+          <label className="field">
+            <span>Wypłata</span>
+            <Segmented
+              ariaLabel="Status wypłaty"
+              value={form.pay_status}
+              onChange={(v) => setForm((f) => ({ ...f, pay_status: v }))}
+              options={[
+                { value: 'pending', label: 'Czeka' },
+                { value: 'paid', label: 'Rozliczone' },
+              ]}
+            />
+          </label>
+
+          {form.pay_status === 'paid' && (
+            <label className="field">
+              <span>Data wypłaty</span>
+              <input type="date" value={form.pay_date || date}
+                onChange={set('pay_date')} />
+            </label>
+          )}
 
           {realRate != null && (
             <div className="converter">

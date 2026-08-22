@@ -67,7 +67,7 @@ console.log('  stub gotowy')
 // ---------------------------------------------------------------------------
 console.log('\n== MIGRACJE ==')
 for (const f of ['0001_schema.sql', '0002_rls.sql', '0003_storage.sql', '0004_new_user_defaults.sql',
-                 '0005_habit_progress.sql', '0006_default_uid_fix.sql', '0007_body_and_ui.sql', '0008_sleep_steps_authors.sql']) {
+                 '0005_habit_progress.sql', '0006_default_uid_fix.sql', '0007_body_and_ui.sql', '0008_sleep_steps_authors.sql', '0009_quote_packs.sql', '0010_work_hours_autofill.sql']) {
   try {
     await db.exec(readFileSync(`${MIG}/${f}`, 'utf8'))
     ok(f)
@@ -308,6 +308,49 @@ await expectErr('ujemne kroki odrzucone',
   await db.exec(asUser(B))
   const r = await db.query(`select * from public.daily_metrics`)
   r.rows.length === 0 ? ok('B nie widzi snu ani krokow A') : bad('B widzi dane A')
+}
+
+// ---------------------------------------------------------------------------
+console.log('\n== GODZINY PRACY LICZONE PRZEZ BAZE ==')
+await expectOk('dzien bez bazy: apka nie podaje godzin',
+  `${asUser(A)} insert into public.work_days (date, left_home_time, return_time, pay_amount)
+   values ('2026-08-22', '05:30', '12:50', 500);`)
+{
+  await db.exec(asUser(A))
+  const r = await db.query(`select hours_worked from public.work_days where date = '2026-08-22'`)
+  Number(r.rows[0]?.hours_worked) === 7.33
+    ? ok('baza policzyla 7,33 h od wyjazdu z domu')
+    : bad('zle godziny: ' + JSON.stringify(r.rows))
+}
+await expectOk('dzien z baza liczy od wyjazdu z bazy',
+  `${asUser(A)} insert into public.work_days (date, left_home_time, left_base_time, return_time)
+   values ('2026-08-18', '05:55', '07:00', '16:25');`)
+{
+  await db.exec(asUser(A))
+  const r = await db.query(`select hours_worked from public.work_days where date = '2026-08-18'`)
+  Number(r.rows[0]?.hours_worked) === 9.42
+    ? ok('z baza: 9,42 h (a nie 10,5 od domu)')
+    : bad('zle godziny: ' + JSON.stringify(r.rows))
+}
+await expectOk('zmiana przez polnoc: 22:00 -> 06:00',
+  `${asUser(A)} insert into public.work_days (date, left_home_time, return_time)
+   values ('2026-08-17', '22:00', '06:00');`)
+{
+  await db.exec(asUser(A))
+  const r = await db.query(`select hours_worked from public.work_days where date = '2026-08-17'`)
+  Number(r.rows[0]?.hours_worked) === 8
+    ? ok('nocna zmiana policzona jako 8 h, nie ujemna')
+    : bad('zle godziny: ' + JSON.stringify(r.rows))
+}
+await expectOk('wartosc podana recznie nie jest nadpisywana',
+  `${asUser(A)} insert into public.work_days (date, left_home_time, return_time, hours_worked)
+   values ('2026-08-16', '06:00', '18:00', 6);`)
+{
+  await db.exec(asUser(A))
+  const r = await db.query(`select hours_worked from public.work_days where date = '2026-08-16'`)
+  Number(r.rows[0]?.hours_worked) === 6
+    ? ok('reczne 6 h zachowane mimo 12 h miedzy godzinami')
+    : bad('nadpisano reczna wartosc: ' + JSON.stringify(r.rows))
 }
 
 console.log('\n== KASOWANIE KONTA ==')

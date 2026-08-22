@@ -13,21 +13,29 @@ export function AuthProvider({ children }) {
       setProfile(null)
       return
     }
-    let { data, error } = await supabase
-      .from('profiles')
-      .select('user_id, display_name, theme, accent, onboarded')
-      .eq('user_id', userId)
-      .maybeSingle()
+    // Kolumny wygladu dochodzily migracjami (accent w 0007, surface w 0012).
+    // Schodzimy po kolei do wezszego zapytania, zeby brak najnowszej kolumny
+    // nie cofal ustawien, ktore baza juz zna.
+    const VARIANTS = [
+      'user_id, display_name, theme, accent, surface, onboarded',
+      'user_id, display_name, theme, accent, onboarded',
+      'user_id, display_name, theme, onboarded',
+    ]
 
-    // Kolumna accent doszla w migracji 0007. Jesli baza jej jeszcze nie ma,
-    // apka ma dzialac dalej zamiast pokazywac biala strone.
-    if (error?.message?.includes('accent')) {
-      console.warn('Baza bez kolumny accent — uruchom migrację 0007_body_and_ui.sql')
+    let data = null
+    let error = null
+
+    for (const columns of VARIANTS) {
       ;({ data, error } = await supabase
         .from('profiles')
-        .select('user_id, display_name, theme, onboarded')
+        .select(columns)
         .eq('user_id', userId)
         .maybeSingle())
+
+      if (!error) break
+      if (!/column .* does not exist|schema cache/i.test(error.message ?? '')) break
+
+      console.warn(`Baza nie zna jeszcze części kolumn wyglądu (${columns}) — wgraj brakujące migracje`)
     }
 
     if (error) {

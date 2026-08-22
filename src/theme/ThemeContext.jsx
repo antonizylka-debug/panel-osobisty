@@ -17,23 +17,38 @@ export const ACCENTS = [
   { value: 'crimson', label: 'Karmazyn',   swatch: '#C0392B' },
   { value: 'ocean',   label: 'Oceaniczny', swatch: '#2563C7' },
   { value: 'earth',   label: 'Ziemia',     swatch: '#8A6A45' },
+  { value: 'mint',    label: 'Mięta',      swatch: '#0E8C7F' },
+  { value: 'indigo',  label: 'Indygo',     swatch: '#4F46E5' },
+  { value: 'magenta', label: 'Magenta',    swatch: '#A8357D' },
+  { value: 'slate',   label: 'Stal',       swatch: '#4A6076' },
+]
+
+export const SURFACES = [
+  { value: 'neutral', label: 'Neutralna' },
+  { value: 'tinted',  label: 'Barwna' },
 ]
 
 export function ThemeProvider({ children }) {
   const { user, profile } = useAuth()
   const [theme, setThemeState] = useState('system')
   const [accent, setAccentState] = useState('lime')
+  const [surface, setSurfaceState] = useState('neutral')
   const [systemDark, setSystemDark] = useState(systemPrefersDark)
 
   // Startowa wartosc przychodzi z profilu (zapamietana dla konta).
   useEffect(() => {
     if (profile?.theme) setThemeState(profile.theme)
     if (profile?.accent) setAccentState(profile.accent)
-  }, [profile?.theme, profile?.accent])
+    if (profile?.surface) setSurfaceState(profile.surface)
+  }, [profile?.theme, profile?.accent, profile?.surface])
 
   useEffect(() => {
     document.documentElement.dataset.accent = accent
   }, [accent])
+
+  useEffect(() => {
+    document.documentElement.dataset.surface = surface
+  }, [surface])
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -76,9 +91,19 @@ export function ThemeProvider({ children }) {
     [user]
   )
 
+  const setSurface = useCallback(
+    async (next) => {
+      setSurfaceState(next)
+      if (!user) return
+      const { error } = await supabase.from('profiles').update({ surface: next }).eq('user_id', user.id)
+      if (error) console.error('Nie udało się zapisać stylu powierzchni:', error.message)
+    },
+    [user]
+  )
+
   const value = useMemo(
-    () => ({ theme, resolved, setTheme, toggle, accent, setAccent }),
-    [theme, resolved, setTheme, toggle, accent, setAccent]
+    () => ({ theme, resolved, setTheme, toggle, accent, setAccent, surface, setSurface }),
+    [theme, resolved, setTheme, toggle, accent, setAccent, surface, setSurface]
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

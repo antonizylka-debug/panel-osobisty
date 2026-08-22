@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { useTheme, ACCENTS } from '../theme/ThemeContext'
+import { useTheme, ACCENTS, SURFACES } from '../theme/ThemeContext'
 
 /** Kropka koloru w naglowku — kolor zmienia sie na miejscu, bez wchodzenia w Ustawienia. */
 export default function AccentMenu() {
-  const { accent, setAccent } = useTheme()
+  const { accent, setAccent, surface, setSurface } = useTheme()
   const [open, setOpen] = useState(false)
   const boxRef = useRef(null)
 
@@ -54,6 +54,18 @@ export default function AccentMenu() {
               >
                 <span style={{ background: a.swatch }} />
               </button>
+            ))}
+          </div>
+
+          <span className="accent-popover-title" style={{ marginTop: '.9rem' }}>Powierzchnia</span>
+          <div className="segmented" role="group" aria-label="Styl powierzchni">
+            {SURFACES.map((s) => (
+              <button
+                key={s.value}
+                type="button"
+                className={'segmented-item' + (surface === s.value ? ' is-active' : '')}
+                onClick={() => setSurface(s.value)}
+              >{s.label}</button>
             ))}
           </div>
         </div>

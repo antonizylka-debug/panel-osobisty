@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../auth/AuthContext'
-import { useTheme, ACCENTS } from '../../theme/ThemeContext'
+import { useTheme, ACCENTS, SURFACES } from '../../theme/ThemeContext'
 import {
   fetchQuotes, createQuote, deleteQuote, toggleQuoteFavorite,
   fetchPrompts, createPrompt, deletePrompt,
@@ -20,7 +20,7 @@ const EXPORT_TABLES = [
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth()
-  const { theme, setTheme, accent, setAccent } = useTheme()
+  const { theme, setTheme, accent, setAccent, surface, setSurface } = useTheme()
   const [quotes, setQuotes] = useState([])
   const [prompts, setPrompts] = useState([])
   const [quotesOpen, setQuotesOpen] = useState(false)
@@ -88,6 +88,19 @@ export default function SettingsPage() {
             { value: 'dark', label: 'Ciemny' },
           ]}
         />
+
+        <span className="field-label" style={{ display: 'block', margin: '1.25rem 0 .6rem' }}>
+          Powierzchnia
+        </span>
+        <Segmented
+          ariaLabel="Styl powierzchni"
+          value={surface}
+          onChange={setSurface}
+          options={SURFACES.map((x) => ({ value: x.value, label: x.label }))}
+        />
+        <p className="muted" style={{ marginTop: '.5rem' }}>
+          Barwna podbarwia tła kolorem akcentu. Neutralna zostawia szarość.
+        </p>
 
         <span className="field-label" style={{ display: 'block', margin: '1.25rem 0 .6rem' }}>
           Kolor akcentu

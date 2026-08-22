@@ -1,7 +1,16 @@
 :root {
-  --bg: #EAECED;
-  --surface: #FFFFFF;
-  --surface-2: #F1F2F3;
+  /* Tla trzymamy jako "-base", a --bg/--surface licza sie z nich nizej.
+     Dzieki temu motyw (jasny/ciemny) i styl powierzchni (neutralna/barwna)
+     ustawiaja sie niezaleznie i nie musza o siebie walczyc specyficznoscia. */
+  --bg-base: #EAECED;
+  --surface-base: #FFFFFF;
+  --surface-2-base: #F1F2F3;
+  --tint: 0%;
+  --tint-soft: 0%;
+
+  --bg: var(--bg-base);
+  --surface: var(--surface-base);
+  --surface-2: var(--surface-2-base);
   --ink: #16191B;
   --ink-mid: #5C6366;
   --ink-faint: #9BA1A4;
@@ -24,9 +33,9 @@
 /* System "ciemny": stosowany, gdy uzytkownik nie wybral jawnie motywu w apce. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #0F1112;
-    --surface: #1A1D1E;
-    --surface-2: #232627;
+    --bg-base: #0F1112;
+    --surface-base: #1A1D1E;
+    --surface-2-base: #232627;
     --ink: #EDEFEF;
     --ink-mid: #A6ACAE;
     --ink-faint: #767C7E;
@@ -47,9 +56,9 @@
 
 /* Jawny wybor w apce (zapamietany w profiles.theme) wygrywa w obie strony. */
 :root[data-theme='dark'] {
-  --bg: #0F1112;
-  --surface: #1A1D1E;
-  --surface-2: #232627;
+  --bg-base: #0F1112;
+  --surface-base: #1A1D1E;
+  --surface-2-base: #232627;
   --ink: #EDEFEF;
   --ink-mid: #A6ACAE;
   --ink-faint: #767C7E;
@@ -79,6 +88,32 @@
 :root[data-accent='crimson'] { --accent-l:#C0392B; --accent-bg-l:#FBE7E3; --accent-d:#F08C7B; --accent-bg-d:#38150F; }
 :root[data-accent='ocean']   { --accent-l:#2563C7; --accent-bg-l:#E3ECFB; --accent-d:#7FAEF5; --accent-bg-d:#122542; }
 :root[data-accent='earth']   { --accent-l:#8A6A45; --accent-bg-l:#F2EAE0; --accent-d:#CBA97D; --accent-bg-d:#2E2317; }
+:root[data-accent='mint']    { --accent-l:#0E8C7F; --accent-bg-l:#DCF2EF; --accent-d:#5EEAD4; --accent-bg-d:#0D302C; }
+:root[data-accent='indigo']  { --accent-l:#4F46E5; --accent-bg-l:#E6E5FC; --accent-d:#A5B4FC; --accent-bg-d:#1B1C46; }
+:root[data-accent='magenta'] { --accent-l:#A8357D; --accent-bg-l:#FAE3F1; --accent-d:#EE9FD0; --accent-bg-d:#360F28; }
+:root[data-accent='slate']   { --accent-l:#4A6076; --accent-bg-l:#E6EBF0; --accent-d:#9FB6CC; --accent-bg-d:#1B242D; }
+
+/* ---------------------------------------------------------------------------
+   STYL POWIERZCHNI — data-surface na <html>, zapisywany w profiles.surface.
+   "tinted" podbarwia tla kolorem akcentu; "neutral" zostawia szarosc.
+   Liczone przez color-mix, wiec dziala z kazda paleta bez wypisywania
+   kombinacji recznie.
+   --------------------------------------------------------------------------- */
+@supports (background: color-mix(in srgb, red 10%, blue)) {
+  :root {
+    --bg:        color-mix(in srgb, var(--accent) var(--tint),      var(--bg-base));
+    --surface:   color-mix(in srgb, var(--accent) var(--tint-soft), var(--surface-base));
+    --surface-2: color-mix(in srgb, var(--accent) var(--tint),      var(--surface-2-base));
+  }
+}
+
+:root[data-surface='tinted'] { --tint: 9%; --tint-soft: 3%; }
+
+/* Na ciemnym tle ta sama domieszka rozjasnia za mocno — potrzeba jej mniej. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light'])[data-surface='tinted'] { --tint: 7%; --tint-soft: 4%; }
+}
+:root[data-theme='dark'][data-surface='tinted'] { --tint: 7%; --tint-soft: 4%; }
 
 * { box-sizing: border-box; }
 

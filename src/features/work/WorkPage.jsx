@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import WorkDayForm from './WorkDayForm'
 import { fetchDay, fetchRange, fetchPending, settlePayment, doorToDoorHours } from './api'
+import { fetchBlocksRange } from './blocksApi'
+import { categoryLabel } from './TimeBlocks'
 import { todayISO, addDaysISO, isoDate, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { Card, CardHead, BarChart, EmptyState, StatRow, Sheet, Segmented } from '../../components/ui'
@@ -19,6 +21,7 @@ export default function WorkPage() {
   const [entry, setEntry] = useState(null)
   const [month, setMonth] = useState([])
   const [pending, setPending] = useState([])
+  const [blocks, setBlocks] = useState([])
   const [range, setRange] = useState('week')
   const [settleOpen, setSettleOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -27,14 +30,16 @@ export default function WorkPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [day, days, pend] = await Promise.all([
+      const [day, days, pend, blks] = await Promise.all([
         fetchDay(date),
         fetchRange(addDaysISO(today, -60), today),
         fetchPending(),
+        fetchBlocksRange(addDaysISO(today, -60), today).catch(() => []),
       ])
       setEntry(day)
       setMonth(days)
       setPending(pend)
+      setBlocks(blks)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -65,18 +70,35 @@ export default function WorkPage() {
 
   const scope = range === 'week' ? thisWeek : thisMonth
 
+  // Poczatek wybranego zakresu — potrzebny osobno, bo bloki czasu
+  // filtrujemy po dacie, a nie po liscie dni z work_days.
+  const scopeFrom = useMemo(() => {
+    if (range === 'month') return monthStart(today)
+    const now = new Date()
+    const dow = (now.getDay() + 6) % 7
+    return isoDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow))
+  }, [range, today])
+
   const totals = useMemo(() => {
-    let hours = 0, pay = 0, business = 0, personal = 0, workDays = 0, offDays = 0
+    let hours = 0, pay = 0, workDays = 0, offDays = 0
     for (const d of scope) {
       hours += Number(d.hours_worked ?? 0)
       pay += Number(d.pay_amount ?? 0)
-      business += Number(d.business_hours ?? 0)
-      personal += Number(d.personal_hours ?? 0)
       if (d.day_type === 'work') workDays++
       else offDays++
     }
-    return { hours, pay, business, personal, workDays, offDays }
-  }, [scope])
+
+    // Godziny poza dniowka biora sie z blokow czasu, nie z pol na work_days.
+    // Liczymy po dacie, nie po tym, czy dzien ma wpis w work_days — blok moze
+    // istniec w dniu, w ktorym nie bylo zadnej dniowki.
+    const byCategory = {}
+    for (const b of blocks) {
+      if (b.date < scopeFrom) continue
+      byCategory[b.category] = (byCategory[b.category] ?? 0) + Number(b.hours ?? 0)
+    }
+
+    return { hours, pay, workDays, offDays, byCategory }
+  }, [scope, blocks, scopeFrom])
 
   const realRate = useMemo(() => {
     let pay = 0, span = 0
@@ -160,8 +182,16 @@ export default function WorkPage() {
       <Card>
         <CardHead title="Na co szedł czas" hint={range === 'week' ? 'Ten tydzień' : 'Ten miesiąc'} />
         <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
-          {formatHours(totals.hours)} za pieniądze · {formatHours(totals.business)} na własny biznes · {formatHours(totals.personal)} dla siebie
+          {formatHours(totals.hours)} za pieniądze
+          {Object.entries(totals.byCategory).map(([cat, h]) => (
+            <span key={cat}> · {formatHours(h)} {categoryLabel(cat).toLowerCase()}</span>
+          ))}
         </p>
+        {Object.keys(totals.byCategory).length === 0 && (
+          <p className="muted" style={{ marginTop: '.4rem' }}>
+            Poza dniówką nic nie dopisane. Dopisujesz to przy wpisie dnia.
+          </p>
+        )}
         {realRate != null && (
           <div className="converter mt-1">Realna stawka w tym okresie: {formatPLN(realRate)}/h</div>
         )}

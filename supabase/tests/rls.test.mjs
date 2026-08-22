@@ -67,7 +67,7 @@ console.log('  stub gotowy')
 // ---------------------------------------------------------------------------
 console.log('\n== MIGRACJE ==')
 for (const f of ['0001_schema.sql', '0002_rls.sql', '0003_storage.sql', '0004_new_user_defaults.sql',
-                 '0005_habit_progress.sql', '0006_default_uid_fix.sql', '0007_body_and_ui.sql', '0008_sleep_steps_authors.sql', '0009_quote_packs.sql', '0010_work_hours_autofill.sql']) {
+                 '0005_habit_progress.sql', '0006_default_uid_fix.sql', '0007_body_and_ui.sql', '0008_sleep_steps_authors.sql', '0009_quote_packs.sql', '0010_work_hours_autofill.sql', '0011_time_blocks.sql']) {
   try {
     await db.exec(readFileSync(`${MIG}/${f}`, 'utf8'))
     ok(f)
@@ -351,6 +351,43 @@ await expectOk('wartosc podana recznie nie jest nadpisywana',
   Number(r.rows[0]?.hours_worked) === 6
     ? ok('reczne 6 h zachowane mimo 12 h miedzy godzinami')
     : bad('nadpisano reczna wartosc: ' + JSON.stringify(r.rows))
+}
+
+// ---------------------------------------------------------------------------
+console.log('\n== BLOKI CZASU ==')
+await expectOk('blok od-do liczy godziny sam',
+  `${asUser(A)} insert into public.time_blocks (date, category, label, start_time, end_time)
+   values ('2026-08-22', 'business', 'Robienie strony', '19:00', '21:30');`)
+{
+  await db.exec(asUser(A))
+  const r = await db.query(`select hours, label from public.time_blocks where category = 'business'`)
+  Number(r.rows[0]?.hours) === 2.5
+    ? ok('19:00-21:30 policzone jako 2,5 h')
+    : bad('zle godziny: ' + JSON.stringify(r.rows))
+}
+await expectOk('blok przez polnoc: 23:00 -> 01:00',
+  `${asUser(A)} insert into public.time_blocks (date, category, label, start_time, end_time)
+   values ('2026-08-21', 'personal', 'Film', '23:00', '01:00');`)
+{
+  await db.exec(asUser(A))
+  const r = await db.query(`select hours from public.time_blocks where category = 'personal'`)
+  Number(r.rows[0]?.hours) === 2
+    ? ok('po polnocy wychodzi 2 h, nie liczba ujemna')
+    : bad('zle godziny: ' + JSON.stringify(r.rows))
+}
+await expectOk('wlasna kategoria przechodzi',
+  `${asUser(A)} insert into public.time_blocks (date, category, label, hours)
+   values ('2026-08-22', 'Nauka angielskiego', 'Duolingo', 0.5);`)
+await expectErr('blok bez godzin i bez czasu trwania odrzucony',
+  `${asUser(A)} insert into public.time_blocks (date, category) values ('2026-08-22', 'business');`,
+  'time_blocks_span_ck')
+await expectErr('pusta kategoria odrzucona',
+  `${asUser(A)} insert into public.time_blocks (date, category, hours) values ('2026-08-22', '   ', 1);`,
+  'time_blocks_category_ck')
+{
+  await db.exec(asUser(B))
+  const r = await db.query(`select * from public.time_blocks`)
+  r.rows.length === 0 ? ok('B nie widzi blokow A') : bad('B widzi bloki A')
 }
 
 console.log('\n== KASOWANIE KONTA ==')

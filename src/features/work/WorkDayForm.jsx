@@ -4,6 +4,7 @@ import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { Segmented } from '../../components/ui'
 import TimeInput from '../../components/TimeInput'
 import DurationInput from '../../components/DurationInput'
+import TimeBlocks from './TimeBlocks'
 
 const DAY_TYPES = [
   { value: 'work', label: 'Praca' },
@@ -14,7 +15,7 @@ const DAY_TYPES = [
 
 const empty = {
   wake_time: '', left_home_time: '', left_base_time: '', return_time: '',
-  hours_worked: '', pay_amount: '', business_hours: '', personal_hours: '',
+  hours_worked: '', pay_amount: '',
   day_type: 'work', pay_status: 'pending', pay_date: '',
 }
 
@@ -27,8 +28,6 @@ function fromEntry(entry) {
     return_time: entry.return_time?.slice(0, 5) ?? '',
     hours_worked: entry.hours_worked ?? '',
     pay_amount: entry.pay_amount ?? '',
-    business_hours: entry.business_hours ?? '',
-    personal_hours: entry.personal_hours ?? '',
     day_type: entry.day_type ?? 'work',
     pay_status: entry.pay_status ?? 'pending',
     pay_date: entry.pay_date ?? '',
@@ -82,8 +81,6 @@ export default function WorkDayForm({ date, entry, onSaved }) {
         return_time: form.return_time || null,
         hours_worked: effectiveHours ?? null,
         pay_amount: pay,
-        business_hours: form.business_hours === '' || form.business_hours == null ? null : Number(form.business_hours),
-        personal_hours: form.personal_hours === '' || form.personal_hours == null ? null : Number(form.personal_hours),
         day_type: form.day_type,
         pay_status: form.pay_status,
         pay_date: form.pay_status === 'paid' ? (form.pay_date || date) : null,
@@ -188,39 +185,11 @@ export default function WorkDayForm({ date, entry, onSaved }) {
             </div>
           )}
 
-          <div>
-            <span className="field-label" style={{ display: 'block', marginBottom: '.2rem' }}>
-              Poza dniówką (opcjonalnie)
-            </span>
-            <p className="muted" style={{ margin: '0 0 .7rem' }}>
-              Godziny powyżej to praca za pieniądze. Tu wpisujesz, ile czasu poza nią
-              poszło na własny biznes, a ile na Ciebie. Po tygodniu widać, czy Twój cel
-              dostaje realny czas, czy tylko dobre chęci.
-            </p>
-          </div>
-
-          <div className="field-grid">
-            <label className="field">
-              <span>Nad własnym biznesem</span>
-              <DurationInput value={form.business_hours}
-                onChange={(v) => setForm((s) => ({ ...s, business_hours: v }))}
-                placeholder="np. 1:30" ariaLabel="Godziny nad biznesem" />
-              <span className="muted" style={{ fontWeight: 500 }}>
-                Nauka, szukanie zleceń, ogarnianie firmy
-              </span>
-            </label>
-            <label className="field">
-              <span>Dla siebie</span>
-              <DurationInput value={form.personal_hours}
-                onChange={(v) => setForm((s) => ({ ...s, personal_hours: v }))}
-                placeholder="np. 2:00" ariaLabel="Godziny dla siebie" />
-              <span className="muted" style={{ fontWeight: 500 }}>
-                Siłownia, rodzina, odpoczynek
-              </span>
-            </label>
-          </div>
         </>
       )}
+
+      {/* Poza dniowka — takze w dzien wolny, urlop czy L4 */}
+      <TimeBlocks date={date} />
 
       {error && <p className="form-error" role="alert">{error}</p>}
 

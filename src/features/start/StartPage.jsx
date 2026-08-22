@@ -8,6 +8,8 @@ import { fetchQuotes, fetchHabits, fetchHabitLogs, fetchDailyPlan, habitStreak }
 import HabitsCard from '../extras/HabitsCard'
 import DailyPlanCard from '../extras/DailyPlanCard'
 import { fetchRange } from '../work/api'
+import { fetchBlocksRange } from '../work/blocksApi'
+import { categoryLabel } from '../work/TimeBlocks'
 import { fetchExpenses, fetchBudgets } from '../expenses/api'
 import { fetchEntry, fetchMoodHistory } from '../gratitude/api'
 import { fetchDebts, fetchPayments, upcomingPayments } from '../debts/api'
@@ -32,18 +34,19 @@ export default function StartPage() {
       const [
         goal, savings, quotes, habits, habitLogs, plan,
         workDays, expenses, budgets, gratitudeToday, moods,
-        debts, payments, yearAgo, idea,
+        debts, payments, yearAgo, idea, blocks,
       ] = await Promise.all([
         fetchMainGoal(), fetchSavingsGoal(), fetchQuotes(),
         fetchHabits(), fetchHabitLogs(addDaysISO(today, -60)), fetchDailyPlan(today),
         fetchRange(monthFrom, today), fetchExpenses({ from: monthFrom, to: today }),
         fetchBudgets(monthFrom), fetchEntry(today), fetchMoodHistory(addDaysISO(today, -30)),
         fetchDebts(), fetchPayments(), fetchYearAgo(today), fetchLatestBusinessIdea(),
+        fetchBlocksRange(addDaysISO(today, -60), today).catch(() => []),
       ])
       setData({
         goal, savings, quotes, habits, habitLogs, plan,
         workDays, expenses, budgets, gratitudeToday, moods,
-        debts, payments, yearAgo, idea,
+        debts, payments, yearAgo, idea, blocks,
       })
     } catch (err) {
       setError(err.message)
@@ -81,8 +84,11 @@ export default function StartPage() {
       monthSpent: spent,
       installments,
       weekHours: weekDays.reduce((s, d) => s + Number(d.hours_worked ?? 0), 0),
-      weekBusiness: weekDays.reduce((s, d) => s + Number(d.business_hours ?? 0), 0),
-      weekPersonal: weekDays.reduce((s, d) => s + Number(d.personal_hours ?? 0), 0),
+      weekByCategory: (data.blocks ?? []).reduce((acc, b) => {
+        if (b.date < monday) return acc
+        acc[b.category] = (acc[b.category] ?? 0) + Number(b.hours ?? 0)
+        return acc
+      }, {}),
       weekPay: weekDays.reduce((s, d) => s + Number(d.pay_amount ?? 0), 0),
       weekSpent: weekExpenses.reduce((s, e) => s + Number(e.amount), 0),
       workedToday,
@@ -197,8 +203,10 @@ export default function StartPage() {
       <Card>
         <CardHead title="Na co szedł czas" hint="Ten tydzień" />
         <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
-          {formatHours(derived.weekHours)} za pieniądze · {formatHours(derived.weekBusiness)} na własny biznes ·{' '}
-          {formatHours(derived.weekPersonal)} dla siebie
+          {formatHours(derived.weekHours)} za pieniądze
+          {Object.entries(derived.weekByCategory).map(([cat, h]) => (
+            <span key={cat}> · {formatHours(h)} {categoryLabel(cat).toLowerCase()}</span>
+          ))}
         </p>
       </Card>
 

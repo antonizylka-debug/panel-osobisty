@@ -1095,6 +1095,33 @@ a { color: var(--accent); }
 .accent-swatch:hover { color: var(--ink); }
 .accent-swatch.is-active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
 
+/* --- pole godziny 24h --- */
+.time-input {
+  display: inline-flex;
+  align-items: center;
+  gap: .1rem;
+  background: var(--surface-2);
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  padding: .35rem .7rem;
+}
+.time-input:focus-within { border-color: var(--accent); background: var(--surface); }
+.time-part {
+  width: 2.2ch;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  padding: .45rem 0;
+}
+.time-part:focus { outline: none; }
+.time-part::placeholder { color: var(--ink-faint); font-weight: 400; }
+.time-part:disabled { opacity: .5; }
+.time-sep { font-weight: 700; color: var(--ink-faint); }
+
 /* --- pomocnicze --- */
 .stack { display: flex; flex-direction: column; gap: 1rem; }
 .muted { color: var(--ink-mid); font-size: .85rem; }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../auth/AuthContext'
 import { Card, CardHead } from '../../components/ui'
+import TimeInput from '../../components/TimeInput'
 
 const pushSupported =
   typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator
@@ -68,12 +69,10 @@ export default function ReminderSettings() {
           <div className="switch-label">Godzina</div>
           <div className="switch-hint">O tej porze przyjdzie przypomnienie</div>
         </div>
-        <input
-          type="time" lang="pl" step="60"
-          className="chip"
-          style={{ padding: '.4rem .7rem' }}
+        <TimeInput
           value={settings.reminder_time?.slice(0, 5) ?? '20:00'}
-          onChange={(e) => patch({ reminder_time: e.target.value })}
+          onChange={(v) => patch({ reminder_time: v || '20:00' })}
+          ariaLabel="Godzina przypomnienia"
         />
       </div>
 

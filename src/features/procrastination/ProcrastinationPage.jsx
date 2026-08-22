@@ -3,6 +3,7 @@ import { EMOTIONS, EMOTION_LABEL, fetchSessions, createSession, updateSession } 
 import { formatDatePl } from '../../lib/date'
 import { Card, CardHead, EmptyState, BarChart, Sheet, Fab } from '../../components/ui'
 import { IconCheck } from '../../components/icons'
+import TimeInput from '../../components/TimeInput'
 
 const TIMER_CHOICES = [10, 15, 25]
 
@@ -306,7 +307,7 @@ function WizardSheet({ open, onClose, onDone }) {
           <div className="field-grid">
             <label className="field">
               <span>Kiedy</span>
-              <input type="time" lang="pl" step="60" value={when} onChange={(e) => setWhen(e.target.value)} />
+              <TimeInput value={when} onChange={setWhen} ariaLabel="Kiedy" />
             </label>
             <label className="field">
               <span>Gdzie</span>

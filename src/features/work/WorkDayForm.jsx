@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { diffHours, doorToDoorHours, saveDay } from './api'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { Segmented } from '../../components/ui'
+import TimeInput from '../../components/TimeInput'
 
 const DAY_TYPES = [
   { value: 'work', label: 'Praca' },
@@ -112,20 +113,19 @@ export default function WorkDayForm({ date, entry, onSaved }) {
           <div className="field-grid">
             <label className="field">
               <span>Pobudka</span>
-              <input type="time" lang="pl" step="60" value={form.wake_time} onChange={set('wake_time')} />
+              <TimeInput value={form.wake_time} onChange={(v) => setForm((s) => ({ ...s, wake_time: v }))} ariaLabel="Pobudka" />
             </label>
             <label className="field">
               <span>Wyjazd z domu</span>
-              <input type="time" lang="pl" step="60" value={form.left_home_time} onChange={set('left_home_time')} />
+              <TimeInput value={form.left_home_time} onChange={(v) => setForm((s) => ({ ...s, left_home_time: v }))} ariaLabel="Wyjazd z domu" />
             </label>
             <label className="field">
               <span>Wyjazd z bazy</span>
-              <input type="time" lang="pl" step="60" value={form.left_base_time} onChange={set('left_base_time')}
-                placeholder="jeśli byłeś na bazie" />
+              <TimeInput value={form.left_base_time} onChange={(v) => setForm((s) => ({ ...s, left_base_time: v }))} ariaLabel="Wyjazd z bazy" />
             </label>
             <label className="field">
               <span>Powrót</span>
-              <input type="time" lang="pl" step="60" value={form.return_time} onChange={set('return_time')} />
+              <TimeInput value={form.return_time} onChange={(v) => setForm((s) => ({ ...s, return_time: v }))} ariaLabel="Powrót" />
             </label>
           </div>
 

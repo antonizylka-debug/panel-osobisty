@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { saveMetrics, sleepHours } from './api'
 import { Card, CardHead, ProgressBar } from '../../components/ui'
+import TimeInput from '../../components/TimeInput'
 import { formatHours } from '../../lib/money'
 
 const num = (v) => (v === '' || v == null ? null : Number(String(v).replace(/[^\d.,-]/g, '').replace(',', '.')))
@@ -48,13 +49,11 @@ export function SleepCard({ date, entry, onSaved }) {
         <div className="field-grid">
           <label className="field">
             <span>Zasnąłem o</span>
-            <input type="time" lang="pl" step="60" value={start}
-              onChange={(e) => setStart(e.target.value)} />
+            <TimeInput value={start} onChange={setStart} ariaLabel="Zasnąłem o" />
           </label>
           <label className="field">
             <span>Wstałem o</span>
-            <input type="time" lang="pl" step="60" value={end}
-              onChange={(e) => setEnd(e.target.value)} />
+            <TimeInput value={end} onChange={setEnd} ariaLabel="Wstałem o" />
           </label>
         </div>
 

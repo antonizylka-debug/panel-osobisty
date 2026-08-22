@@ -195,9 +195,9 @@ export default function StartPage() {
       ]} />
 
       <Card>
-        <CardHead title="Podział godzin" hint="Ten tydzień" />
+        <CardHead title="Na co szedł czas" hint="Ten tydzień" />
         <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
-          {formatHours(derived.weekHours)} praca / {formatHours(derived.weekBusiness)} biznes /{' '}
+          {formatHours(derived.weekHours)} za pieniądze · {formatHours(derived.weekBusiness)} na własny biznes ·{' '}
           {formatHours(derived.weekPersonal)} dla siebie
         </p>
       </Card>

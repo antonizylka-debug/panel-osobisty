@@ -188,18 +188,35 @@ export default function WorkDayForm({ date, entry, onSaved }) {
             </div>
           )}
 
+          <div>
+            <span className="field-label" style={{ display: 'block', marginBottom: '.2rem' }}>
+              Poza dniówką (opcjonalnie)
+            </span>
+            <p className="muted" style={{ margin: '0 0 .7rem' }}>
+              Godziny powyżej to praca za pieniądze. Tu wpisujesz, ile czasu poza nią
+              poszło na własny biznes, a ile na Ciebie. Po tygodniu widać, czy Twój cel
+              dostaje realny czas, czy tylko dobre chęci.
+            </p>
+          </div>
+
           <div className="field-grid">
             <label className="field">
-              <span>Nad biznesem</span>
+              <span>Nad własnym biznesem</span>
               <DurationInput value={form.business_hours}
                 onChange={(v) => setForm((s) => ({ ...s, business_hours: v }))}
                 placeholder="np. 1:30" ariaLabel="Godziny nad biznesem" />
+              <span className="muted" style={{ fontWeight: 500 }}>
+                Nauka, szukanie zleceń, ogarnianie firmy
+              </span>
             </label>
             <label className="field">
               <span>Dla siebie</span>
               <DurationInput value={form.personal_hours}
                 onChange={(v) => setForm((s) => ({ ...s, personal_hours: v }))}
                 placeholder="np. 2:00" ariaLabel="Godziny dla siebie" />
+              <span className="muted" style={{ fontWeight: 500 }}>
+                Siłownia, rodzina, odpoczynek
+              </span>
             </label>
           </div>
         </>

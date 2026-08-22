@@ -158,9 +158,9 @@ export default function WorkPage() {
       />
 
       <Card>
-        <CardHead title="Podział godzin" hint={range === 'week' ? 'Ten tydzień' : 'Ten miesiąc'} />
+        <CardHead title="Na co szedł czas" hint={range === 'week' ? 'Ten tydzień' : 'Ten miesiąc'} />
         <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
-          {formatHours(totals.hours)} praca · {formatHours(totals.business)} biznes · {formatHours(totals.personal)} dla siebie
+          {formatHours(totals.hours)} za pieniądze · {formatHours(totals.business)} na własny biznes · {formatHours(totals.personal)} dla siebie
         </p>
         {realRate != null && (
           <div className="converter mt-1">Realna stawka w tym okresie: {formatPLN(realRate)}/h</div>

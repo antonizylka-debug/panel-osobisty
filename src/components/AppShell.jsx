@@ -3,6 +3,7 @@ import { useTheme } from '../theme/ThemeContext'
 import { useAuth } from '../auth/AuthContext'
 import { useLocalReminder } from '../features/reminders/useLocalReminder'
 import { useSync } from '../offline/SyncContext'
+import AccentMenu from './AccentMenu'
 import {
   IconStart, IconGratitude, IconExpenses, IconWorkHours, IconJournal, IconDoItNow,
   IconBody, IconSun, IconMoon, IconSearch, IconSettings,
@@ -54,6 +55,7 @@ export default function AppShell() {
           <Link className="theme-toggle" to="/szukaj" aria-label="Szukaj">
             <IconSearch />
           </Link>
+          <AccentMenu />
           <button
             className="theme-toggle"
             onClick={toggle}

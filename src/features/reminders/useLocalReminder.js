@@ -51,12 +51,19 @@ export function useLocalReminder(user) {
       if (missing.length === 0) return
 
       localStorage.setItem(STORAGE_KEY, today)
-      new Notification('Panel Osobisty', {
+
+      const opts = {
         body: `Zostało na dziś: ${missing.join(' i ')}.`,
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-192.png',
         tag: 'daily-reminder',
-      })
+      }
+
+      // Przez service workera, jesli jest — takie powiadomienie wyglada
+      // i zachowuje sie jak systemowe, takze na komputerze.
+      const reg = await navigator.serviceWorker?.getRegistration?.()
+      if (reg?.showNotification) await reg.showNotification('Panel Osobisty', opts)
+      else new Notification('Panel Osobisty', opts)
     }
 
     tick()

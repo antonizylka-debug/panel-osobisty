@@ -13,6 +13,7 @@ export default function ReminderSettings() {
   const [permission, setPermission] = useState(pushSupported ? Notification.permission : 'unsupported')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
     supabase
@@ -55,6 +56,28 @@ export default function ReminderSettings() {
     }
   }
 
+  async function sendTest() {
+    setError('')
+    try {
+      // Przez service workera, jesli jest — tylko takie powiadomienie przezyje
+      // zamkniecie karty i pokaze sie w systemie tak samo jak z apki mobilnej.
+      const reg = await navigator.serviceWorker?.getRegistration?.()
+      const opts = {
+        body: 'Tak będzie wyglądać wieczorne przypomnienie.',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        tag: 'test',
+      }
+      if (reg?.showNotification) await reg.showNotification('Panel Osobisty', opts)
+      else new Notification('Panel Osobisty', opts)
+
+      setMessage('Wysłane. Jeśli nic nie widzisz, sprawdź powiadomienia systemowe i tryb skupienia.')
+      setTimeout(() => setMessage(''), 6000)
+    } catch (err) {
+      setError('Nie udało się wysłać: ' + err.message)
+    }
+  }
+
   if (!settings) return null
 
   return (
@@ -78,13 +101,13 @@ export default function ReminderSettings() {
 
       <div className="switch-row">
         <div>
-          <div className="switch-label">Powiadomienia w telefonie</div>
+          <div className="switch-label">Powiadomienia</div>
           <div className="switch-hint">
             {permission === 'unsupported'
               ? 'Ta przeglądarka nie obsługuje powiadomień'
               : permission === 'denied'
                 ? 'Zablokowane — odblokuj w ustawieniach przeglądarki'
-                : 'Działa po dodaniu apki do ekranu początkowego'}
+                : 'Na komputerze działa, gdy karta jest otwarta. Na telefonie po dodaniu apki do ekranu początkowego.'}
           </div>
         </div>
         {permission === 'granted' ? (
@@ -128,7 +151,18 @@ export default function ReminderSettings() {
         />
       </div>
 
+      {permission === 'granted' && (
+        <div className="switch-row">
+          <div>
+            <div className="switch-label">Sprawdź, czy działa</div>
+            <div className="switch-hint">Wyśle testowe powiadomienie teraz</div>
+          </div>
+          <button className="chip" onClick={sendTest}>Wyślij próbne</button>
+        </div>
+      )}
+
       {error && <p className="form-error mt-1" role="alert">{error}</p>}
+      {message && <div className="converter mt-1">{message}</div>}
       {saving && <p className="muted mt-1">Zapisywanie…</p>}
     </Card>
   )

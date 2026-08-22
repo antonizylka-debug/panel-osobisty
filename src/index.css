@@ -1074,6 +1074,52 @@ a { color: var(--accent); }
 .switch.is-on::after { transform: translateX(20px); }
 @media (prefers-reduced-motion: reduce) { .switch, .switch::after { transition: none; } }
 
+/* --- kropka koloru w naglowku --- */
+.accent-menu { position: relative; }
+.accent-dot {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.4);
+}
+.accent-popover {
+  position: absolute;
+  top: calc(100% + .5rem);
+  right: 0;
+  z-index: 60;
+  background: var(--surface);
+  border-radius: 20px;
+  padding: .9rem;
+  box-shadow: var(--shadow-card);
+  width: max-content;
+}
+.accent-popover-title {
+  display: block;
+  font-size: .68rem; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: .6rem;
+}
+.accent-popover-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .45rem;
+}
+.accent-chip {
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+.accent-chip span {
+  width: 22px; height: 22px; border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
+}
+.accent-chip:hover { background: var(--surface-2); }
+.accent-chip.is-active { border-color: var(--accent); background: var(--accent-bg); }
+
 /* --- wybor koloru akcentu --- */
 .accent-grid {
   display: grid;

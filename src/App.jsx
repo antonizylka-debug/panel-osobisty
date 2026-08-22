@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
 import { ThemeProvider } from './theme/ThemeContext'
+import { SyncProvider } from './offline/SyncContext'
 import ProtectedRoute from './auth/ProtectedRoute'
 import GuestRoute from './auth/GuestRoute'
 import AppShell from './components/AppShell'
@@ -29,6 +30,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <ThemeProvider>
+          <SyncProvider>
           <Routes>
             <Route element={<GuestRoute />}>
               <Route path="/logowanie" element={<LoginPage />} />
@@ -63,6 +65,7 @@ export default function App() {
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </SyncProvider>
         </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>

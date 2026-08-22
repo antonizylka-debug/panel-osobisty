@@ -109,6 +109,9 @@ export default function StartPage() {
           <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, lineHeight: 1.45 }}>
             {shownQuote.text}
           </p>
+          {shownQuote.author && (
+            <p className="muted" style={{ marginTop: '.5rem', fontWeight: 700 }}>— {shownQuote.author}</p>
+          )}
           {favoriteQuotes.length > 0 && (
             <button className="chip mt-1" onClick={() => setShowFavoriteQuote((v) => !v)}>
               {showFavoriteQuote ? 'Pokaż cytat dnia' : 'Pokaż losowy ulubiony'}

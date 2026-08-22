@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import LineChart from './LineChart'
 import MonthCalendar from '../../components/MonthCalendar'
+import { SleepCard, StepsCard } from './SleepStepsCards'
 import {
   fetchWeights, saveWeight, fetchNutrition, saveNutrition,
-  fetchWeightGoal, saveWeightGoal, fetchBodyProfile, saveBodyProfile,
+  fetchWeightGoal, saveWeightGoal, fetchBodyProfile, saveBodyProfile, fetchMetrics,
   ACTIVITY, ageFrom, calcBMR, calcTDEE, calcDailyTarget, ema, weeklyTrend,
 } from './api'
 import { todayISO, addDaysISO, formatDatePl } from '../../lib/date'
@@ -17,6 +18,7 @@ export default function BodyPage() {
   const [weights, setWeights] = useState([])
   const [nutrition, setNutrition] = useState([])
   const [goal, setGoal] = useState(null)
+  const [metrics, setMetrics] = useState([])
   const [profile, setProfile] = useState(null)
   const [goalOpen, setGoalOpen] = useState(false)
   const [bodyOpen, setBodyOpen] = useState(false)
@@ -24,17 +26,32 @@ export default function BodyPage() {
   const [error, setError] = useState('')
 
   const load = useCallback(async () => {
-    try {
-      const since = addDaysISO(today, -180)
-      const [w, n, g, p] = await Promise.all([
-        fetchWeights(since), fetchNutrition(since), fetchWeightGoal(), fetchBodyProfile(),
-      ])
-      setWeights(w); setNutrition(n); setGoal(g); setProfile(p)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
+    const since = addDaysISO(today, -180)
+
+    // allSettled, nie all: brak jednej tabeli (np. zanim wgrasz migracje)
+    // nie moze skasowac calej strony razem z danymi, ktore sa w porzadku.
+    const [w, n, g, p, m] = await Promise.allSettled([
+      fetchWeights(since), fetchNutrition(since), fetchWeightGoal(), fetchBodyProfile(),
+      fetchMetrics(since),
+    ])
+
+    if (w.status === 'fulfilled') setWeights(w.value)
+    if (n.status === 'fulfilled') setNutrition(n.value)
+    if (g.status === 'fulfilled') setGoal(g.value)
+    if (p.status === 'fulfilled') setProfile(p.value)
+    if (m.status === 'fulfilled') setMetrics(m.value)
+
+    const failures = [w, n, g, p, m].filter((r) => r.status === 'rejected')
+    if (failures.length) {
+      const missingTable = failures.some((f) => /daily_metrics/.test(f.reason?.message ?? ''))
+      setError(missingTable
+        ? 'Sen i kroki wymagają migracji 0008_sleep_steps_authors.sql — reszta działa normalnie.'
+        : failures[0].reason?.message ?? 'Nie udało się wczytać części danych.')
+    } else {
+      setError('')
     }
+
+    setLoading(false)
   }, [today])
 
   useEffect(() => { load() }, [load])
@@ -42,6 +59,7 @@ export default function BodyPage() {
   const latest = weights.length ? weights[weights.length - 1] : null
   const todayWeight = weights.find((w) => w.date === today)
   const todayNutrition = nutrition.find((n) => n.date === today)
+  const todayMetrics = metrics.find((m) => m.date === today)
 
   const age = profile ? ageFrom(profile.birth_date, today) : null
   const bmr = calcBMR({
@@ -69,10 +87,15 @@ export default function BodyPage() {
 
   const marks = useMemo(() => {
     const m = new Map()
-    for (const w of weights) m.set(w.date, [...(m.get(w.date) ?? []), 'waga'])
-    for (const n of nutrition) if (n.kcal != null) m.set(n.date, [...(m.get(n.date) ?? []), 'kalorie'])
+    const add = (date, label) => m.set(date, [...(m.get(date) ?? []), label])
+    for (const w of weights) add(w.date, 'waga')
+    for (const n of nutrition) if (n.kcal != null) add(n.date, 'kalorie')
+    for (const d of metrics) {
+      if (d.sleep_hours != null) add(d.date, 'sen')
+      if (d.steps != null) add(d.date, 'kroki')
+    }
     return m
-  }, [weights, nutrition])
+  }, [weights, nutrition, metrics])
 
   // Ile jeszcze tygodni do celu przy obecnym tempie
   const weeksLeft = useMemo(() => {
@@ -158,6 +181,10 @@ export default function BodyPage() {
       </Card>
 
       <NutritionCard date={today} entry={todayNutrition} target={dailyTarget} onSaved={load} />
+
+      <SleepCard date={today} entry={todayMetrics} onSaved={load} />
+
+      <StepsCard date={today} entry={todayMetrics} onSaved={load} />
 
       <Card>
         <CardHead title="Trend wagi" hint="Linia to wygładzona średnia, kropki to pomiary" />

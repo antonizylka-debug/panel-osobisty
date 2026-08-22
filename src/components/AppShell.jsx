@@ -2,6 +2,7 @@ import { NavLink, Outlet, Link } from 'react-router-dom'
 import { useTheme } from '../theme/ThemeContext'
 import { useAuth } from '../auth/AuthContext'
 import { useLocalReminder } from '../features/reminders/useLocalReminder'
+import { useSync } from '../offline/SyncContext'
 import {
   IconStart, IconGratitude, IconExpenses, IconWorkHours, IconJournal, IconDoItNow,
   IconBody, IconSun, IconMoon, IconSearch, IconSettings,
@@ -17,6 +18,27 @@ const TABS = [
   { to: '/zrob-to-teraz', label: 'Teraz', Icon: IconDoItNow },
 ]
 
+/** Widoczny tylko wtedy, gdy jest o czym mowic: brak sieci albo zaleglosci. */
+function SyncBadge() {
+  const { online, pending, syncing, sync } = useSync()
+
+  if (online && pending === 0) return null
+
+  return (
+    <button
+      className="offline-pill"
+      onClick={sync}
+      disabled={!online || syncing}
+      title={online ? 'Kliknij, żeby zsynchronizować teraz' : 'Brak połączenia'}
+    >
+      {!online && 'Offline'}
+      {!online && pending > 0 && ' · '}
+      {pending > 0 && `niezsynchronizowane: ${pending}`}
+      {online && pending > 0 && syncing && ' · wysyłam…'}
+    </button>
+  )
+}
+
 export default function AppShell() {
   const { resolved, toggle } = useTheme()
   const { user } = useAuth()
@@ -27,6 +49,7 @@ export default function AppShell() {
     <div className="shell">
       <header className="shell-top">
         <span className="shell-brand">Panel Osobisty</span>
+        <SyncBadge />
         <div style={{ display: 'flex', gap: '.5rem', marginLeft: 'auto' }}>
           <Link className="theme-toggle" to="/szukaj" aria-label="Szukaj">
             <IconSearch />

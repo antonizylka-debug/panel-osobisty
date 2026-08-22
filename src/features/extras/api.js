@@ -192,8 +192,10 @@ export async function fetchQuotes() {
   return data
 }
 
-export async function createQuote(text) {
-  const { error } = await supabase.from('motivation_quotes').insert({ text })
+export async function createQuote(text, author) {
+  const { error } = await supabase
+    .from('motivation_quotes')
+    .insert({ text, author: author?.trim() || null })
   if (error) throw error
 }
 

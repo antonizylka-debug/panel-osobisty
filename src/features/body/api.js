@@ -54,6 +54,43 @@ export async function saveNutrition({ date, kcal, protein, carbs, fat, activeKca
   return data
 }
 
+/* ---------------------------- sen i kroki ---------------------------------- */
+
+export async function fetchMetrics(since) {
+  const { data, error } = await supabase
+    .from('daily_metrics')
+    .select('*')
+    .gte('date', since)
+    .order('date', { ascending: true })
+  if (error) throw error
+  return data
+}
+
+export async function saveMetrics({ date, steps, sleepStart, sleepEnd }) {
+  const payload = { date }
+  if (steps !== undefined) payload.steps = steps
+  if (sleepStart !== undefined) payload.sleep_start = sleepStart || null
+  if (sleepEnd !== undefined) payload.sleep_end = sleepEnd || null
+
+  const { data, error } = await supabase
+    .from('daily_metrics')
+    .upsert(payload, { onConflict: 'user_id,date' })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+/** Godziny snu z pory zasniecia i pobudki — podglad zanim baza policzy. */
+export function sleepHours(start, end) {
+  if (!start || !end) return null
+  const [sh, sm] = start.split(':').map(Number)
+  const [eh, em] = end.split(':').map(Number)
+  let mins = eh * 60 + em - (sh * 60 + sm)
+  if (mins <= 0) mins += 24 * 60
+  return Math.round((mins / 60) * 100) / 100
+}
+
 /* ------------------------------- cel wagowy -------------------------------- */
 
 export async function fetchWeightGoal() {

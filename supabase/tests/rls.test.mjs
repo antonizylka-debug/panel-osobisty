@@ -67,7 +67,7 @@ console.log('  stub gotowy')
 // ---------------------------------------------------------------------------
 console.log('\n== MIGRACJE ==')
 for (const f of ['0001_schema.sql', '0002_rls.sql', '0003_storage.sql', '0004_new_user_defaults.sql',
-                 '0005_habit_progress.sql', '0006_default_uid_fix.sql', '0007_body_and_ui.sql']) {
+                 '0005_habit_progress.sql', '0006_default_uid_fix.sql', '0007_body_and_ui.sql', '0008_sleep_steps_authors.sql']) {
   try {
     await db.exec(readFileSync(`${MIG}/${f}`, 'utf8'))
     ok(f)
@@ -277,6 +277,38 @@ await expectErr('ujemny postep odrzucony',
    select id, '2026-08-19', -5 from public.habits limit 1;`, 'habit_logs_value_ck')
 await expectErr('cel nawyku musi byc dodatni',
   `${asUser(A)} insert into public.habits (name, target) values ('Zly nawyk', 0);`, 'habits_target_ck')
+
+// ---------------------------------------------------------------------------
+console.log('\n== SEN I KROKI ==')
+await expectOk('sen przez polnoc: 22:30 -> 06:15',
+  `${asUser(A)} insert into public.daily_metrics (date, sleep_start, sleep_end, steps)
+   values ('2026-08-21', '22:30', '06:15', 8420);`)
+{
+  await db.exec(asUser(A))
+  const r = await db.query(`select sleep_hours, steps from public.daily_metrics where date = '2026-08-21'`)
+  Number(r.rows[0]?.sleep_hours) === 7.75
+    ? ok('trigger policzyl 7,75 h zamiast liczby ujemnej')
+    : bad('zle godziny snu: ' + JSON.stringify(r.rows))
+  Number(r.rows[0]?.steps) === 8420 ? ok('kroki zapisane') : bad('kroki nie zapisane')
+}
+await expectOk('sen w obrebie doby: 01:00 -> 09:00',
+  `${asUser(A)} insert into public.daily_metrics (date, sleep_start, sleep_end)
+   values ('2026-08-20', '01:00', '09:00');`)
+{
+  await db.exec(asUser(A))
+  const r = await db.query(`select sleep_hours from public.daily_metrics where date = '2026-08-20'`)
+  Number(r.rows[0]?.sleep_hours) === 8
+    ? ok('sen bez przekroczenia polnocy liczony poprawnie (8 h)')
+    : bad('zle godziny: ' + JSON.stringify(r.rows))
+}
+await expectErr('ujemne kroki odrzucone',
+  `${asUser(A)} insert into public.daily_metrics (date, steps) values ('2026-08-19', -100);`,
+  'daily_metrics_steps_check')
+{
+  await db.exec(asUser(B))
+  const r = await db.query(`select * from public.daily_metrics`)
+  r.rows.length === 0 ? ok('B nie widzi snu ani krokow A') : bad('B widzi dane A')
+}
 
 console.log('\n== KASOWANIE KONTA ==')
 {

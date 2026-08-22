@@ -45,10 +45,14 @@ export default function WorkDayForm({ date, entry, onSaved }) {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
-  // Godziny liczone automatycznie: wyjazd z bazy -> powrot. Edytowalne.
+  // Godziny liczone automatycznie: wyjazd z bazy -> powrot.
+  // Gdy danego dnia nie bylo bazy, liczymy od wyjazdu z domu. Edytowalne.
+  const hoursFrom = form.left_base_time || form.left_home_time
+  const countedFromBase = !!form.left_base_time
+
   const autoHours = useMemo(
-    () => diffHours(form.left_base_time, form.return_time),
-    [form.left_base_time, form.return_time]
+    () => diffHours(hoursFrom, form.return_time),
+    [hoursFrom, form.return_time]
   )
   const effectiveHours = manualHours && form.hours_worked !== '' ? Number(form.hours_worked) : autoHours
 
@@ -112,7 +116,8 @@ export default function WorkDayForm({ date, entry, onSaved }) {
             </label>
             <label className="field">
               <span>Wyjazd z bazy</span>
-              <input type="time" lang="pl" step="60" value={form.left_base_time} onChange={set('left_base_time')} />
+              <input type="time" lang="pl" step="60" value={form.left_base_time} onChange={set('left_base_time')}
+                placeholder="jeśli byłeś na bazie" />
             </label>
             <label className="field">
               <span>Powrót</span>
@@ -132,6 +137,11 @@ export default function WorkDayForm({ date, entry, onSaved }) {
                 value={manualHours ? form.hours_worked : (autoHours ?? '')}
                 onChange={(e) => { setManualHours(true); set('hours_worked')(e) }}
               />
+              {autoHours != null && !manualHours && (
+                <span className="muted" style={{ fontWeight: 500 }}>
+                  Liczone od {countedFromBase ? 'wyjazdu z bazy' : 'wyjazdu z domu'} do powrotu
+                </span>
+              )}
             </label>
             <label className="field">
               <span>Dniówka</span>

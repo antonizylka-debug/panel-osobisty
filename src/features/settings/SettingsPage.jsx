@@ -177,7 +177,8 @@ export default function SettingsPage() {
         items={quotes}
         placeholder="Nowy cytat"
         onClose={() => setQuotesOpen(false)}
-        onAdd={async (t) => { await createQuote(t); load() }}
+        withAuthor
+        onAdd={async (t, a) => { await createQuote(t, a); load() }}
         onDelete={async (id) => { await deleteQuote(id); load() }}
         onToggleFavorite={async (item) => { await toggleQuoteFavorite(item.id, !item.is_favorite); load() }}
       />
@@ -198,8 +199,9 @@ export default function SettingsPage() {
   )
 }
 
-function ListSheet({ open, title, items, placeholder, onClose, onAdd, onDelete, onToggleFavorite }) {
+function ListSheet({ open, title, items, placeholder, onClose, onAdd, onDelete, onToggleFavorite, withAuthor }) {
   const [text, setText] = useState('')
+  const [author, setAuthor] = useState('')
   const [busy, setBusy] = useState(false)
 
   return (
@@ -209,12 +211,19 @@ function ListSheet({ open, title, items, placeholder, onClose, onAdd, onDelete, 
           e.preventDefault()
           if (!text.trim()) return
           setBusy(true)
-          try { await onAdd(text.trim()); setText('') } finally { setBusy(false) }
+          try { await onAdd(text.trim(), author); setText(''); setAuthor('') } finally { setBusy(false) }
         }}>
           <label className="field">
             <span>{placeholder}</span>
             <textarea rows={2} value={text} onChange={(e) => setText(e.target.value)} />
           </label>
+          {withAuthor && (
+            <label className="field">
+              <span>Autor (opcjonalnie)</span>
+              <input type="text" value={author} placeholder="np. Jim Rohn"
+                onChange={(e) => setAuthor(e.target.value)} />
+            </label>
+          )}
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>Dodaj</button>
         </form>
 
@@ -225,7 +234,10 @@ function ListSheet({ open, title, items, placeholder, onClose, onAdd, onDelete, 
             {items.map((item) => (
               <li key={item.id} className="entry">
                 <div className="entry-head">
-                  <span style={{ flex: 1, fontSize: '.92rem' }}>{item.text}</span>
+                  <span style={{ flex: 1, fontSize: '.92rem' }}>
+                    {item.text}
+                    {item.author && <em style={{ display: 'block', color: 'var(--ink-faint)', fontStyle: 'normal', fontSize: '.78rem', marginTop: '.2rem' }}>— {item.author}</em>}
+                  </span>
                   <div className="entry-actions">
                     {onToggleFavorite && (
                       <button className={'chip' + (item.is_favorite ? ' is-active' : '')}

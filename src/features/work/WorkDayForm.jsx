@@ -3,6 +3,7 @@ import { diffHours, doorToDoorHours, saveDay } from './api'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { Segmented } from '../../components/ui'
 import TimeInput from '../../components/TimeInput'
+import DurationInput from '../../components/DurationInput'
 
 const DAY_TYPES = [
   { value: 'work', label: 'Praca' },
@@ -81,8 +82,8 @@ export default function WorkDayForm({ date, entry, onSaved }) {
         return_time: form.return_time || null,
         hours_worked: effectiveHours ?? null,
         pay_amount: pay,
-        business_hours: form.business_hours === '' ? null : Number(form.business_hours),
-        personal_hours: form.personal_hours === '' ? null : Number(form.personal_hours),
+        business_hours: form.business_hours === '' || form.business_hours == null ? null : Number(form.business_hours),
+        personal_hours: form.personal_hours === '' || form.personal_hours == null ? null : Number(form.personal_hours),
         day_type: form.day_type,
         pay_status: form.pay_status,
         pay_date: form.pay_status === 'paid' ? (form.pay_date || date) : null,
@@ -132,14 +133,10 @@ export default function WorkDayForm({ date, entry, onSaved }) {
           <div className="field-grid">
             <label className="field">
               <span>Przepracowane godziny</span>
-              <input
-                type="number"
-                step="any"
-                min="0"
-                max="24"
-                placeholder={autoHours != null ? String(autoHours) : '—'}
+              <DurationInput
                 value={manualHours ? form.hours_worked : (autoHours ?? '')}
-                onChange={(e) => { setManualHours(true); set('hours_worked')(e) }}
+                onChange={(v) => { setManualHours(true); setForm((s) => ({ ...s, hours_worked: v })) }}
+                ariaLabel="Przepracowane godziny"
               />
               {autoHours != null && !manualHours && (
                 <span className="muted" style={{ fontWeight: 500 }}>
@@ -193,14 +190,16 @@ export default function WorkDayForm({ date, entry, onSaved }) {
 
           <div className="field-grid">
             <label className="field">
-              <span>Nad biznesem (h)</span>
-              <input type="number" step="any" min="0" max="24" placeholder="0"
-                value={form.business_hours} onChange={set('business_hours')} />
+              <span>Nad biznesem</span>
+              <DurationInput value={form.business_hours}
+                onChange={(v) => setForm((s) => ({ ...s, business_hours: v }))}
+                placeholder="np. 1:30" ariaLabel="Godziny nad biznesem" />
             </label>
             <label className="field">
-              <span>Dla siebie (h)</span>
-              <input type="number" step="any" min="0" max="24" placeholder="0"
-                value={form.personal_hours} onChange={set('personal_hours')} />
+              <span>Dla siebie</span>
+              <DurationInput value={form.personal_hours}
+                onChange={(v) => setForm((s) => ({ ...s, personal_hours: v }))}
+                placeholder="np. 2:00" ariaLabel="Godziny dla siebie" />
             </label>
           </div>
         </>

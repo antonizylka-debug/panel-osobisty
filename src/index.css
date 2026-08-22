@@ -356,7 +356,7 @@ a { color: var(--accent); }
 .bottom-nav {
   flex: none;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: .2rem;
   background: var(--surface);
   border-radius: 24px;
@@ -1106,20 +1106,33 @@ a { color: var(--accent); }
   padding: .35rem .7rem;
 }
 .time-input:focus-within { border-color: var(--accent); background: var(--surface); }
-.time-part {
-  width: 2.2ch;
+
+/* Dwa selektory, nie jeden: ogolna regula .field input jest bardziej
+   specyficzna niz .time-part i nadpisywala padding oraz szerokosc,
+   przez co na tekst nie zostawalo ani piksela miejsca. */
+.time-input .time-part,
+.field .time-input .time-part {
+  width: 2.6ch;
+  min-width: 0;
+  flex: none;
   border: none;
+  border-radius: 0;
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   text-align: center;
   padding: .45rem 0;
 }
-.time-part:focus { outline: none; }
-.time-part::placeholder { color: var(--ink-faint); font-weight: 400; }
-.time-part:disabled { opacity: .5; }
+.time-input .time-part:focus,
+.field .time-input .time-part:focus {
+  outline: none;
+  border: none;
+  background: transparent;
+}
+.time-input .time-part::placeholder { color: var(--ink-faint); font-weight: 500; }
+.time-input .time-part:disabled { opacity: .5; }
 .time-sep { font-weight: 700; color: var(--ink-faint); }
 
 /* --- pomocnicze --- */

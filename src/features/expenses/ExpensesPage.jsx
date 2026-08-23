@@ -9,6 +9,7 @@ import { fetchRealHourlyRate, fetchRange } from '../work/api'
 import { todayISO, addDaysISO, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { Card, CardHead, ProgressBar, BarChart, EmptyState, Sheet, Segmented, StatRow, Fab } from '../../components/ui'
+import { PageLoader } from '../../components/FullScreenSpinner'
 
 function monthStart(iso) { return iso.slice(0, 8) + '01' }
 function daysInMonth(iso) {
@@ -166,7 +167,7 @@ export default function ExpensesPage() {
     }
   }, [workDays, debts, monthTotal, today])
 
-  if (loading) return <div className="page-pad"><p className="page-lede">Wczytywanie…</p></div>
+  if (loading) return <PageLoader />
 
   return (
     <div className="page-pad">

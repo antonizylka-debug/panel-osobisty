@@ -7,6 +7,7 @@ import { useSpeech } from './useSpeech'
 import { formatDatePl } from '../../lib/date'
 import { Card, CardHead, EmptyState, Sheet, Segmented, Fab } from '../../components/ui'
 import { IconGratitude, IconMic } from '../../components/icons'
+import { PageLoader } from '../../components/FullScreenSpinner'
 
 export default function JournalPage() {
   const [entries, setEntries] = useState([])
@@ -50,7 +51,7 @@ export default function JournalPage() {
     catch (err) { setError(err.message); load() }
   }
 
-  if (loading) return <div className="page-pad"><p className="page-lede">Wczytywanie…</p></div>
+  if (loading) return <PageLoader />
 
   return (
     <div className="page-pad">

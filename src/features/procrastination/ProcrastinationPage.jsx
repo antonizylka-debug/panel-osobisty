@@ -4,6 +4,7 @@ import { formatDatePl } from '../../lib/date'
 import { Card, CardHead, EmptyState, BarChart, Sheet, Fab } from '../../components/ui'
 import { IconCheck } from '../../components/icons'
 import TimeInput from '../../components/TimeInput'
+import { PageLoader } from '../../components/FullScreenSpinner'
 
 const TIMER_CHOICES = [10, 15, 25]
 
@@ -39,7 +40,7 @@ export default function ProcrastinationPage() {
       .sort((a, b) => b.value - a.value)
   }, [sessions])
 
-  if (loading) return <div className="page-pad"><p className="page-lede">Wczytywanie…</p></div>
+  if (loading) return <PageLoader />
 
   return (
     <div className="page-pad">

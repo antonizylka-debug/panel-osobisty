@@ -4,6 +4,7 @@ import { fetchFavorites } from './api'
 import { TYPE_LABEL } from '../journal/api'
 import { formatDatePl } from '../../lib/date'
 import { Card, CardHead, EmptyState } from '../../components/ui'
+import { PageLoader } from '../../components/FullScreenSpinner'
 
 export default function FavoritesPage() {
   const [data, setData] = useState(null)
@@ -19,7 +20,7 @@ export default function FavoritesPage() {
 
   useEffect(() => { load() }, [load])
 
-  if (loading) return <div className="page-pad"><p className="page-lede">Wczytywanie…</p></div>
+  if (loading) return <PageLoader />
 
   const total = data ? data.gratitude.length + data.journal.length + data.quotes.length : 0
 

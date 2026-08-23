@@ -4,6 +4,7 @@ import { fetchEntry, fetchMoodHistory, fetchEntriesPage, setFavorite } from './a
 import { todayISO, addDaysISO, formatDatePl } from '../../lib/date'
 import { Card, CardHead, BarChart, EmptyState, StatRow } from '../../components/ui'
 import { IconGratitude } from '../../components/icons'
+import { PageLoader } from '../../components/FullScreenSpinner'
 
 function computeStreak(dates) {
   const set = new Set(dates)
@@ -98,7 +99,7 @@ export default function GratitudePage() {
 
   const visible = onlyFavorites ? list.filter((e) => e.is_favorite) : list
 
-  if (loading) return <div className="page-pad"><p className="page-lede">Wczytywanie…</p></div>
+  if (loading) return <PageLoader />
 
   return (
     <div className="page-pad">

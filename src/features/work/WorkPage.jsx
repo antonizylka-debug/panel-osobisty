@@ -7,6 +7,7 @@ import { categoryLabel } from './TimeBlocks'
 import { todayISO, addDaysISO, isoDate, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { Card, CardHead, BarChart, EmptyState, StatRow, Sheet, Segmented } from '../../components/ui'
+import { PageLoader } from '../../components/FullScreenSpinner'
 
 const DAY_TYPE_LABEL = { work: 'Praca', off: 'Wolne', vacation: 'Urlop', sick: 'L4' }
 
@@ -137,7 +138,7 @@ export default function WorkPage() {
 
   const pendingTotal = pending.reduce((s, d) => s + Number(d.pay_amount ?? 0), 0)
 
-  if (loading) return <div className="page-pad"><p className="page-lede">Wczytywanie…</p></div>
+  if (loading) return <PageLoader />
 
   return (
     <div className="page-pad">

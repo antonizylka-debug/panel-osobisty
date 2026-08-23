@@ -16,6 +16,7 @@ import { fetchDebts, fetchPayments, upcomingPayments } from '../debts/api'
 import { todayISO, addDaysISO, isoDate, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { Card, CardHead, ProgressBar, StatRow, EmptyState, Sheet } from '../../components/ui'
+import { PageLoader } from '../../components/FullScreenSpinner'
 
 function monthStart(iso) { return iso.slice(0, 8) + '01' }
 
@@ -99,7 +100,7 @@ export default function StartPage() {
     }
   }, [data, today])
 
-  if (loading) return <div className="page-pad"><p className="page-lede">Wczytywanie…</p></div>
+  if (loading) return <PageLoader />
   if (error) return <div className="page-pad"><p className="form-error" role="alert">{error}</p></div>
 
   const quote = quoteOfTheDay(data.quotes, today)

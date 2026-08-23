@@ -9,6 +9,7 @@ import {
 } from './api'
 import { todayISO, addDaysISO, formatDatePl } from '../../lib/date'
 import { Card, CardHead, ProgressBar, StatRow, EmptyState, Sheet, Segmented } from '../../components/ui'
+import { PageLoader } from '../../components/FullScreenSpinner'
 
 const num = (v) => (v === '' || v == null ? null : Number(String(v).replace(',', '.')))
 const fmtKg = (v) => `${Number(v).toLocaleString('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg`
@@ -106,7 +107,7 @@ export default function BodyPage() {
     return Number.isFinite(w) && w > 0 ? Math.ceil(w) : null
   }, [goal, latest, trend])
 
-  if (loading) return <div className="page-pad"><p className="page-lede">Wczytywanie…</p></div>
+  if (loading) return <PageLoader />
 
   const start = goal?.start_weight_kg ? Number(goal.start_weight_kg) : (weights[0] ? Number(weights[0].weight_kg) : null)
   const doneKg = goal && latest && start != null ? Math.abs(start - Number(latest.weight_kg)) : null

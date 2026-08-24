@@ -67,7 +67,7 @@ console.log('  stub gotowy')
 // ---------------------------------------------------------------------------
 console.log('\n== MIGRACJE ==')
 for (const f of ['0001_schema.sql', '0002_rls.sql', '0003_storage.sql', '0004_new_user_defaults.sql',
-                 '0005_habit_progress.sql', '0006_default_uid_fix.sql', '0007_body_and_ui.sql', '0008_sleep_steps_authors.sql', '0009_quote_packs.sql', '0010_work_hours_autofill.sql', '0011_time_blocks.sql']) {
+                 '0005_habit_progress.sql', '0006_default_uid_fix.sql', '0007_body_and_ui.sql', '0008_sleep_steps_authors.sql', '0009_quote_packs.sql', '0010_work_hours_autofill.sql', '0011_time_blocks.sql', '0012_surface_style.sql', '0013_budget_buckets.sql']) {
   try {
     await db.exec(readFileSync(`${MIG}/${f}`, 'utf8'))
     ok(f)
@@ -388,6 +388,45 @@ await expectErr('pusta kategoria odrzucona',
   await db.exec(asUser(B))
   const r = await db.query(`select * from public.time_blocks`)
   r.rows.length === 0 ? ok('B nie widzi blokow A') : bad('B widzi bloki A')
+}
+
+// ---------------------------------------------------------------------------
+console.log('\n== KOPERTY BUDZETOWE ==')
+{
+  await db.exec(asUser(A))
+  const b = await db.query(`select name, percent, is_savings from public.budget_buckets order by sort_order`)
+  const suma = b.rows.reduce((s, r) => s + Number(r.percent), 0)
+  b.rows.length === 3 && suma === 100
+    ? ok(`nowe konto dostaje podzial 50/30/20 (suma ${suma}%)`)
+    : bad('zly domyslny podzial: ' + JSON.stringify(b.rows))
+
+  b.rows.filter((r) => r.is_savings).length === 1
+    ? ok('dokladnie jedna koperta oznaczona jako oszczednosci')
+    : bad('zla liczba kopert oszczednosciowych')
+
+  const m = await db.query(`select count(*) c from public.budget_category_map`)
+  Number(m.rows[0].c) === 10
+    ? ok('kategorie wydatkow przypisane do kopert')
+    : bad('zle mapowanie kategorii: ' + JSON.stringify(m.rows))
+}
+await expectErr('procent powyzej 100 odrzucony',
+  `${asUser(A)} insert into public.budget_buckets (name, percent) values ('Za duzo', 150);`,
+  'budget_buckets_percent_check')
+await expectErr('pusta nazwa koperty odrzucona',
+  `${asUser(A)} insert into public.budget_buckets (name, percent) values ('  ', 10);`,
+  'budget_buckets_name_check')
+{
+  const bucketA = (await db.query(`${''}select id from public.budget_buckets limit 1`)).rows[0].id
+  await expectErr('B nie podepnie kategorii pod koperte A',
+    `${asUser(B)} insert into public.budget_category_map (category, bucket_id) values ('Jedzenie', '${bucketA}');`,
+    'row-level security')
+}
+{
+  await db.exec(asUser(B))
+  const r = await db.query(`select * from public.budget_buckets`)
+  r.rows.length === 3 && r.rows.every((x) => x.user_id === B)
+    ? ok('B widzi wylacznie swoje koperty')
+    : bad('B widzi cudze koperty: ' + JSON.stringify(r.rows.map((x) => x.user_id)))
 }
 
 console.log('\n== KASOWANIE KONTA ==')

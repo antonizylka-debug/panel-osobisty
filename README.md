@@ -32,6 +32,17 @@ supabase/
 Jeśli `0002` zgłosi błąd typu `Tabele bez włączonego RLS: ...` — to działa jak trzeba.
 Ta migracja celowo **nie przechodzi**, dopóki jakakolwiek tabela w `public` jest odsłonięta.
 
+## Dlaczego rollup jest przypięty do 4.62.4
+
+W  jest . Na maszynie, na której
+powstawał projekt, Windows Application Control blokuje świeżo zapisane
+niepodpisane pliki  — nowszy binarny moduł rollupa nie chciał się
+załadować ani przy , ani przy ("An Application Control policy has blocked this file").
+
+Wersja 4.62.4 była już zaufana, więc przypięcie odblokowuje budowanie.
+Na Linuksie (czyli też na Vercelu) problem nie występuje — jeśli kiedyś
+przestanie być potrzebne, można to  usunąć.
+
 ## Jak odpalić testy
 
 ```bash

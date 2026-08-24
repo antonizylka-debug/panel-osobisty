@@ -3,7 +3,8 @@
 Osobisty panel PWA: wdzięczność, wydatki, godziny pracy, myśli i cele, anty-prokrastynacja.
 Stos: **React (Vite) + Supabase** (Auth + Postgres + Storage, plan darmowy).
 
-Stan budowy: **13 z 14 kroków gotowych.** Zostaje tryb offline (krok 11).
+Stan budowy: **wszystkie 14 kroków ze specyfikacji gotowe**, plus zakładka Ciało,
+bloki czasu, koperty budżetowe i motywy kolorystyczne dorobione poza nią.
 
 ---
 
@@ -11,37 +12,54 @@ Stan budowy: **13 z 14 kroków gotowych.** Zostaje tryb offline (krok 11).
 
 ```
 supabase/
-├── migrations/
-│   ├── 0001_schema.sql            typy, 18 tabel, indeksy, triggery updated_at
+├── migrations/                    13 plików, uruchamiane po kolei
+│   ├── 0001_schema.sql            typy, tabele, indeksy, triggery updated_at
 │   ├── 0002_rls.sql               RLS + 4 polityki na każdej tabeli, bez wyjątków
 │   ├── 0003_storage.sql           prywatny bucket na paragony + polityki
-│   └── 0004_new_user_defaults.sql profil + nawyki + cytaty + pytania dla nowego konta
+│   ├── 0004_new_user_defaults.sql profil + nawyki + cytaty + pytania dla nowego konta
+│   ├── 0005_habit_progress.sql    nawyki z celem liczbowym
+│   ├── 0006_default_uid_fix.sql   automatyczne user_id na tabelach "jeden wiersz na konto"
+│   ├── 0007_body_and_ui.sql       waga, kalorie, cel wagowy, kolor akcentu, dni odpoczynku
+│   ├── 0008_sleep_steps_authors.sql  sen, kroki, autor przy cytacie
+│   ├── 0009_quote_packs.sql       pakiet cytatów o dyscyplinie
+│   ├── 0010_work_hours_autofill.sql  godziny pracy liczone przez bazę
+│   ├── 0011_time_blocks.sql       bloki czasu poza dniówką
+│   ├── 0012_surface_style.sql     neutralna albo barwna powierzchnia
+│   └── 0013_budget_buckets.sql    podział przychodu 50/30/20
 └── tests/
-    └── rls.test.mjs               35 testów na PGlite (Postgres w WASM)
+    └── rls.test.mjs               83 testy na PGlite (Postgres w WASM)
 ```
 
 ## Jak wgrać bazę do Supabase
 
 1. Załóż projekt na [supabase.com](https://supabase.com) (plan darmowy).
-2. SQL Editor → wklej i uruchom pliki **po kolei**: `0001` → `0002` → `0003` → `0004`.
+2. SQL Editor → wklej i uruchom pliki **po kolei**, od `0001` do `0013`.
 3. Authentication → Providers → Email: włącz **Confirm email**.
 4. Authentication → URL Configuration: ustaw adres apki (potrzebne do potwierdzenia maila i resetu hasła).
 
-`0002` i `0004` można puszczać wielokrotnie — są idempotentne. `0001` i `0003` uruchamiasz raz.
+Wszystkie migracje poza `0001` i `0003` są idempotentne — można je puszczać wielokrotnie.
+Każda dokładająca tabelę kończy się tą samą pętlą RLS co `0002`, więc nowa tabela
+nigdy nie zostaje bez polityk.
 
 Jeśli `0002` zgłosi błąd typu `Tabele bez włączonego RLS: ...` — to działa jak trzeba.
 Ta migracja celowo **nie przechodzi**, dopóki jakakolwiek tabela w `public` jest odsłonięta.
 
 ## Dlaczego rollup jest przypięty do 4.62.4
 
-W  jest . Na maszynie, na której
-powstawał projekt, Windows Application Control blokuje świeżo zapisane
-niepodpisane pliki  — nowszy binarny moduł rollupa nie chciał się
-załadować ani przy , ani przy ("An Application Control policy has blocked this file").
+W `package.json` jest `"overrides": { "rollup": "4.62.4" }`.
 
-Wersja 4.62.4 była już zaufana, więc przypięcie odblokowuje budowanie.
-Na Linuksie (czyli też na Vercelu) problem nie występuje — jeśli kiedyś
-przestanie być potrzebne, można to  usunąć.
+Na maszynie, na której powstawał projekt, Windows Application Control blokuje
+świeżo zapisane niepodpisane pliki `.node`. Po zwykłym `npm install` nowszy
+binarny moduł rollupa przestawał się ładować — i `npm run build`, i `npm run dev`
+padały z komunikatem `An Application Control policy has blocked this file`.
+
+Wersja 4.62.4 była na tej maszynie już zaufana, więc przypięcie przywraca
+budowanie. Na Linuksie (czyli też przy deployu na Vercela) problem nie
+występuje — gdy przestanie być potrzebne, `overrides` można usunąć.
+
+Gdyby wróciło po kolejnym `npm install`, objaw jest ten sam i pomaga to samo:
+sprawdź, która wersja rollupa działa w innym projekcie na tej maszynie,
+i przypnij tę.
 
 ## Jak odpalić testy
 
@@ -50,9 +68,9 @@ cd supabase/tests && npm install && npm test
 ```
 
 Testy stawiają Postgresa w pamięci (PGlite), podstawiają atrapy schematów `auth` i `storage`,
-puszczają wszystkie cztery migracje i sprawdzają m.in.:
+puszczają wszystkie trzynaście migracji i sprawdzają m.in.:
 
-- każda z 18 tabel ma RLS i komplet 4 polityk,
+- każda tabela ma RLS, komplet 4 polityk i automatyczne user_id,
 - użytkownik B nie odczyta, nie zmieni ani nie skasuje wpisu użytkownika A,
 - B nie wstawi wiersza z cudzym `user_id`, nie podepnie raty pod cudzy dług ani nie odhaczy cudzego nawyku,
 - `anon` nie ma dostępu do żadnej tabeli,
@@ -130,7 +148,7 @@ inaczej przestaje działać edytor tabel w panelu Supabase i Twój własny wglą
 - [x] **8. Zrób to teraz**
 - [x] **9. Dodatki: przegląd tygodnia, plan dnia, nawyki, ulubione, wyszukiwarka**
 - [x] **10. Ekran Start**
-- [ ] 11. Tryb offline (IndexedDB ↔ Supabase)
+- [x] **11. Tryb offline (IndexedDB ↔ Supabase)**
 - [x] **12. Import wyciągu CSV**
 - [x] **13. Przypomnienia (lokalne powiadomienia)**
 - [x] **14. Ustawienia konta + eksport danych**

@@ -59,25 +59,66 @@ export async function fetchCategoryMap() {
   return data
 }
 
+/**
+ * Zapis podzialu bez gubienia przypisanych kategorii.
+ *
+ * Kasowanie i wstawianie od nowa wygladalo prosciej, ale budget_category_map
+ * ma na bucket_id ON DELETE CASCADE — razem z kopertami znikaly wszystkie
+ * przypisania kategorii i podzial resetowal sie do zera.
+ *
+ * Dlatego dopasowujemy po pozycji: pierwsza koperta zostaje pierwsza,
+ * zmienia sie tylko jej nazwa i procent. Id przezywa, wiec kategorie
+ * dalej wskazuja na wlasciwa koperte — takze po zmianie na inny preset
+ * czy po zmianie nazwy.
+ */
 export async function saveBuckets(buckets) {
-  // Podzial zawsze zapisujemy w calosci — inaczej latwo zostawic sume != 100.
-  const { error: delError } = await supabase
-    .from('budget_buckets')
-    .delete()
-    .not('id', 'is', null)
-  if (delError) throw delError
+  const existing = await fetchBuckets()
 
-  const { data, error } = await supabase
-    .from('budget_buckets')
-    .insert(buckets.map((b, i) => ({
+  const updates = []
+  const inserts = []
+
+  buckets.forEach((b, i) => {
+    const row = {
       name: b.name.trim(),
       percent: b.percent,
       is_savings: !!b.is_savings,
       sort_order: i + 1,
-    })))
-    .select()
-  if (error) throw error
-  return data
+    }
+    if (existing[i]) updates.push({ id: existing[i].id, ...row })
+    else inserts.push(row)
+  })
+
+  // Nazwa ma unikalnosc per konto, wiec przy zamianie miejscami dwie koperty
+  // moglyby chwilowo nosic te sama nazwe. Najpierw rozbrajamy nazwy,
+  // potem ustawiamy docelowe.
+  for (const u of updates) {
+    const { error } = await supabase
+      .from('budget_buckets')
+      .update({ name: `tmp-${u.id.slice(0, 8)}` })
+      .eq('id', u.id)
+    if (error) throw error
+  }
+
+  for (const u of updates) {
+    const { id, ...patch } = u
+    const { error } = await supabase.from('budget_buckets').update(patch).eq('id', id)
+    if (error) throw error
+  }
+
+  if (inserts.length) {
+    const { error } = await supabase.from('budget_buckets').insert(inserts)
+    if (error) throw error
+  }
+
+  // Koperty ponad nowa liczbe znikaja — razem z ich przypisaniami,
+  // bo nie ma juz dokad ich kierowac.
+  const removed = existing.slice(buckets.length)
+  for (const r of removed) {
+    const { error } = await supabase.from('budget_buckets').delete().eq('id', r.id)
+    if (error) throw error
+  }
+
+  return fetchBuckets()
 }
 
 export async function assignCategory(category, bucketId) {

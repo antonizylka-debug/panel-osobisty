@@ -429,6 +429,71 @@ await expectErr('pusta nazwa koperty odrzucona',
     : bad('B widzi cudze koperty: ' + JSON.stringify(r.rows.map((x) => x.user_id)))
 }
 
+// ---------------------------------------------------------------------------
+console.log('\n== ZMIANA PODZIALU NIE GUBI KATEGORII ==')
+{
+  await db.exec(asUser(A))
+
+  // Stan wyjsciowy: 50/30/20 z poprzypisywanymi kategoriami
+  const przed = await db.query(`
+    select b.id, b.name, b.percent, b.sort_order,
+           (select count(*) from public.budget_category_map m where m.bucket_id = b.id) as kategorie
+    from public.budget_buckets b order by b.sort_order
+  `)
+  const kategoriiPrzed = przed.rows.reduce((s, r) => s + Number(r.kategorie), 0)
+
+  // To robi teraz apka: aktualizacja w miejscu, po pozycji, bez kasowania.
+  // Zmiana na 70/10/20 z inna nazwa pierwszej koperty.
+  const nowe = [
+    { name: 'Życie', percent: 70, is_savings: false },
+    { name: 'Zachcianki', percent: 10, is_savings: false },
+    { name: 'Oszczędności', percent: 20, is_savings: true },
+  ]
+  for (const [i, r] of nowe.entries()) {
+    await db.exec(`update public.budget_buckets set name = 'tmp-${i}' where id = '${przed.rows[i].id}'`)
+  }
+  for (const [i, r] of nowe.entries()) {
+    await db.exec(`
+      update public.budget_buckets
+      set name = '${r.name}', percent = ${r.percent}, is_savings = ${r.is_savings}, sort_order = ${i + 1}
+      where id = '${przed.rows[i].id}'
+    `)
+  }
+
+  const po = await db.query(`
+    select b.id, b.name, b.percent,
+           (select count(*) from public.budget_category_map m where m.bucket_id = b.id) as kategorie
+    from public.budget_buckets b order by b.sort_order
+  `)
+  const kategoriiPo = po.rows.reduce((s, r) => s + Number(r.kategorie), 0)
+
+  kategoriiPo === kategoriiPrzed && kategoriiPo > 0
+    ? ok(`po zmianie podzialu kategorie zostaja (${kategoriiPo} z ${kategoriiPrzed})`)
+    : bad(`kategorie przepadly: bylo ${kategoriiPrzed}, jest ${kategoriiPo}`)
+
+  po.rows[0].name === 'Życie' && Number(po.rows[0].percent) === 70
+    ? ok('zmiana nazwy i procentu weszla, id koperty przezylo')
+    : bad('zla koperta po zmianie: ' + JSON.stringify(po.rows[0]))
+
+  po.rows[0].id === przed.rows[0].id
+    ? ok('to nadal ta sama koperta, nie nowa')
+    : bad('koperta zostala odtworzona z nowym id')
+}
+{
+  // A gdyby jednak skasowac koperte — kategorie maja zniknac razem z nia,
+  // zeby nie zostalo mapowanie wskazujace w prozne.
+  await db.exec(asUser(A))
+  const b = await db.query(`select id from public.budget_buckets order by sort_order limit 1`)
+  await db.exec(`delete from public.budget_buckets where id = '${b.rows[0].id}'`)
+  const sieroty = await db.query(`
+    select count(*) c from public.budget_category_map m
+    where not exists (select 1 from public.budget_buckets b where b.id = m.bucket_id)
+  `)
+  Number(sieroty.rows[0].c) === 0
+    ? ok('skasowanie koperty nie zostawia osieroconych przypisan')
+    : bad(`zostalo ${sieroty.rows[0].c} przypisan bez koperty`)
+}
+
 console.log('\n== KASOWANIE KONTA ==')
 {
   await db.exec(asAdmin)

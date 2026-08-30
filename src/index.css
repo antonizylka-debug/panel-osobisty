@@ -221,16 +221,52 @@ a { color: var(--accent); }
   .loader-ring { stroke-dasharray: none; }
 }
 
-/* ---------- karty auth ---------- */
-.auth-card, .onboard-card {
+/* ---------- tlo logowania: miekkie, rozmyte plamy koloru ---------- */
+.auth-bg {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+.auth-bg::before, .auth-bg::after {
+  content: '';
+  position: absolute;
+  width: 60vmax; height: 60vmax;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: 0;
+}
+.auth-bg::before {
+  top: -20vmax; left: -15vmax;
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+  opacity: .35;
+}
+.auth-bg::after {
+  bottom: -25vmax; right: -20vmax;
+  background: color-mix(in srgb, var(--accent) 40%, #7C6AE0 60%);
+  opacity: .3;
+}
+.auth-bg > * { position: relative; z-index: 1; }
+
+/* ---------- karty auth: szklany efekt (glassmorphism) ---------- */
+.auth-card {
   width: 100%;
   max-width: 400px;
+  background: color-mix(in srgb, var(--surface) 65%, transparent);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid color-mix(in srgb, white 40%, transparent);
+  border-radius: 24px;
+  padding: 2.5rem 2.25rem;
+  box-shadow: 0 20px 60px -20px rgba(20,23,26,.25), 0 1px 2px rgba(20,23,26,.06);
+}
+.onboard-card {
+  width: 100%;
+  max-width: 460px;
   background: var(--surface);
   border-radius: 18px;
   padding: 2.5rem 2.25rem;
   box-shadow: var(--shadow-card);
 }
-.onboard-card { max-width: 460px; }
 
 .auth-card-title, .onboard-title {
   margin: 0 0 .4rem;

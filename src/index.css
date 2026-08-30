@@ -411,7 +411,13 @@ a { color: var(--accent); }
   padding: calc(env(safe-area-inset-top, 0px) + 1.1rem) 1.25rem .75rem;
   flex: none;
 }
-.shell-brand { font-weight: 800; font-size: 1.05rem; letter-spacing: normal; }
+.shell-brand {
+  display: flex; align-items: center; gap: .5rem;
+  font-family: "Caveat", "Manrope", system-ui, sans-serif;
+  font-weight: 700; font-size: 1.55rem; letter-spacing: normal;
+  color: var(--ink);
+}
+.shell-brand-logo { width: 26px; height: 26px; flex: none; color: var(--accent); }
 
 .theme-toggle {
   display: grid;
@@ -539,15 +545,15 @@ a { color: var(--accent); }
     align-items: center;
     gap: .6rem;
     margin: 0 0 1.25rem .35rem;
-    font-size: .95rem;
-    font-weight: 800;
+    font-family: "Caveat", "Manrope", system-ui, sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
     color: #F5F2E9;
     letter-spacing: normal;
   }
   .side-brand-dot {
-    width: 22px; height: 22px; flex: none;
-    border-radius: 50%;
-    background: var(--accent);
+    width: 28px; height: 28px; flex: none;
+    color: var(--accent);
   }
 
   .side-search {
@@ -1002,9 +1008,11 @@ a { color: var(--accent); }
 
 /* Pastelowe warianty karty statystyki — opcjonalne, wlaczane przez tone/icon. */
 :root {
-  --tone-violet: #8B7FD6;
-  --tone-green:  #6FA37A;
-  --tone-amber:  #D6A24A;
+  /* Jeden, stonowany odcien zamiast teczy — formalniej, mniej "zabawkowo".
+     Nazwy zostaja (uzywane w kodzie), ale wszystkie wskazuja na ten sam grafit. */
+  --tone-violet: #3A3F47;
+  --tone-green:  #3A3F47;
+  --tone-amber:  #3A3F47;
 }
 .stat-cell--tone {
   background: color-mix(in srgb, var(--stat-tone) 20%, var(--surface));

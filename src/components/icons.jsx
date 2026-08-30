@@ -8,6 +8,17 @@ const common = {
   'aria-hidden': true,
 }
 
+/** Znaczek marki — rosnacy wykres na zaokraglonym tle, w kolorze akcentu. */
+export function IconLogo(props) {
+  return (
+    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true" {...props}>
+      <rect width="32" height="32" rx="9" fill="currentColor" />
+      <path d="M8 19.5 13 14.5 17 18.5 24.5 10" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="24.5" cy="10" r="2.1" fill="white" />
+    </svg>
+  )
+}
+
 export function IconStart(props) {
   return (
     <svg {...common} {...props}>

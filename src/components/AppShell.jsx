@@ -6,7 +6,7 @@ import { useSync } from '../offline/SyncContext'
 import AccentMenu from './AccentMenu'
 import {
   IconStart, IconGratitude, IconExpenses, IconWorkHours, IconJournal, IconDoItNow,
-  IconBody, IconSun, IconMoon, IconSearch, IconSettings, IconLogout,
+  IconBody, IconSun, IconMoon, IconSearch, IconSettings, IconLogout, IconLogo,
 } from './icons'
 
 const TABS = [
@@ -58,7 +58,10 @@ export default function AppShell() {
   return (
     <div className="shell">
       <header className="shell-top">
-        <span className="shell-brand">Cashflow</span>
+        <span className="shell-brand">
+          <IconLogo className="shell-brand-logo" />
+          Cashflow
+        </span>
         <SyncBadge />
         <div style={{ display: 'flex', gap: '.5rem', marginLeft: 'auto' }}>
           <Link className="theme-toggle mobile-only" to="/szukaj" aria-label="Szukaj">
@@ -89,7 +92,7 @@ export default function AppShell() {
           menu, profil z wylogowaniem na samym dole. */}
       <nav className="bottom-nav" aria-label="Nawigacja główna">
         <span className="side-brand">
-          <span className="side-brand-dot" />
+          <IconLogo className="side-brand-dot" />
           <span className="side-brand-text">Cashflow</span>
         </span>
 

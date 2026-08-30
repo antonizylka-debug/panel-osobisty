@@ -10,13 +10,13 @@ import {
 } from './icons'
 
 const TABS = [
-  { to: '/', label: 'Start', Icon: IconStart, end: true },
+  { to: '/', label: 'Dashboard', Icon: IconStart, end: true },
   { to: '/wdziecznosc', label: 'Wdzięczność', Icon: IconGratitude },
   { to: '/wydatki', label: 'Wydatki', Icon: IconExpenses },
   { to: '/godziny-pracy', label: 'Godziny', Icon: IconWorkHours },
-  { to: '/cialo', label: 'Ciało', Icon: IconBody },
-  { to: '/mysli-i-cele', label: 'Myśli', Icon: IconJournal },
-  { to: '/zrob-to-teraz', label: 'Teraz', Icon: IconDoItNow },
+  { to: '/cialo', label: 'Zdrowie', Icon: IconBody },
+  { to: '/mysli-i-cele', label: 'Notatki', Icon: IconJournal },
+  { to: '/zrob-to-teraz', label: 'Fokus', Icon: IconDoItNow },
 ]
 
 /** Widoczny tylko wtedy, gdy jest o czym mowic: brak sieci albo zaleglosci. */
@@ -58,10 +58,10 @@ export default function AppShell() {
   return (
     <div className="shell">
       <header className="shell-top">
-        <span className="shell-brand">
+        <Link className="shell-brand" to="/">
           <IconLogo className="shell-brand-logo" />
           Cashflow
-        </span>
+        </Link>
         <SyncBadge />
         <div style={{ display: 'flex', gap: '.5rem', marginLeft: 'auto' }}>
           <Link className="theme-toggle mobile-only" to="/szukaj" aria-label="Szukaj">
@@ -91,10 +91,10 @@ export default function AppShell() {
           w stylu Claude/Alair — logo, wyszukiwarka, kolor akcentu, posortowane
           menu, profil z wylogowaniem na samym dole. */}
       <nav className="bottom-nav" aria-label="Nawigacja główna">
-        <span className="side-brand">
+        <Link className="side-brand" to="/">
           <IconLogo className="side-brand-dot" />
           <span className="side-brand-text">Cashflow</span>
-        </span>
+        </Link>
 
         <Link className="side-search" to="/szukaj">
           <IconSearch />

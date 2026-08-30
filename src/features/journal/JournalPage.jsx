@@ -55,7 +55,7 @@ export default function JournalPage() {
 
   return (
     <div className="page-pad">
-      <h1 className="page-title">Myśli i cele</h1>
+      <h1 className="page-title">Notatki i cele</h1>
       {error && <p className="form-error" role="alert">{error}</p>}
 
 

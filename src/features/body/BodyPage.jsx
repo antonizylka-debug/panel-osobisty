@@ -115,7 +115,7 @@ export default function BodyPage() {
 
   return (
     <div className="page-pad">
-      <h1 className="page-title">Ciało</h1>
+      <h1 className="page-title">Zdrowie</h1>
       {error && <p className="form-error" role="alert">{error}</p>}
 
       <WeightCard date={today} entry={todayWeight} onSaved={load} />

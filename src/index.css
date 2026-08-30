@@ -416,6 +416,7 @@ a { color: var(--accent); }
   font-family: "Caveat", "Manrope", system-ui, sans-serif;
   font-weight: 700; font-size: 1.55rem; letter-spacing: normal;
   color: var(--ink);
+  text-decoration: none;
 }
 .shell-brand-logo { width: 26px; height: 26px; flex: none; color: var(--accent); }
 
@@ -550,6 +551,7 @@ a { color: var(--accent); }
     font-weight: 700;
     color: #F5F2E9;
     letter-spacing: normal;
+    text-decoration: none;
   }
   .side-brand-dot {
     width: 28px; height: 28px; flex: none;

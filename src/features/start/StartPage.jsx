@@ -15,7 +15,7 @@ import { fetchEntry, fetchMoodHistory } from '../gratitude/api'
 import { fetchDebts, fetchPayments, upcomingPayments } from '../debts/api'
 import { todayISO, addDaysISO, isoDate, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
-import { Card, CardHead, ProgressBar, StatRow, EmptyState, Sheet } from '../../components/ui'
+import { Card, CardHead, ProgressBar, EmptyState, Sheet } from '../../components/ui'
 import { PageLoader } from '../../components/FullScreenSpinner'
 import { IconWorkHours, IconPayout, IconExpenses } from '../../components/icons'
 import BudgetSplitCard from '../budget/BudgetSplitCard'
@@ -177,26 +177,44 @@ export default function StartPage() {
             <span>Raty</span>
             <b>{formatPLN(derived.installments, { short: true })}</b>
           </div>
-          <div className="page-header-stat">
-            <span>Godzin w tyg.</span>
-            <b>{Math.round(derived.weekHours)}</b>
-          </div>
         </div>
       </div>
 
-      {/* Tydzien: godziny/dniowki/wydatki jako pastelowe kafle */}
-      <StatRow items={[
-        { label: 'godzin', value: Math.round(derived.weekHours), icon: <IconWorkHours />, tone: 'violet' },
-        { label: 'dniówki', value: formatPLN(derived.weekPay, { short: true }), icon: <IconPayout />, tone: 'green' },
-        { label: 'wydatki', value: formatPLN(derived.weekSpent, { short: true }), icon: <IconExpenses />, tone: 'amber' },
-      ]} />
-      {weekBreakdown.length > 0 && (
-        <p className="muted" style={{ margin: '-.6rem 0 1rem', fontSize: '.82rem' }}>
-          Poza dniówką: {weekBreakdown.map(([cat, h], i) => (
-            <span key={cat}>{i > 0 && ' · '}{formatHours(h)} {categoryLabel(cat).toLowerCase()}</span>
-          ))}
-        </p>
-      )}
+      {/* Tydzien: jeden czysty rzad, bez pastelowych blokow — ta sama
+          stonowana stylistyka co naglowek, tylko z malymi ikonkami. */}
+      <div className="mini-stats">
+        <span className="mini-stats-label">Ten tydzień</span>
+        <div className="mini-stats-row">
+          <div className="mini-stat">
+            <span className="mini-stat-icon" style={{ '--icon-tone': 'var(--tone-violet)' }}><IconWorkHours /></span>
+            <div>
+              <b>{Math.round(derived.weekHours)}</b>
+              <span className="mini-stat-label">godzin</span>
+            </div>
+          </div>
+          <div className="mini-stat">
+            <span className="mini-stat-icon" style={{ '--icon-tone': 'var(--tone-green)' }}><IconPayout /></span>
+            <div>
+              <b>{formatPLN(derived.weekPay, { short: true })}</b>
+              <span className="mini-stat-label">dniówki</span>
+            </div>
+          </div>
+          <div className="mini-stat">
+            <span className="mini-stat-icon" style={{ '--icon-tone': 'var(--tone-amber)' }}><IconExpenses /></span>
+            <div>
+              <b>{formatPLN(derived.weekSpent, { short: true })}</b>
+              <span className="mini-stat-label">wydatki</span>
+            </div>
+          </div>
+        </div>
+        {weekBreakdown.length > 0 && (
+          <p className="muted" style={{ margin: '.6rem 0 0', fontSize: '.82rem' }}>
+            Poza dniówką: {weekBreakdown.map(([cat, h], i) => (
+              <span key={cat}>{i > 0 && ' · '}{formatHours(h)} {categoryLabel(cat).toLowerCase()}</span>
+            ))}
+          </p>
+        )}
+      </div>
 
       {/* Podzial 50/30/20 — cala karta, bez skracania */}
       <BudgetSplitCard income={derived.monthPay} expenses={data.expenses} />
@@ -209,7 +227,7 @@ export default function StartPage() {
         />
         <ul className="row-list">
           <li>
-            <Link className="row-item" to="/wdziecznosc">
+            <Link className="row-item row-item--flat" to="/wdziecznosc">
               <div className="row-main">
                 <span className="row-title">Wdzięczność</span>
                 <span className="row-sub">
@@ -222,7 +240,7 @@ export default function StartPage() {
             </Link>
           </li>
           <li>
-            <Link className="row-item" to="/godziny-pracy">
+            <Link className="row-item row-item--flat" to="/godziny-pracy">
               <div className="row-main">
                 <span className="row-title">Godziny pracy</span>
                 <span className="row-sub">

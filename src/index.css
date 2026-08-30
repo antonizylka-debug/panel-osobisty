@@ -26,8 +26,8 @@
   --danger: #C4433A;
   --danger-bg: #FBEAE8;
 
-  --shadow-card: 0 1px 2px rgba(20,23,26,.04), 0 16px 32px -20px rgba(20,23,26,.22);
-  --shadow-float: 0 8px 24px -12px rgba(20,23,26,.22), 0 1px 2px rgba(20,23,26,.05);
+  --shadow-card: 0 1px 2px rgba(20,23,26,.03), 0 8px 16px -12px rgba(20,23,26,.12);
+  --shadow-float: 0 8px 24px -12px rgba(20,23,26,.18), 0 1px 2px rgba(20,23,26,.05);
 }
 
 /* System "ciemny": stosowany, gdy uzytkownik nie wybral jawnie motywu w apce. */
@@ -226,7 +226,7 @@ a { color: var(--accent); }
   width: 100%;
   max-width: 400px;
   background: var(--surface);
-  border-radius: 28px;
+  border-radius: 18px;
   padding: 2.5rem 2.25rem;
   box-shadow: var(--shadow-card);
 }
@@ -729,7 +729,8 @@ a { color: var(--accent); }
 
 .card {
   background: var(--surface);
-  border-radius: 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
   padding: 1.25rem;
   box-shadow: var(--shadow-card);
   margin-bottom: 1rem;
@@ -764,6 +765,34 @@ a { color: var(--accent); }
 .chip.is-active { background: var(--primary); color: var(--primary-ink); }
 
 .chip-row { display: flex; gap: .4rem; flex-wrap: wrap; }
+
+/* --- pasek zakladek (jak filtry wydatkow) --- */
+.tab-row {
+  display: flex;
+  gap: .25rem;
+  flex-wrap: wrap;
+  padding: .3rem;
+  background: var(--surface-2);
+  border-radius: 12px;
+}
+.tab-item {
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 700;
+  padding: .5rem .8rem;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--ink-mid);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab-item:hover { color: var(--ink); }
+.tab-item.is-active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-float);
+}
 
 /* --- przelacznik segmentowy --- */
 .segmented {
@@ -811,7 +840,7 @@ a { color: var(--accent); }
 }
 .stat-cell {
   background: var(--surface);
-  border-radius: 20px;
+  border-radius: 14px;
   padding: .9rem .7rem;
   text-align: center;
   box-shadow: var(--shadow-card);
@@ -892,7 +921,7 @@ a { color: var(--accent); }
 .entry-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .7rem; }
 .entry {
   background: var(--surface-2);
-  border-radius: 18px;
+  border-radius: 12px;
   padding: .85rem 1rem;
 }
 .entry-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
@@ -966,7 +995,7 @@ a { color: var(--accent); }
   width: 100%; max-width: 560px;
   max-height: 88dvh;
   background: var(--surface);
-  border-radius: 28px;
+  border-radius: 20px;
   box-shadow: var(--shadow-card);
   display: flex; flex-direction: column;
   overflow: hidden;
@@ -990,7 +1019,7 @@ a { color: var(--accent); }
 .row-item {
   display: flex; align-items: center; gap: .75rem;
   background: var(--surface-2);
-  border-radius: 18px;
+  border-radius: 12px;
   padding: .8rem 1rem;
   width: 100%; text-align: left;
   border: none; font: inherit; color: inherit; cursor: pointer;
@@ -1047,8 +1076,8 @@ a { color: var(--accent); }
   padding: .9rem 1.4rem .9rem 1.1rem;
   border: none;
   border-radius: 999px;
-  background: var(--primary);
-  color: var(--primary-ink);
+  background: var(--accent);
+  color: #fff;
   cursor: pointer;
   box-shadow: 0 4px 12px -2px rgba(20,23,26,.3), 0 12px 28px -8px rgba(20,23,26,.35);
 }

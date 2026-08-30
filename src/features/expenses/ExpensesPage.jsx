@@ -404,7 +404,7 @@ export default function ExpensesPage() {
           hint={`${visible.length} pozycji`}
           action={<button className="chip" onClick={() => setImportOpen(true)}>Import CSV</button>}
         />
-        <div className="chip-row" style={{ marginBottom: '.75rem' }}>
+        <div className="tab-row" style={{ marginBottom: '.9rem' }}>
           {[
             { v: 'all', l: 'Wszystkie' },
             { v: 'private', l: 'Prywatne' },
@@ -412,7 +412,7 @@ export default function ExpensesPage() {
             { v: 'work-other', l: 'Praca / komuś' },
             { v: 'subs', l: 'Subskrypcje' },
           ].map((f) => (
-            <button key={f.v} className={'chip' + (filter === f.v ? ' is-active' : '')}
+            <button key={f.v} className={'tab-item' + (filter === f.v ? ' is-active' : '')}
               onClick={() => setFilter(f.v)}>{f.l}</button>
           ))}
         </div>

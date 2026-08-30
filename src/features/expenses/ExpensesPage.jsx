@@ -12,7 +12,8 @@ import { fetchRealHourlyRate, fetchRange } from '../work/api'
 import { todayISO, addDaysISO, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { compareLabel } from '../../lib/compare'
-import { Card, CardHead, ProgressBar, BarChart, PieChart, EmptyState, Sheet, Segmented, StatRow, Fab } from '../../components/ui'
+import { Card, CardHead, ProgressBar, BarChart, PieChart, EmptyState, Sheet, Segmented, StatRow, Fab, Kebab } from '../../components/ui'
+import { IconEdit, IconTrash } from '../../components/icons'
 import { PageLoader } from '../../components/FullScreenSpinner'
 import BudgetSplitCard from '../budget/BudgetSplitCard'
 
@@ -486,7 +487,8 @@ function ExpenseRow({ expense, hourlyRate, onDeleted }) {
   return (
     <>
       <li>
-        <button className="row-item" onClick={openDetail}>
+        <div className="row-item" role="button" tabIndex={0} onClick={openDetail}
+          onKeyDown={(e) => { if (e.key === 'Enter') openDetail() }}>
           <div className="row-main">
             <span className="row-title">{expense.description || expense.category || 'Wydatek'}</span>
             <span className="row-sub">
@@ -496,7 +498,11 @@ function ExpenseRow({ expense, hourlyRate, onDeleted }) {
             </span>
           </div>
           <span className="row-value">{formatPLN(expense.amount)}</span>
-        </button>
+          <Kebab items={[
+            { label: 'Edytuj', icon: <IconEdit />, onClick: openDetail },
+            { label: 'Usuń', icon: <IconTrash />, tone: 'danger', onClick: async () => { await deleteExpense(expense.id); onDeleted() } },
+          ]} />
+        </div>
       </li>
 
       <Sheet open={open} title={expense.description || 'Wydatek'} onClose={() => setOpen(false)}>

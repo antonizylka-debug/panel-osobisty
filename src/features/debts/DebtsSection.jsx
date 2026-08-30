@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { createDebt, deleteDebt, updateDebt, togglePayment, debtProgress } from './api'
 import { formatPLN, parseAmount } from '../../lib/money'
 import { todayISO, addMonthsISO, formatDatePl } from '../../lib/date'
-import { Card, CardHead, ProgressBar, EmptyState, Sheet } from '../../components/ui'
+import { Card, CardHead, ProgressBar, EmptyState, Sheet, Kebab } from '../../components/ui'
+import { IconEdit, IconTrash } from '../../components/icons'
 
 function currentMonthKey(today) {
   return today.slice(0, 8) + '01'
@@ -48,11 +49,20 @@ export default function DebtsSection({ debts, payments, onChanged }) {
                 <li key={debt.id}>
                   <div className="entry">
                     <div className="entry-head">
-                      <button className="row-title" onClick={() => setDetail(debt)}
-                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', font: 'inherit', fontWeight: 700 }}>
-                        {debt.name}
-                      </button>
-                      <span className="row-value">{formatPLN(debt.monthly_payment)}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', flex: 1, minWidth: 0 }}>
+                        <button className="row-title" onClick={() => setDetail(debt)}
+                          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', font: 'inherit', fontWeight: 700 }}>
+                          {debt.name}
+                        </button>
+                        <span className="row-value">{formatPLN(debt.monthly_payment)}</span>
+                      </div>
+                      <Kebab items={[
+                        { label: 'Edytuj', icon: <IconEdit />, onClick: () => setDetail(debt) },
+                        {
+                          label: 'Usuń', icon: <IconTrash />, tone: 'danger',
+                          onClick: async () => { await deleteDebt(debt.id); onChanged() },
+                        },
+                      ]} />
                     </div>
                     <div style={{ margin: '.6rem 0 .4rem' }}>
                       <ProgressBar value={prog.paidAmount} max={prog.total} />

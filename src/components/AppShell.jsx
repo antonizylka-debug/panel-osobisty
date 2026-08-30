@@ -1,4 +1,4 @@
-import { NavLink, Outlet, Link } from 'react-router-dom'
+import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom'
 import { useTheme } from '../theme/ThemeContext'
 import { useAuth } from '../auth/AuthContext'
 import { useLocalReminder } from '../features/reminders/useLocalReminder'
@@ -6,7 +6,7 @@ import { useSync } from '../offline/SyncContext'
 import AccentMenu from './AccentMenu'
 import {
   IconStart, IconGratitude, IconExpenses, IconWorkHours, IconJournal, IconDoItNow,
-  IconBody, IconSun, IconMoon, IconSearch, IconSettings,
+  IconBody, IconSun, IconMoon, IconSearch, IconSettings, IconLogout,
 } from './icons'
 
 const TABS = [
@@ -42,22 +42,28 @@ function SyncBadge() {
 
 export default function AppShell() {
   const { resolved, toggle } = useTheme()
-  const { user, profile } = useAuth()
+  const { user, profile, signOut } = useAuth()
+  const navigate = useNavigate()
 
   useLocalReminder(user)
 
   const initial = (profile?.display_name?.trim()?.[0] ?? user?.email?.[0] ?? '?').toUpperCase()
+  const name = profile?.display_name?.trim() || user?.email || ''
+
+  async function handleLogout() {
+    await signOut()
+    navigate('/logowanie', { replace: true })
+  }
 
   return (
     <div className="shell">
       <header className="shell-top">
-        <span className="shell-brand">Panel Osobisty</span>
+        <span className="shell-brand">Cashflow</span>
         <SyncBadge />
         <div style={{ display: 'flex', gap: '.5rem', marginLeft: 'auto' }}>
-          <Link className="theme-toggle" to="/szukaj" aria-label="Szukaj">
+          <Link className="theme-toggle mobile-only" to="/szukaj" aria-label="Szukaj">
             <IconSearch />
           </Link>
-          <AccentMenu />
           <button
             className="theme-toggle"
             onClick={toggle}
@@ -68,7 +74,7 @@ export default function AppShell() {
           <Link className="theme-toggle" to="/ustawienia" aria-label="Ustawienia">
             <IconSettings />
           </Link>
-          <Link className="user-avatar" to="/ustawienia" title={profile?.display_name || user?.email}>
+          <Link className="user-avatar" to="/ustawienia" title={name}>
             {initial}
           </Link>
         </div>
@@ -78,21 +84,53 @@ export default function AppShell() {
         <Outlet />
       </main>
 
-      {/* Ten sam element na telefonie (dolny pasek) i na desktopie (boczne menu) */}
+      {/* Na telefonie: dolny pasek z ikonami. Na desktopie: ciemny boczny panel
+          w stylu Claude/Alair — logo, wyszukiwarka, kolor akcentu, posortowane
+          menu, profil z wylogowaniem na samym dole. */}
       <nav className="bottom-nav" aria-label="Nawigacja główna">
-        <span className="side-brand">Panel Osobisty</span>
-        {TABS.map(({ to, label, Icon, end }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            title={label}
-            className={({ isActive }) => 'bottom-nav-item' + (isActive ? ' is-active' : '')}
-          >
-            <Icon />
-            <span>{label}</span>
-          </NavLink>
-        ))}
+        <span className="side-brand">
+          <span className="side-brand-dot" />
+          <span className="side-brand-text">Cashflow</span>
+        </span>
+
+        <Link className="side-search" to="/szukaj">
+          <IconSearch />
+          <span>Szukaj…</span>
+        </Link>
+
+        <div className="side-accent">
+          <span>Kolor akcentu</span>
+          <AccentMenu />
+        </div>
+
+        <span className="side-section-label">Menu</span>
+        <div className="side-nav-list">
+          {TABS.map(({ to, label, Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              title={label}
+              className={({ isActive }) => 'bottom-nav-item' + (isActive ? ' is-active' : '')}
+            >
+              <Icon />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+        </div>
+
+        <div className="side-footer">
+          <Link className="side-profile" to="/ustawienia">
+            <span className="side-avatar">{initial}</span>
+            <span className="side-profile-text">
+              <span className="side-profile-name">{name}</span>
+              <span className="side-profile-sub">{resolved === 'dark' ? 'Ciemny motyw' : 'Jasny motyw'}</span>
+            </span>
+          </Link>
+          <button className="side-logout" onClick={handleLogout} aria-label="Wyloguj" title="Wyloguj">
+            <IconLogout />
+          </button>
+        </div>
       </nav>
     </div>
   )

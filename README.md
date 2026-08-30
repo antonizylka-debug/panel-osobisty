@@ -1,4 +1,4 @@
-# Panel Osobisty
+# Cashflow
 
 Osobisty panel PWA: wdzięczność, wydatki, godziny pracy, myśli i cele, anty-prokrastynacja.
 Stos: **React (Vite) + Supabase** (Auth + Postgres + Storage, plan darmowy).

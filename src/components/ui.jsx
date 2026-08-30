@@ -1,4 +1,60 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { IconMore } from './icons'
+
+/**
+ * Menu "kropki" przy elemencie listy — Edytuj/Usun itp.
+ * items: [{ label, onClick, tone: 'danger'? }]
+ */
+export function Kebab({ items, ariaLabel = 'Wiecej opcji' }) {
+  const [open, setOpen] = useState(false)
+  const boxRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onPointerDown(e) {
+      if (!boxRef.current?.contains(e.target)) setOpen(false)
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div className="kebab" ref={boxRef} onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        className="kebab-trigger"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={ariaLabel}
+        aria-expanded={open}
+      >
+        <IconMore />
+      </button>
+      {open && (
+        <div className="kebab-menu" role="menu">
+          {items.map((it) => (
+            <button
+              key={it.label}
+              type="button"
+              role="menuitem"
+              className={'kebab-item' + (it.tone === 'danger' ? ' is-danger' : '')}
+              onClick={() => { setOpen(false); it.onClick() }}
+            >
+              {it.icon}
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function Card({ children, className = '', ...rest }) {
   return (

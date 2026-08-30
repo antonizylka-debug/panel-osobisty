@@ -139,6 +139,44 @@ export function IconSearch(props) {
   )
 }
 
+export function IconLogout(props) {
+  return (
+    <svg {...common} {...props}>
+      <path d="M9 4.5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h3" />
+      <path d="M13.5 8.5 17.5 12l-4 3.5" />
+      <path d="M17.5 12h-10" />
+    </svg>
+  )
+}
+
+export function IconMore(props) {
+  return (
+    <svg {...common} fill="currentColor" stroke="none" {...props}>
+      <circle cx="12" cy="5" r="1.8" />
+      <circle cx="12" cy="12" r="1.8" />
+      <circle cx="12" cy="19" r="1.8" />
+    </svg>
+  )
+}
+
+export function IconEdit(props) {
+  return (
+    <svg {...common} {...props}>
+      <path d="M15.2 3.8 20.2 8.8 8.5 20.5H3.5v-5Z" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function IconTrash(props) {
+  return (
+    <svg {...common} {...props}>
+      <path d="M4.5 6.5h15" />
+      <path d="M9 6.5v-2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+      <path d="M6.5 6.5 7.3 20a1 1 0 0 0 1 1h7.4a1 1 0 0 0 1-1l.8-13.5" />
+    </svg>
+  )
+}
+
 export function IconSettings(props) {
   return (
     <svg {...common} {...props}>

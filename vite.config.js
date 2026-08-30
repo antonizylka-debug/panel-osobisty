@@ -14,8 +14,8 @@ export default defineConfig({
       includeAssets: ['icons/mask-icon.svg'],
       manifest: {
         id: '/',
-        name: 'Panel Osobisty',
-        short_name: 'Panel',
+        name: 'Cashflow',
+        short_name: 'Cashflow',
         description:
           'Osobisty panel do śledzenia wdzięczności, wydatków, godzin pracy, myśli i celów.',
         lang: 'pl',

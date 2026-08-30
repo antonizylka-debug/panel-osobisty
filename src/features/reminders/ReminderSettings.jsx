@@ -68,8 +68,8 @@ export default function ReminderSettings() {
         badge: '/icons/icon-192.png',
         tag: 'test',
       }
-      if (reg?.showNotification) await reg.showNotification('Panel Osobisty', opts)
-      else new Notification('Panel Osobisty', opts)
+      if (reg?.showNotification) await reg.showNotification('Cashflow', opts)
+      else new Notification('Cashflow', opts)
 
       setMessage('Wysłane. Jeśli nic nie widzisz, sprawdź powiadomienia systemowe i tryb skupienia.')
       setTimeout(() => setMessage(''), 6000)

@@ -62,8 +62,8 @@ export function useLocalReminder(user) {
       // Przez service workera, jesli jest — takie powiadomienie wyglada
       // i zachowuje sie jak systemowe, takze na komputerze.
       const reg = await navigator.serviceWorker?.getRegistration?.()
-      if (reg?.showNotification) await reg.showNotification('Panel Osobisty', opts)
-      else new Notification('Panel Osobisty', opts)
+      if (reg?.showNotification) await reg.showNotification('Cashflow', opts)
+      else new Notification('Cashflow', opts)
     }
 
     tick()

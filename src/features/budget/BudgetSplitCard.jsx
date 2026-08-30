@@ -9,6 +9,9 @@ import { formatPLN } from '../../lib/money'
 import { todayISO, formatDatePl } from '../../lib/date'
 import { savingsProjection } from '../../lib/savings'
 import { Card, CardHead, ProgressBar, EmptyState, Sheet } from '../../components/ui'
+import { IconExpenses, IconPayout } from '../../components/icons'
+
+const BUCKET_TONES = ['violet', 'amber']
 
 /**
  * Podzial przychodu na koperty procentowe (50/30/20 i odmiany).
@@ -83,16 +86,23 @@ export default function BudgetSplitCard({ income, expenses }) {
             </p>
 
             <ul className="row-list mt-1">
-              {summary.rows.map((b) => (
+              {summary.rows.map((b, i) => {
+                const tone = b.is_savings ? 'green' : BUCKET_TONES[i % BUCKET_TONES.length]
+                return (
                 <li key={b.id}>
                   <div className="entry">
                     <div className="entry-head">
-                      <span className="row-title">
-                        {b.name}
-                        <span className="badge" style={{ marginLeft: '.4rem' }}>
-                          {Math.round(b.percent)}%
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '.65rem' }}>
+                        <span className="icon-badge" style={{ '--icon-tone': `var(--tone-${tone})` }}>
+                          {b.is_savings ? <IconPayout /> : <IconExpenses />}
                         </span>
-                      </span>
+                        <span className="row-title">
+                          {b.name}
+                          <span className="badge" style={{ marginLeft: '.4rem' }}>
+                            {Math.round(b.percent)}%
+                          </span>
+                        </span>
+                      </div>
                       <span className="row-value">{formatPLN(b.planned, { short: true })}</span>
                     </div>
 
@@ -125,7 +135,8 @@ export default function BudgetSplitCard({ income, expenses }) {
                     )}
                   </div>
                 </li>
-              ))}
+                )
+              })}
             </ul>
 
             {summary.unassigned > 0 && (

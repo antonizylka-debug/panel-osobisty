@@ -9,6 +9,7 @@ import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { compareLabel } from '../../lib/compare'
 import { Card, CardHead, BarChart, EmptyState, StatRow, Sheet, Segmented } from '../../components/ui'
 import { PageLoader } from '../../components/FullScreenSpinner'
+import { IconWorkHours, IconPayout, IconCheck } from '../../components/icons'
 
 const DAY_TYPE_LABEL = { work: 'Praca', off: 'Wolne', vacation: 'Urlop', sick: 'L4' }
 
@@ -195,9 +196,9 @@ export default function WorkPage() {
 
       <StatRow
         items={[
-          { label: 'godzin', value: Math.round(totals.hours) },
-          { label: 'dniówki', value: formatPLN(totals.pay, { short: true }) },
-          { label: 'dni pracy', value: totals.workDays },
+          { label: 'godzin', value: Math.round(totals.hours), icon: <IconWorkHours />, tone: 'violet' },
+          { label: 'dniówki', value: formatPLN(totals.pay, { short: true }), icon: <IconPayout />, tone: 'green' },
+          { label: 'dni pracy', value: totals.workDays, icon: <IconCheck />, tone: 'amber' },
         ]}
       />
 

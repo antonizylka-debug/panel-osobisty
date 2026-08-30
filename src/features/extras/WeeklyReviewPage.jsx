@@ -6,6 +6,7 @@ import { fetchMoodHistory } from '../gratitude/api'
 import { todayISO, addDaysISO, isoDate, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours } from '../../lib/money'
 import { Card, CardHead, StatRow } from '../../components/ui'
+import { IconWorkHours, IconPayout, IconExpenses } from '../../components/icons'
 
 function mondayOf(iso) {
   const [y, m, d] = iso.split('-').map(Number)
@@ -96,9 +97,9 @@ export default function WeeklyReviewPage() {
       {numbers && (
         <>
           <StatRow items={[
-            { label: 'godzin', value: Math.round(numbers.hours) },
-            { label: 'dniówki', value: formatPLN(numbers.pay, { short: true }) },
-            { label: 'wydatki', value: formatPLN(numbers.spent, { short: true }) },
+            { label: 'godzin', value: Math.round(numbers.hours), icon: <IconWorkHours />, tone: 'violet' },
+            { label: 'dniówki', value: formatPLN(numbers.pay, { short: true }), icon: <IconPayout />, tone: 'green' },
+            { label: 'wydatki', value: formatPLN(numbers.spent, { short: true }), icon: <IconExpenses />, tone: 'amber' },
           ]} />
           <Card>
             <CardHead title="Bilans tygodnia" hint={`${numbers.entries} wpisów wdzięczności`} />

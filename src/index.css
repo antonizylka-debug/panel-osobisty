@@ -886,6 +886,16 @@ a { color: var(--accent); }
 }
 .mini-stat-icon svg { width: 17px; height: 17px; }
 
+/* Ten sam kolorowy kwadrat-ikona, do uzycia poza .mini-stat (np. koperty budzetu). */
+.icon-badge {
+  display: grid; place-items: center;
+  width: 34px; height: 34px; flex: none;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--icon-tone, var(--ink-mid)) 85%, transparent);
+  color: #fff;
+}
+.icon-badge svg { width: 16px; height: 16px; }
+
 /* --- pigulki filtrow --- */
 .chip {
   font: inherit;

@@ -2,20 +2,20 @@
   /* Tla trzymamy jako "-base", a --bg/--surface licza sie z nich nizej.
      Dzieki temu motyw (jasny/ciemny) i styl powierzchni (neutralna/barwna)
      ustawiaja sie niezaleznie i nie musza o siebie walczyc specyficznoscia. */
-  --bg-base: #EEEAE1;
+  --bg-base: #EDEEF0;
   --surface-base: #FFFFFF;
-  --surface-2-base: #F3F0E8;
+  --surface-2-base: #F4F5F6;
   --tint: 0%;
   --tint-soft: 0%;
 
   --bg: var(--bg-base);
   --surface: var(--surface-base);
   --surface-2: var(--surface-2-base);
-  --ink: #1C1B17;
-  --ink-mid: #635F55;
-  --ink-faint: #9D988B;
-  --line: #E4E0D5;
-  --line-hard: #D2CCBC;
+  --ink: #16181C;
+  --ink-mid: #62666D;
+  --ink-faint: #9CA0A6;
+  --line: #E4E6E8;
+  --line-hard: #CFD2D6;
 
   /* Akcent bierze sie z palety wybranej w Ustawieniach (data-accent na <html>).
      Kazda paleta definiuje wariant jasny (-l) i ciemny (-d); motyw wybiera ktory. */
@@ -80,6 +80,7 @@
    PALETY AKCENTU — data-accent na <html>, zapisywane w profiles.accent.
    Kazda podaje wariant na jasne tlo (-l) i na ciemne (-d).
    --------------------------------------------------------------------------- */
+:root[data-accent='orange']  { --accent-l:#F5891F; --accent-bg-l:#FEE9D6; --accent-d:#FFA94D; --accent-bg-d:#3D2409; }
 :root[data-accent='sage']    { --accent-l:#6B7F5E; --accent-bg-l:#E6EADD; --accent-d:#9AB088; --accent-bg-d:#252E1F; }
 :root[data-accent='lime']    { --accent-l:#15A46B; --accent-bg-l:#E1F5EA; --accent-d:#34D399; --accent-bg-d:#123527; }
 :root[data-accent='violet']  { --accent-l:#6D4AE0; --accent-bg-l:#EBE6FD; --accent-d:#A78BFA; --accent-bg-d:#241C48; }

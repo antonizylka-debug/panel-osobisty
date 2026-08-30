@@ -121,21 +121,19 @@ export default function StartPage() {
 
   return (
     <div className="page-pad">
-      {/* Cytat dnia — jedno zdanie, zero ciezaru */}
+      {/* Cytat dnia — cicha linia bez ramki, zeby nie konkurowal z pieniedzmi o uwage */}
       {shownQuote && (
-        <Card>
-          <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, lineHeight: 1.45 }}>
+        <div className="quote-line">
+          <p>
             {shownQuote.text}
+            {shownQuote.author && <span className="quote-author"> — {shownQuote.author}</span>}
           </p>
-          {shownQuote.author && (
-            <p className="muted" style={{ marginTop: '.5rem', fontWeight: 700 }}>— {shownQuote.author}</p>
-          )}
           {favoriteQuotes.length > 0 && (
-            <button className="chip mt-1" onClick={() => setShowFavoriteQuote((v) => !v)}>
-              {showFavoriteQuote ? 'Pokaż cytat dnia' : 'Pokaż losowy ulubiony'}
+            <button className="quote-toggle" onClick={() => setShowFavoriteQuote((v) => !v)}>
+              {showFavoriteQuote ? 'Cytat dnia' : 'Losowy ulubiony'}
             </button>
           )}
-        </Card>
+        </div>
       )}
 
       {/* Rzadkie, wazne ostrzezenie — na samej gorze, zeby nie zniknelo w tlumie */}

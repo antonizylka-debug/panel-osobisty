@@ -2,20 +2,20 @@
   /* Tla trzymamy jako "-base", a --bg/--surface licza sie z nich nizej.
      Dzieki temu motyw (jasny/ciemny) i styl powierzchni (neutralna/barwna)
      ustawiaja sie niezaleznie i nie musza o siebie walczyc specyficznoscia. */
-  --bg-base: #EAECED;
+  --bg-base: #EEEAE1;
   --surface-base: #FFFFFF;
-  --surface-2-base: #F1F2F3;
+  --surface-2-base: #F3F0E8;
   --tint: 0%;
   --tint-soft: 0%;
 
   --bg: var(--bg-base);
   --surface: var(--surface-base);
   --surface-2: var(--surface-2-base);
-  --ink: #16191B;
-  --ink-mid: #5C6366;
-  --ink-faint: #9BA1A4;
-  --line: #E1E3E5;
-  --line-hard: #CDD1D3;
+  --ink: #1C1B17;
+  --ink-mid: #635F55;
+  --ink-faint: #9D988B;
+  --line: #E4E0D5;
+  --line-hard: #D2CCBC;
 
   /* Akcent bierze sie z palety wybranej w Ustawieniach (data-accent na <html>).
      Kazda paleta definiuje wariant jasny (-l) i ciemny (-d); motyw wybiera ktory. */
@@ -80,6 +80,7 @@
    PALETY AKCENTU — data-accent na <html>, zapisywane w profiles.accent.
    Kazda podaje wariant na jasne tlo (-l) i na ciemne (-d).
    --------------------------------------------------------------------------- */
+:root[data-accent='sage']    { --accent-l:#6B7F5E; --accent-bg-l:#E6EADD; --accent-d:#9AB088; --accent-bg-d:#252E1F; }
 :root[data-accent='lime']    { --accent-l:#15A46B; --accent-bg-l:#E1F5EA; --accent-d:#34D399; --accent-bg-d:#123527; }
 :root[data-accent='violet']  { --accent-l:#6D4AE0; --accent-bg-l:#EBE6FD; --accent-d:#A78BFA; --accent-bg-d:#241C48; }
 :root[data-accent='amber']   { --accent-l:#B7791F; --accent-bg-l:#FBF0DA; --accent-d:#E7B75A; --accent-bg-d:#332508; }
@@ -381,6 +382,20 @@ a { color: var(--accent); }
 .theme-toggle:hover { color: var(--accent); }
 .theme-toggle svg { width: 20px; height: 20px; }
 
+.user-avatar {
+  display: grid;
+  place-items: center;
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 800;
+  font-size: .95rem;
+  text-decoration: none;
+  box-shadow: var(--shadow-float);
+  flex: none;
+}
+
 .shell-main {
   flex: 1;
   min-height: 0;
@@ -434,49 +449,61 @@ a { color: var(--accent); }
 @media (min-width: 900px) {
   .shell {
     display: grid;
-    grid-template-columns: 232px minmax(0, 1fr);
+    grid-template-columns: 96px minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas: "nav top" "nav main";
     gap: 0;
+    background: var(--bg);
   }
 
   .shell-top  { grid-area: top; padding: 1.5rem 2rem 1rem; }
   .shell-main { grid-area: main; }
   .shell-top .shell-brand { display: none; }
 
+  /* Ciemny pasek na calej wysokosci — same ikony, bez etykiet. */
   .bottom-nav {
     grid-area: nav;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
-    gap: .15rem;
+    align-items: center;
+    gap: .5rem;
     margin: 0;
     padding: 1.5rem .75rem;
     border-radius: 0;
     box-shadow: none;
-    background: transparent;
-    border-right: 1px solid var(--line);
+    background: #21221D;
+    border-right: none;
     overflow-y: auto;
   }
 
   .side-brand {
     display: block;
-    font-weight: 800;
-    font-size: 1.15rem;
-    letter-spacing: -.02em;
-    padding: 0 .75rem 1.5rem;
+    width: 34px; height: 34px;
+    margin-bottom: 1.25rem;
+    border-radius: 50%;
+    background: var(--accent);
+    font-size: 0;
+    overflow: hidden;
   }
 
   .bottom-nav-item {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: .75rem;
-    padding: .7rem .75rem;
-    border-radius: 14px;
-    font-size: .9rem;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+    width: 44px;
     min-height: 44px;
+    padding: 0;
+    border-radius: 14px;
+    color: #918D7E;
   }
-  .bottom-nav-item svg { width: 19px; height: 19px; flex: none; }
+  .bottom-nav-item:hover { color: #F5F2E9; background: rgba(255,255,255,.06); }
+  .bottom-nav-item span { display: none; }
+  .bottom-nav-item svg { width: 20px; height: 20px; flex: none; }
+  .bottom-nav-item.is-active {
+    color: #21221D;
+    background: #F5F2E9;
+  }
+  .bottom-nav-item.is-active:hover { background: #F5F2E9; }
 
   .page-pad { max-width: 780px; padding-left: 2rem; padding-right: 2rem; }
 
@@ -687,6 +714,27 @@ a { color: var(--accent); }
   text-transform: uppercase; color: var(--ink-faint);
 }
 
+/* Pastelowe warianty karty statystyki — opcjonalne, wlaczane przez tone/icon. */
+:root {
+  --tone-violet: #8B7FD6;
+  --tone-green:  #6FA37A;
+  --tone-amber:  #D6A24A;
+}
+.stat-cell--tone {
+  background: color-mix(in srgb, var(--stat-tone) 20%, var(--surface));
+  text-align: left;
+}
+.stat-cell-icon {
+  display: grid;
+  place-items: center;
+  width: 28px; height: 28px;
+  border-radius: 10px;
+  margin-bottom: .5rem;
+  background: color-mix(in srgb, var(--stat-tone) 45%, var(--surface));
+  color: var(--stat-tone);
+}
+.stat-cell-icon svg { width: 16px; height: 16px; }
+
 /* --- duza liczba (bilans) --- */
 .big-number {
   font-size: 2.6rem;
@@ -711,6 +759,17 @@ a { color: var(--accent); }
   font-weight: 600;
 }
 .chart-labels span { text-align: center; overflow: hidden; }
+
+.pie-chart { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.pie-svg { width: 128px; height: 128px; flex-shrink: 0; }
+.pie-legend { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 160px; }
+.pie-legend li {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .3rem 0; font-size: .85rem;
+}
+.pie-dot { width: .6rem; height: .6rem; border-radius: 50%; flex-shrink: 0; }
+.pie-label { flex: 1; font-weight: 600; }
+.pie-value { color: var(--ink-faint); font-size: .78rem; white-space: nowrap; }
 
 .empty-state {
   margin: 0;

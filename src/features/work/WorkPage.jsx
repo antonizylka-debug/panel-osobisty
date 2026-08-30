@@ -4,8 +4,9 @@ import WorkDayForm from './WorkDayForm'
 import { fetchDay, fetchRange, fetchPending, settlePayment, doorToDoorHours } from './api'
 import { fetchBlocksRange } from './blocksApi'
 import { categoryLabel } from './TimeBlocks'
-import { todayISO, addDaysISO, isoDate, formatDatePl } from '../../lib/date'
+import { todayISO, addDaysISO, isoDate, daysBetweenISO, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
+import { compareLabel } from '../../lib/compare'
 import { Card, CardHead, BarChart, EmptyState, StatRow, Sheet, Segmented } from '../../components/ui'
 import { PageLoader } from '../../components/FullScreenSpinner'
 
@@ -101,6 +102,21 @@ export default function WorkPage() {
     return { hours, pay, workDays, offDays, byCategory }
   }, [scope, blocks, scopeFrom])
 
+  // Ten sam kawalek poprzedniego okresu (do tego samego dnia tygodnia / miesiaca) —
+  // zeby porownanie bylo uczciwe, a nie caly poprzedni tydzien vs kilka dni biezacego.
+  const prevTotals = useMemo(() => {
+    const elapsed = daysBetweenISO(scopeFrom, today)
+    const prevFrom = range === 'week'
+      ? addDaysISO(scopeFrom, -7)
+      : monthStart(addDaysISO(scopeFrom, -1))
+    const prevTo = addDaysISO(prevFrom, elapsed)
+    const prevScope = month.filter((d) => d.date >= prevFrom && d.date <= prevTo)
+
+    let hours = 0, pay = 0
+    for (const d of prevScope) { hours += Number(d.hours_worked ?? 0); pay += Number(d.pay_amount ?? 0) }
+    return { hours, pay }
+  }, [month, range, scopeFrom, today])
+
   const realRate = useMemo(() => {
     let pay = 0, span = 0
     for (const d of scope) {
@@ -126,7 +142,12 @@ export default function WorkPage() {
     function avgSince(from, label) {
       const days = month.filter((d) => d.date >= from && Number(d.hours_worked ?? 0) > 0)
       const total = days.reduce((s, d) => s + Number(d.hours_worked), 0)
-      return { label, days: days.length, total, avg: days.length ? total / days.length : 0 }
+      const pay = days.reduce((s, d) => s + Number(d.pay_amount ?? 0), 0)
+      const weeks = (daysBetweenISO(from, today) + 1) / 7
+      return {
+        label, days: days.length, total, avg: days.length ? total / days.length : 0,
+        pay, avgPerWeek: weeks > 0 ? pay / weeks : 0,
+      }
     }
 
     return [
@@ -197,6 +218,20 @@ export default function WorkPage() {
           <div className="converter mt-1">Realna stawka w tym okresie: {formatPLN(realRate)}/h</div>
         )}
         <p className="muted mt-1">Dni wolnych, urlopu i L4: {totals.offDays}</p>
+
+        {(() => {
+          const noun = range === 'week' ? 'ten sam moment poprzedniego tygodnia' : 'ten sam dzień poprzedniego miesiąca'
+          const hoursLabel = compareLabel(totals.hours, prevTotals.hours, noun, formatHours)
+          const payLabel = compareLabel(totals.pay, prevTotals.pay, noun, (v) => formatPLN(v, { short: true }))
+          if (!hoursLabel && !payLabel) return null
+          return (
+            <p className="muted mt-1">
+              {hoursLabel}
+              {hoursLabel && payLabel && <br />}
+              {payLabel}
+            </p>
+          )
+        })()}
       </Card>
 
       <Card>
@@ -213,7 +248,16 @@ export default function WorkPage() {
                       : 'brak dni pracujących'}
                   </span>
                 </div>
-                <span className="row-value">{a.days > 0 ? formatHours(a.avg) : '—'}</span>
+                <div style={{ textAlign: 'right' }}>
+                  <span className="row-value" style={{ display: 'block' }}>
+                    {a.days > 0 ? formatHours(a.avg) : '—'}
+                  </span>
+                  {a.days > 0 && (
+                    <span className="row-sub" style={{ display: 'block' }}>
+                      śr. {formatPLN(a.avgPerWeek, { short: true })}/tydz.
+                    </span>
+                  )}
+                </div>
               </div>
             </li>
           ))}

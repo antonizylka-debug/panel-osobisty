@@ -45,6 +45,16 @@ export function IconWorkHours(props) {
   )
 }
 
+export function IconPayout(props) {
+  return (
+    <svg {...common} {...props}>
+      <rect x="2.5" y="7" width="15" height="10" rx="2" />
+      <circle cx="10" cy="12" r="2.3" />
+      <path d="M15.5 4.5h4A2 2 0 0 1 21.5 6.5v8" />
+    </svg>
+  )
+}
+
 export function IconJournal(props) {
   return (
     <svg {...common} {...props}>

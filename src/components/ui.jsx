@@ -113,11 +113,66 @@ export function BarChart({ data, height = 120, format = (v) => v, tone = 'accent
   )
 }
 
+const PIE_COLORS = ['#4F86F7', '#E5584A', '#8BC34A', '#9B6EF3', '#4DBFB8', '#F5B942', '#F2799A', '#5DB7DE']
+
+/** Kolko "na co ida pieniadze" — bez zewnetrznych bibliotek. */
+export function PieChart({ data, format = (v) => v }) {
+  const total = data.reduce((s, d) => s + d.value, 0)
+  if (!data.length || total <= 0) return <EmptyState>Za mało danych na wykres.</EmptyState>
+
+  const toRad = (deg) => (deg * Math.PI) / 180
+  const point = (angle, r = 48) => [50 + r * Math.cos(toRad(angle)), 50 + r * Math.sin(toRad(angle))]
+
+  let angle = -90
+  const slices = data.map((d, i) => {
+    const share = d.value / total
+    const startAngle = angle
+    angle += share * 360
+    return { ...d, share, startAngle, endAngle: angle, color: PIE_COLORS[i % PIE_COLORS.length] }
+  })
+
+  return (
+    <div className="pie-chart">
+      <svg viewBox="0 0 100 100" className="pie-svg">
+        {slices.map((s, i) => {
+          if (s.share >= 0.999) return <circle key={i} cx="50" cy="50" r="48" fill={s.color} />
+          const [x1, y1] = point(s.startAngle)
+          const [x2, y2] = point(s.endAngle)
+          const largeArc = s.endAngle - s.startAngle > 180 ? 1 : 0
+          return (
+            <path key={i} fill={s.color}
+              d={`M 50 50 L ${x1} ${y1} A 48 48 0 ${largeArc} 1 ${x2} ${y2} Z`} />
+          )
+        })}
+      </svg>
+      <ul className="pie-legend">
+        {slices.map((s, i) => (
+          <li key={i}>
+            <span className="pie-dot" style={{ background: s.color }} />
+            <span className="pie-label">{s.label}</span>
+            <span className="pie-value">{Math.round(s.share * 100)}% · {format(s.value)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+/**
+ * Karty statystyk. `icon` i `tone` sa opcjonalne — bez nich komorka wyglada
+ * tak jak zawsze (biale tlo). Podane razem dodaja pastelowy odcien i ikonke,
+ * jak w kartach "Ten tydzien" na Starcie.
+ */
 export function StatRow({ items }) {
   return (
     <div className="stat-row">
       {items.map((it) => (
-        <div className="stat-cell" key={it.label}>
+        <div
+          className={'stat-cell' + (it.tone ? ' stat-cell--tone' : '')}
+          key={it.label}
+          style={it.tone ? { '--stat-tone': `var(--tone-${it.tone})` } : undefined}
+        >
+          {it.icon && <span className="stat-cell-icon">{it.icon}</span>}
           <b>{it.value}</b>
           <span>{it.label}</span>
         </div>

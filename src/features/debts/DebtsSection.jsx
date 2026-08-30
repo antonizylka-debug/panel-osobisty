@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createDebt, deleteDebt, updateDebt, togglePayment, debtProgress } from './api'
 import { formatPLN, parseAmount } from '../../lib/money'
-import { todayISO, formatDatePl } from '../../lib/date'
+import { todayISO, addMonthsISO, formatDatePl } from '../../lib/date'
 import { Card, CardHead, ProgressBar, EmptyState, Sheet } from '../../components/ui'
 
 function currentMonthKey(today) {
@@ -66,7 +66,7 @@ export default function DebtsSection({ debts, payments, onChanged }) {
                         className={'chip' + (paidThisMonth ? ' is-active' : '')}
                         onClick={() => handleTogglePaid(debt)}
                       >
-                        {paidThisMonth ? 'Zapłacona ✓' : `Rata ${debt.payment_day}.`}
+                        {paidThisMonth ? 'Zapłacona ✓' : 'Oznacz jako zapłaconą'}
                       </button>
                     </div>
                   </div>
@@ -83,9 +83,8 @@ export default function DebtsSection({ debts, payments, onChanged }) {
         {detail && (
           <div className="stack">
             <p className="muted">
-              Wierzyciel: {detail.creditor || '—'}<br />
-              Rata {formatPLN(detail.monthly_payment)} · {detail.payment_day}. dnia miesiąca<br />
-              Od {formatDatePl(detail.start_date)}{detail.end_date && ` do ${formatDatePl(detail.end_date)}`}
+              Rata {formatPLN(detail.monthly_payment)} miesięcznie
+              {detail.end_date && <> · jeszcze do {formatDatePl(detail.end_date)}</>}
             </p>
             <button className="btn btn-ghost btn-block" onClick={async () => {
               await updateDebt(detail.id, { active: false })
@@ -103,10 +102,7 @@ export default function DebtsSection({ debts, payments, onChanged }) {
 }
 
 function AddDebtSheet({ open, onClose, onDone }) {
-  const [form, setForm] = useState({
-    name: '', total_amount: '', monthly_payment: '', payment_day: '10',
-    start_date: todayISO(), end_date: '', creditor: '',
-  })
+  const [form, setForm] = useState({ name: '', monthly_payment: '', months_left: '' })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
@@ -114,24 +110,24 @@ function AddDebtSheet({ open, onClose, onDone }) {
   async function submit(e) {
     e.preventDefault()
     setError('')
-    const total = parseAmount(form.total_amount)
     const monthly = parseAmount(form.monthly_payment)
+    const months = Number(form.months_left)
     if (!form.name.trim()) return setError('Podaj nazwę.')
-    if (!total || total <= 0) return setError('Podaj kwotę całkowitą.')
     if (!monthly || monthly <= 0) return setError('Podaj miesięczną ratę.')
+    if (!months || months <= 0) return setError('Podaj, ile miesięcy jeszcze zostało.')
 
     setSaving(true)
     try {
+      const today = todayISO()
       await createDebt({
         name: form.name.trim(),
-        total_amount: total,
         monthly_payment: monthly,
-        payment_day: Number(form.payment_day),
-        start_date: form.start_date,
-        end_date: form.end_date || null,
-        creditor: form.creditor.trim() || null,
+        total_amount: monthly * months,
+        start_date: today,
+        end_date: addMonthsISO(today, months),
+        payment_day: Math.min(28, Number(today.slice(8))),
       })
-      setForm({ name: '', total_amount: '', monthly_payment: '', payment_day: '10', start_date: todayISO(), end_date: '', creditor: '' })
+      setForm({ name: '', monthly_payment: '', months_left: '' })
       onDone()
     } catch (err) {
       setError(err.message)
@@ -145,32 +141,16 @@ function AddDebtSheet({ open, onClose, onDone }) {
       <form className="stack" onSubmit={submit}>
         <label className="field">
           <span>Nazwa</span>
-          <input type="text" placeholder="np. Kredyt na auto" value={form.name} onChange={set('name')} />
+          <input type="text" placeholder="np. Rata za PC" value={form.name} onChange={set('name')} />
         </label>
         <div className="field-grid">
-          <label className="field">
-            <span>Kwota całkowita</span>
-            <input type="text" inputMode="decimal" value={form.total_amount} onChange={set('total_amount')} />
-          </label>
           <label className="field">
             <span>Rata miesięczna</span>
             <input type="text" inputMode="decimal" value={form.monthly_payment} onChange={set('monthly_payment')} />
           </label>
           <label className="field">
-            <span>Dzień płatności</span>
-            <input type="number" min="1" max="31" value={form.payment_day} onChange={set('payment_day')} />
-          </label>
-          <label className="field">
-            <span>Wierzyciel</span>
-            <input type="text" value={form.creditor} onChange={set('creditor')} />
-          </label>
-          <label className="field">
-            <span>Pierwsza rata</span>
-            <input type="date" value={form.start_date} onChange={set('start_date')} />
-          </label>
-          <label className="field">
-            <span>Ostatnia rata</span>
-            <input type="date" value={form.end_date} onChange={set('end_date')} />
+            <span>Ile miesięcy jeszcze</span>
+            <input type="number" min="1" inputMode="numeric" value={form.months_left} onChange={set('months_left')} />
           </label>
         </div>
         {error && <p className="form-error" role="alert">{error}</p>}

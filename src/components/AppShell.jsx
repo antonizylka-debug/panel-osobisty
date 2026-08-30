@@ -42,9 +42,11 @@ function SyncBadge() {
 
 export default function AppShell() {
   const { resolved, toggle } = useTheme()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
 
   useLocalReminder(user)
+
+  const initial = (profile?.display_name?.trim()?.[0] ?? user?.email?.[0] ?? '?').toUpperCase()
 
   return (
     <div className="shell">
@@ -66,6 +68,9 @@ export default function AppShell() {
           <Link className="theme-toggle" to="/ustawienia" aria-label="Ustawienia">
             <IconSettings />
           </Link>
+          <Link className="user-avatar" to="/ustawienia" title={profile?.display_name || user?.email}>
+            {initial}
+          </Link>
         </div>
       </header>
 
@@ -81,6 +86,7 @@ export default function AppShell() {
             key={to}
             to={to}
             end={end}
+            title={label}
             className={({ isActive }) => 'bottom-nav-item' + (isActive ? ' is-active' : '')}
           >
             <Icon />

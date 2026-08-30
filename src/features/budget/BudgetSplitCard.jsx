@@ -2,27 +2,37 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   PRESETS, fetchBuckets, fetchCategoryMap, saveBuckets, assignCategory, bucketSummary,
 } from './api'
+import { fetchSavingsGoal } from '../start/api'
+import SavingsGoalSheet from './SavingsGoalSheet'
 import { CATEGORIES } from '../expenses/api'
 import { formatPLN } from '../../lib/money'
+import { todayISO, formatDatePl } from '../../lib/date'
+import { savingsProjection } from '../../lib/savings'
 import { Card, CardHead, ProgressBar, EmptyState, Sheet } from '../../components/ui'
 
 /**
  * Podzial przychodu na koperty procentowe (50/30/20 i odmiany).
  * Przychod bierze sie z dniowek, wydatki z kategorii przypisanych do kopert.
+ *
+ * Koperta oszczednosciowa dodatkowo liczy sie w strone celu oszczednosciowego
+ * (savings_goal) — ile jeszcze potrzeba, czy przy tym tempie sie uda i do kiedy.
  */
 export default function BudgetSplitCard({ income, expenses }) {
   const [buckets, setBuckets] = useState([])
   const [categoryMap, setCategoryMap] = useState([])
+  const [savings, setSavings] = useState(null)
   const [editOpen, setEditOpen] = useState(false)
   const [mapOpen, setMapOpen] = useState(false)
+  const [savingsOpen, setSavingsOpen] = useState(false)
   const [error, setError] = useState('')
   const [loaded, setLoaded] = useState(false)
 
   async function load() {
     try {
-      const [b, m] = await Promise.all([fetchBuckets(), fetchCategoryMap()])
+      const [b, m, s] = await Promise.all([fetchBuckets(), fetchCategoryMap(), fetchSavingsGoal()])
       setBuckets(b)
       setCategoryMap(m)
+      setSavings(s)
       setError('')
     } catch (err) {
       setError(/budget_bucket/.test(err.message ?? '')
@@ -106,9 +116,13 @@ export default function BudgetSplitCard({ income, expenses }) {
                       ) : (
                         b.left >= 0
                           ? `Wydane ${formatPLN(b.spent)} · zostało ${formatPLN(b.left)}`
-                          : `Wydane ${formatPLN(b.spent)} · przekroczone o ${formatPLN(-b.left)}`
+                          : `Wydane ${formatPLN(b.spent)} · przekroczone o ${formatPLN(-b.left)} (${Math.round((b.ratio - 1) * 100)}% ponad limit)`
                       )}
                     </p>
+
+                    {b.is_savings && (
+                      <SavingsGoalBlock savings={savings} monthlyRate={b.spent} onEdit={() => setSavingsOpen(true)} />
+                    )}
                   </div>
                 </li>
               ))}
@@ -137,6 +151,13 @@ export default function BudgetSplitCard({ income, expenses }) {
         categoryMap={categoryMap}
         onClose={() => setMapOpen(false)}
         onChanged={load}
+      />
+
+      <SavingsGoalSheet
+        open={savingsOpen}
+        savings={savings}
+        onClose={() => setSavingsOpen(false)}
+        onDone={() => { setSavingsOpen(false); load() }}
       />
     </>
   )
@@ -233,12 +254,16 @@ function EditSheet({ open, buckets, onClose, onSaved }) {
 function MapSheet({ open, buckets, categoryMap, onClose, onChanged }) {
   const current = new Map(categoryMap.map((m) => [m.category, m.bucket_id]))
   const [busy, setBusy] = useState(null)
+  const [error, setError] = useState('')
 
   async function set(category, bucketId) {
     setBusy(category)
+    setError('')
     try {
       await assignCategory(category, bucketId || null)
       await onChanged()
+    } catch (err) {
+      setError(`Nie zapisano „${category}": ${err.message}`)
     } finally { setBusy(null) }
   }
 
@@ -249,6 +274,8 @@ function MapSheet({ open, buckets, categoryMap, onClose, onChanged }) {
           Z której koperty schodzi dany wydatek. Kategorie bez przypisania nie
           liczą się do podziału.
         </p>
+
+        {error && <p className="form-error" role="alert">{error}</p>}
 
         {CATEGORIES.map((c) => (
           <label className="field" key={c}>
@@ -267,5 +294,58 @@ function MapSheet({ open, buckets, categoryMap, onClose, onChanged }) {
         ))}
       </div>
     </Sheet>
+  )
+}
+
+/**
+ * Ile z tego, co ta koperta faktycznie odklada co miesiac (monthlyRate),
+ * przybliza do konkretnego celu z kwota i (opcjonalnie) terminem.
+ */
+function SavingsGoalBlock({ savings, monthlyRate, onEdit }) {
+  const projection = savingsProjection(savings, monthlyRate, todayISO())
+
+  if (!savings) {
+    return (
+      <div className="converter is-muted mt-1">
+        Nie masz ustawionego celu (kwoty i terminu) dla tej koperty.{' '}
+        <button className="chip" onClick={onEdit}>Ustaw cel</button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="converter mt-1">
+      <div className="entry-head">
+        <strong>{savings.title}</strong>
+        <button className="chip" onClick={onEdit}>Zmień</button>
+      </div>
+      <p style={{ margin: '.3rem 0 0' }}>
+        {formatPLN(savings.current_amount)} z {formatPLN(savings.target_amount)}
+        {savings.target_date && <> · termin {formatDatePl(savings.target_date)}</>}
+      </p>
+
+      {projection?.done && <p style={{ margin: '.3rem 0 0' }}>Cel osiągnięty.</p>}
+
+      {projection && !projection.done && (
+        <p style={{ margin: '.3rem 0 0' }}>
+          {projection.monthlyRate <= 0 ? (
+            'W tym miesiącu nic nie odkładasz — na razie nie da się przewidzieć terminu.'
+          ) : projection.targetDate ? (
+            projection.onTrack ? (
+              <>W tempie {formatPLN(projection.monthlyRate, { short: true })}/mies. uzbierasz to już{' '}
+                {formatDatePl(projection.projectedDate)} — przed terminem ({formatDatePl(projection.targetDate)}).</>
+            ) : (
+              <>W tym tempie zdążysz dopiero {formatDatePl(projection.projectedDate)}.
+                Żeby zdążyć do {formatDatePl(projection.targetDate)}, musisz odkładać{' '}
+                {formatPLN(projection.requiredPerMonth, { short: true })}/mies.
+                (teraz {formatPLN(projection.monthlyRate, { short: true })}/mies.)</>
+            )
+          ) : (
+            <>W tempie {formatPLN(projection.monthlyRate, { short: true })}/mies. uzbierasz to{' '}
+              {formatDatePl(projection.projectedDate)}.</>
+          )}
+        </p>
+      )}
+    </div>
   )
 }

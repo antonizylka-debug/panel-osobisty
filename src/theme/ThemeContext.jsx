@@ -9,6 +9,7 @@ function systemPrefersDark() {
 }
 
 export const ACCENTS = [
+  { value: 'sage',    label: 'Szałwia',    swatch: '#748966' },
   { value: 'lime',    label: 'Limonkowy',  swatch: '#15A46B' },
   { value: 'violet',  label: 'Fioletowy',  swatch: '#6D4AE0' },
   { value: 'amber',   label: 'Bursztyn',   swatch: '#B7791F' },

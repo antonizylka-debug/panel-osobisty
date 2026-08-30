@@ -39,6 +39,31 @@ export async function createExpensesBulk(rows) {
   return data
 }
 
+/** Dodatkowa kasa poza dniowka — napiwek, znalezione, sprzedane, prezent itd. */
+export async function fetchExtraIncome({ from, to }) {
+  const { data, error } = await supabase
+    .from('extra_income')
+    .select('*')
+    .gte('date', from)
+    .lte('date', to)
+    .order('date', { ascending: false })
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function addExtraIncome({ date, amount, note }) {
+  const { error } = await supabase
+    .from('extra_income')
+    .insert({ date, amount, note: note?.trim() || null })
+  if (error) throw error
+}
+
+export async function deleteExtraIncome(id) {
+  const { error } = await supabase.from('extra_income').delete().eq('id', id)
+  if (error) throw error
+}
+
 export async function deleteExpense(id) {
   const { error } = await supabase.from('expenses').delete().eq('id', id)
   if (error) throw error

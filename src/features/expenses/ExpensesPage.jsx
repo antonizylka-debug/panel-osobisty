@@ -3,12 +3,16 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import ExpenseForm from './ExpenseForm'
 import DebtsSection from '../debts/DebtsSection'
 import CsvImportSheet from './CsvImportSheet'
-import { fetchExpenses, fetchBudgets, saveBudget, deleteExpense, receiptUrl, CATEGORIES } from './api'
+import {
+  fetchExpenses, fetchBudgets, saveBudget, deleteExpense, receiptUrl, CATEGORIES,
+  fetchExtraIncome, addExtraIncome, deleteExtraIncome,
+} from './api'
 import { fetchDebts, fetchPayments } from '../debts/api'
 import { fetchRealHourlyRate, fetchRange } from '../work/api'
 import { todayISO, addDaysISO, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
-import { Card, CardHead, ProgressBar, BarChart, EmptyState, Sheet, Segmented, StatRow, Fab } from '../../components/ui'
+import { compareLabel } from '../../lib/compare'
+import { Card, CardHead, ProgressBar, BarChart, PieChart, EmptyState, Sheet, Segmented, StatRow, Fab } from '../../components/ui'
 import { PageLoader } from '../../components/FullScreenSpinner'
 import BudgetSplitCard from '../budget/BudgetSplitCard'
 
@@ -29,27 +33,31 @@ export default function ExpensesPage() {
   const [payments, setPayments] = useState([])
   const [hourlyRate, setHourlyRate] = useState(null)
   const [workDays, setWorkDays] = useState([])
+  const [extraIncome, setExtraIncome] = useState([])
   const [addOpen, setAddOpen] = useState(location.pathname.endsWith('/nowy'))
+  const [extraOpen, setExtraOpen] = useState(false)
   const [budgetOpen, setBudgetOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [filter, setFilter] = useState('all')
   const [category, setCategory] = useState('')
+  const [visibleCount, setVisibleCount] = useState(20)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [exp, bud, dbt, pay, rate, days] = await Promise.all([
+      const [exp, bud, dbt, pay, rate, days, extra] = await Promise.all([
         fetchExpenses({ from: addDaysISO(today, -120), to: today }),
         fetchBudgets(monthStart(today)),
         fetchDebts(),
         fetchPayments(),
         fetchRealHourlyRate(addDaysISO(today, -30)),
         fetchRange(monthStart(today), today),
+        fetchExtraIncome({ from: addDaysISO(today, -120), to: today }).catch(() => []),
       ])
       setExpenses(exp); setBudgets(bud); setDebts(dbt); setPayments(pay)
-      setHourlyRate(rate); setWorkDays(days)
+      setHourlyRate(rate); setWorkDays(days); setExtraIncome(extra)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -72,6 +80,31 @@ export default function ExpensesPage() {
   const monthTotal = thisMonth.reduce((s, e) => s + Number(e.amount), 0)
   const overallBudget = budgets.find((b) => !b.category)
 
+  const monday = useMemo(() => {
+    const now = new Date()
+    const dow = (now.getDay() + 6) % 7
+    return addDaysISO(today, -dow)
+  }, [today])
+
+  // Porownanie do poprzedniego miesiaca / tygodnia — pokazuje, czy wydajesz
+  // wiecej czy mniej niz zwykle, nie tylko ile w liczbach bezwzglednych.
+  const comparison = useMemo(() => {
+    const prevMonthStart = monthStart(addDaysISO(monthStart(today), -1))
+    const prevMonthEnd = addDaysISO(monthStart(today), -1)
+    const prevMonthTotal = expenses
+      .filter((e) => e.date >= prevMonthStart && e.date <= prevMonthEnd)
+      .reduce((s, e) => s + Number(e.amount), 0)
+
+    const weekTotal = expenses.filter((e) => e.date >= monday).reduce((s, e) => s + Number(e.amount), 0)
+    const prevMonday = addDaysISO(monday, -7)
+    const prevSunday = addDaysISO(monday, -1)
+    const prevWeekTotal = expenses
+      .filter((e) => e.date >= prevMonday && e.date <= prevSunday)
+      .reduce((s, e) => s + Number(e.amount), 0)
+
+    return { prevMonthTotal, weekTotal, prevWeekTotal }
+  }, [expenses, today, monday])
+
   const byContext = useMemo(() => {
     let priv = 0, workSelf = 0, workOther = 0
     for (const e of thisMonth) {
@@ -87,11 +120,9 @@ export default function ExpensesPage() {
   const weekForecast = useMemo(() => {
     const now = new Date()
     const dow = (now.getDay() + 6) % 7
-    const monday = addDaysISO(today, -dow)
-    const spent = expenses.filter((e) => e.date >= monday).reduce((s, e) => s + Number(e.amount), 0)
     const elapsed = dow + 1
-    return elapsed > 0 ? (spent / elapsed) * 7 : 0
-  }, [expenses, today])
+    return elapsed > 0 ? (comparison.weekTotal / elapsed) * 7 : 0
+  }, [comparison.weekTotal])
 
   const monthForecast = useMemo(() => {
     const day = Number(today.slice(8))
@@ -143,14 +174,22 @@ export default function ExpensesPage() {
     return list
   }, [thisMonth, filter, category])
 
+  useEffect(() => { setVisibleCount(20) }, [filter, category])
+
   const budgetTone = overallBudget
     ? monthTotal / Number(overallBudget.limit_amount) >= 1 ? 'danger'
       : monthTotal / Number(overallBudget.limit_amount) >= 0.8 ? 'warn' : 'accent'
     : 'accent'
 
+  const extraIncomeThisMonth = useMemo(
+    () => extraIncome.filter((e) => e.date >= monthStart(today)),
+    [extraIncome, today]
+  )
+
   // Ile realnie zostalo z tego, co w tym miesiacu zarobiles.
   const left = useMemo(() => {
     const earned = workDays.reduce((s, d) => s + Number(d.pay_amount ?? 0), 0)
+      + extraIncomeThisMonth.reduce((s, e) => s + Number(e.amount), 0)
     const installments = debts
       .filter((d) => d.active)
       .reduce((s, d) => s + Number(d.monthly_payment), 0)
@@ -166,7 +205,7 @@ export default function ExpensesPage() {
       daysLeft,
       perDay: remaining > 0 ? remaining / daysLeft : 0,
     }
-  }, [workDays, debts, monthTotal, today])
+  }, [workDays, extraIncomeThisMonth, debts, monthTotal, today])
 
   if (loading) return <PageLoader />
 
@@ -190,6 +229,11 @@ export default function ExpensesPage() {
             ≈ {formatHours(monthTotal / hourlyRate)} Twojej pracy
           </p>
         )}
+        {compareLabel(monthForecast, comparison.prevMonthTotal, 'poprzedni miesiąc', (v) => formatPLN(v, { short: true })) && (
+          <p className="muted" style={{ marginTop: '.3rem' }}>
+            W tym tempie: {compareLabel(monthForecast, comparison.prevMonthTotal, 'poprzedni miesiąc', (v) => formatPLN(v, { short: true }))}
+          </p>
+        )}
         {overallBudget && (
           <div style={{ marginTop: '.8rem' }}>
             <ProgressBar value={monthTotal} max={Number(overallBudget.limit_amount)} tone={budgetTone} />
@@ -203,6 +247,9 @@ export default function ExpensesPage() {
         )}
         <div className="converter is-muted mt-1">
           Przy obecnym tempie w tym tygodniu wydasz ok. {formatPLN(weekForecast, { short: true })}
+          {compareLabel(weekForecast, comparison.prevWeekTotal, 'poprzedni tydzień', (v) => formatPLN(v, { short: true })) && (
+            <><br />{compareLabel(weekForecast, comparison.prevWeekTotal, 'poprzedni tydzień', (v) => formatPLN(v, { short: true }))}</>
+          )}
         </div>
       </Card>
 
@@ -250,6 +297,23 @@ export default function ExpensesPage() {
         )}
       </Card>
 
+      <Card>
+        <CardHead
+          title="Dodatkowa kasa"
+          hint="Napiwek, znalezione, sprzedane coś — co dostałeś poza dniówką"
+          action={<button className="chip is-active" onClick={() => setExtraOpen(true)}>+ Dodaj</button>}
+        />
+        {extraIncomeThisMonth.length === 0 ? (
+          <EmptyState>Nic jeszcze nie dopisane w tym miesiącu.</EmptyState>
+        ) : (
+          <ul className="row-list">
+            {extraIncomeThisMonth.map((e) => (
+              <ExtraIncomeRow key={e.id} entry={e} onDeleted={load} />
+            ))}
+          </ul>
+        )}
+      </Card>
+
       <BudgetSplitCard income={left.earned} expenses={thisMonth} />
 
       <StatRow
@@ -269,7 +333,12 @@ export default function ExpensesPage() {
         {byCategory.length === 0 ? (
           <EmptyState>Dodaj pierwszy wydatek, a pokażę rozbicie.</EmptyState>
         ) : (
-          <ul className="row-list">
+          <>
+          <PieChart
+            data={byCategory.map((c) => ({ label: c.name, value: c.amount }))}
+            format={(v) => formatPLN(v, { short: true })}
+          />
+          <ul className="row-list mt-1">
             {byCategory.map((c) => {
               const ratio = c.limit ? c.amount / Number(c.limit) : null
               return (
@@ -296,6 +365,7 @@ export default function ExpensesPage() {
               )
             })}
           </ul>
+          </>
         )}
       </Card>
 
@@ -356,16 +426,27 @@ export default function ExpensesPage() {
         {visible.length === 0 ? (
           <EmptyState>Brak wydatków dla tych filtrów.</EmptyState>
         ) : (
-          <ul className="row-list">
-            {visible.map((e) => (
-              <ExpenseRow key={e.id} expense={e} hourlyRate={hourlyRate} onDeleted={load} />
-            ))}
-          </ul>
+          <>
+            <ul className="row-list">
+              {visible.slice(0, visibleCount).map((e) => (
+                <ExpenseRow key={e.id} expense={e} hourlyRate={hourlyRate} onDeleted={load} />
+              ))}
+            </ul>
+            {visible.length > visibleCount && (
+              <button className="chip mt-1" onClick={() => setVisibleCount((n) => n + 20)}>
+                Załaduj więcej ({visible.length - visibleCount})
+              </button>
+            )}
+          </>
         )}
       </Card>
 
       <Sheet open={addOpen} title="Nowy wydatek" onClose={closeAdd}>
         <ExpenseForm hourlyRate={hourlyRate} onSaved={() => { closeAdd(); load() }} />
+      </Sheet>
+
+      <Sheet open={extraOpen} title="Dodatkowa kasa" onClose={() => setExtraOpen(false)}>
+        <ExtraIncomeForm onSaved={() => { setExtraOpen(false); load() }} />
       </Sheet>
 
       <BudgetSheet
@@ -435,6 +516,70 @@ function ExpenseRow({ expense, hourlyRate, onDeleted }) {
         </div>
       </Sheet>
     </>
+  )
+}
+
+function ExtraIncomeRow({ entry, onDeleted }) {
+  return (
+    <li>
+      <div className="row-item">
+        <div className="row-main">
+          <span className="row-title">{entry.note || 'Dodatkowa kasa'}</span>
+          <span className="row-sub">{formatDatePl(entry.date)}</span>
+        </div>
+        <span className="row-value">{formatPLN(entry.amount)}</span>
+        <button className="chip" style={{ marginLeft: '.6rem', color: 'var(--danger)' }}
+          onClick={async () => { await deleteExtraIncome(entry.id); onDeleted() }}>
+          Usuń
+        </button>
+      </div>
+    </li>
+  )
+}
+
+function ExtraIncomeForm({ onSaved }) {
+  const [amount, setAmount] = useState('')
+  const [note, setNote] = useState('')
+  const [date, setDate] = useState(todayISO())
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function submit(e) {
+    e.preventDefault()
+    const amt = parseAmount(amount)
+    if (!amt || amt <= 0) return setError('Podaj kwotę.')
+    setBusy(true)
+    try {
+      await addExtraIncome({ date, amount: amt, note })
+      onSaved()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <form className="stack" onSubmit={submit}>
+      <label className="field">
+        <span>Ile dostałeś</span>
+        <input type="text" inputMode="decimal" autoFocus value={amount}
+          onChange={(e) => setAmount(e.target.value)} placeholder="np. 50" />
+      </label>
+      <label className="field">
+        <span>Skąd (opcjonalnie)</span>
+        <input type="text" value={note} onChange={(e) => setNote(e.target.value)}
+          placeholder="np. napiwek" />
+      </label>
+      <label className="field">
+        <span>Data</span>
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+      </label>
+      {error && <p className="form-error" role="alert">{error}</p>}
+      <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
+        {busy ? 'Zapisywanie…' : 'Zapisz'}
+      </button>
+    </form>
   )
 }
 

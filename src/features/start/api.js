@@ -12,11 +12,11 @@ export async function fetchSavingsGoal() {
   return data
 }
 
-export async function saveSavingsGoal({ title, targetAmount, currentAmount }) {
+export async function saveSavingsGoal({ title, targetAmount, currentAmount, targetDate }) {
   const { error } = await supabase
     .from('savings_goal')
     .upsert(
-      { title, target_amount: targetAmount, current_amount: currentAmount },
+      { title, target_amount: targetAmount, current_amount: currentAmount, target_date: targetDate || null },
       { onConflict: 'user_id' }
     )
   if (error) throw error

@@ -152,25 +152,41 @@ export default function StartPage() {
         </Card>
       )}
 
-      {/* HERO: jedna duza liczba — bilans miesiaca */}
-      <Card>
-        <CardHead
-          title="Bilans miesiąca"
-          hint="Dniówki minus wydatki minus raty"
-          action={<Link className="chip" to="/wydatki">Szczegóły</Link>}
-        />
-        <p className={'big-number ' + (derived.balance >= 0 ? 'is-positive' : 'is-negative')}>
-          {formatPLN(derived.balance)}
-        </p>
-        <p className="muted" style={{ marginTop: '.4rem' }}>
-          {formatPLN(derived.monthPay, { short: true })} zarobione ·{' '}
-          {formatPLN(derived.monthSpent, { short: true })} wydane ·{' '}
-          {formatPLN(derived.installments, { short: true })} raty
-        </p>
-      </Card>
+      {/* Otwarty naglowek strony — bez ramki karty, jak sekcja "Andreeva" u Altezzy:
+          duza liczba po lewej, kolumny etykieta/wartosc po prawej, cienka linia pod spodem. */}
+      <div className="page-header-panel">
+        <div className="page-header-main">
+          <div className="page-header-top">
+            <span className="page-header-eyebrow">Bilans miesiąca</span>
+            <Link className="chip" to="/wydatki">Szczegóły</Link>
+          </div>
+          <p className={'page-header-figure ' + (derived.balance >= 0 ? 'is-positive' : 'is-negative')}>
+            {formatPLN(derived.balance)}
+          </p>
+          <span className="page-header-sub">Dniówki minus wydatki minus raty</span>
+        </div>
 
-      {/* Tydzien: godziny/dniowki/wydatki — druga najwazniejsza rzecz, tuz pod bilansem */}
-      <p className="eyebrow-tag" style={{ marginBottom: '.6rem' }}>Ten tydzień</p>
+        <div className="page-header-stats">
+          <div className="page-header-stat">
+            <span>Zarobione</span>
+            <b>{formatPLN(derived.monthPay, { short: true })}</b>
+          </div>
+          <div className="page-header-stat">
+            <span>Wydane</span>
+            <b>{formatPLN(derived.monthSpent, { short: true })}</b>
+          </div>
+          <div className="page-header-stat">
+            <span>Raty</span>
+            <b>{formatPLN(derived.installments, { short: true })}</b>
+          </div>
+          <div className="page-header-stat">
+            <span>Godzin w tyg.</span>
+            <b>{Math.round(derived.weekHours)}</b>
+          </div>
+        </div>
+      </div>
+
+      {/* Tydzien: godziny/dniowki/wydatki jako pastelowe kafle */}
       <StatRow items={[
         { label: 'godzin', value: Math.round(derived.weekHours), icon: <IconWorkHours />, tone: 'violet' },
         { label: 'dniówki', value: formatPLN(derived.weekPay, { short: true }), icon: <IconPayout />, tone: 'green' },

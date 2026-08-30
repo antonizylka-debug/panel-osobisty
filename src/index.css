@@ -650,7 +650,8 @@ a { color: var(--accent); }
   .page-pad > .page-lede,
   .page-pad > .page-head,
   .page-pad > .form-error,
-  .page-pad > .search-input {
+  .page-pad > .search-input,
+  .page-pad > .page-header-panel {
     column-span: all;
   }
 
@@ -757,6 +758,42 @@ a { color: var(--accent); }
 .card-hint { margin: .2rem 0 0; font-size: .82rem; color: var(--ink-mid); }
 
 .field-label { font-size: .88rem; font-weight: 700; }
+
+/* --- otwarty naglowek strony (bez ramki karty) --- */
+.page-header-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+.page-header-main { min-width: 220px; }
+.page-header-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.page-header-eyebrow {
+  font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.page-header-figure {
+  margin: .3rem 0 0;
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1;
+}
+.page-header-figure.is-positive { color: var(--accent); }
+.page-header-figure.is-negative { color: var(--danger); }
+.page-header-sub { display: block; margin-top: .4rem; font-size: .84rem; color: var(--ink-mid); }
+
+.page-header-stats { display: flex; flex-wrap: wrap; gap: 1.75rem; }
+.page-header-stat { display: flex; flex-direction: column; gap: .3rem; }
+.page-header-stat span {
+  font-size: .68rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.page-header-stat b { font-size: 1.15rem; font-weight: 800; letter-spacing: -.01em; }
 
 /* --- pigulki filtrow --- */
 .chip {

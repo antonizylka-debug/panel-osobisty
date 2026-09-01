@@ -110,3 +110,15 @@ export function depositStats(deposits, today = todayISO()) {
 export function isMissingTable(err) {
   return /savings_deposits/.test(err?.message ?? '')
 }
+
+/**
+ * Gdzie leza odlozone pieniadze — decyduje, czy wartosc netto ma je doliczyc
+ * osobno, czy potraktowac jako etykiete na czesci gotowki (migracja 0022).
+ */
+export async function setHeldIn(heldIn) {
+  const { error } = await supabase
+    .from('savings_goal')
+    .update({ held_in: heldIn })
+    .not('user_id', 'is', null)
+  if (error) throw error
+}

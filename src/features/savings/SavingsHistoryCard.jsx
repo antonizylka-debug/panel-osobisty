@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  fetchDeposits, addDeposit, deleteDeposit, depositStats,
+  fetchDeposits, addDeposit, deleteDeposit, depositStats, setHeldIn,
   SOURCES, SOURCE_LABEL, isMissingTable,
 } from './api'
 import { fetchSavingsGoal } from '../start/api'
@@ -82,6 +82,35 @@ export default function SavingsHistoryCard() {
                 <ProgressBar value={current} max={target} />
               </div>
             )}
+
+            {/* Decyduje, czy wartosc netto doliczy odlozone osobno, czy uzna
+                je za czesc gotowki w domu — inaczej ta sama kwota liczy sie
+                dwa razy. */}
+            <div style={{ marginTop: '1rem' }}>
+              <span className="mini-stats-label">Gdzie je trzymasz</span>
+              <div className="segmented" role="group" aria-label="Gdzie trzymasz odłożone">
+                {[
+                  { value: 'cash', label: 'W gotówce w domu' },
+                  { value: 'separate', label: 'Osobno' },
+                ].map((o) => (
+                  <button key={o.value} type="button"
+                    className={'segmented-item' + ((goal.held_in ?? 'cash') === o.value ? ' is-active' : '')}
+                    onClick={async () => {
+                      try { await setHeldIn(o.value); load() }
+                      catch (err) {
+                        setError(/held_in/.test(err.message)
+                          ? 'Wymaga migracji 0022_savings_held_in.sql.'
+                          : err.message)
+                      }
+                    }}>{o.label}</button>
+                ))}
+              </div>
+              <p className="muted" style={{ marginTop: '.4rem', fontSize: '.8rem' }}>
+                {(goal.held_in ?? 'cash') === 'cash'
+                  ? 'Odłożone to część gotówki w domu — wartość netto nie liczy ich drugi raz.'
+                  : 'Odłożone leżą poza gotówką (konto, lokata) — wartość netto dolicza je osobno.'}
+              </p>
+            </div>
 
             {stats ? (
               <table className="ledger mt-1">

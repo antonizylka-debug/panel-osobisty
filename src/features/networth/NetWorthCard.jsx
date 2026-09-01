@@ -30,7 +30,11 @@ export default function NetWorthCard() {
 
   const rows = [
     { label: 'Gotówka w domu', value: data.parts.cash, to: '/przychody' },
-    { label: 'Odłożone na cel', value: data.parts.saved, to: '/wydatki' },
+    // Odlozone doliczamy tylko wtedy, gdy leza poza gotowka — inaczej sa
+    // ta sama kwota, ktora juz stoi w wierszu wyzej (patrz migracja 0022).
+    ...(data.savedSeparately
+      ? [{ label: 'Odłożone (osobno)', value: data.parts.saved, to: '/przychody' }]
+      : []),
     { label: 'Czeka na wypłatę', value: data.parts.owedToYou, to: '/przychody' },
     { label: 'Do spłaty', value: -data.parts.debtLeft, to: '/wydatki' },
   ]
@@ -39,7 +43,9 @@ export default function NetWorthCard() {
     <Card>
       <CardHead
         title="Wartość netto"
-        hint="Gotówka + oszczędności + nierozliczone dniówki − długi"
+        hint={data.savedSeparately
+          ? 'Gotówka + odłożone osobno + nierozliczone dniówki − długi'
+          : 'Gotówka + nierozliczone dniówki − długi'}
       />
       <p className={'big-number ' + (data.netWorth >= 0 ? 'is-positive' : 'is-negative')}>
         {formatPLN(data.netWorth)}
@@ -59,6 +65,14 @@ export default function NetWorthCard() {
           ))}
         </tbody>
       </table>
+
+      {!data.savedSeparately && data.parts.saved > 0 && (
+        <p className="muted mt-1">
+          Z tej gotówki {formatPLN(data.parts.saved)} masz zaklepane na cel —
+          nie doliczam ich drugi raz. Trzymasz odłożone gdzie indziej?
+          Zmień to w Przychodach → Odkładanie.
+        </p>
+      )}
 
       {data.cashCountedAt && data.spentSinceCount > 0 && (
         <p className="muted mt-1">

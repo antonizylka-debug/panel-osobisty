@@ -12,7 +12,7 @@ bloki czasu, koperty budżetowe i motywy kolorystyczne dorobione poza nią.
 
 ```
 supabase/
-├── migrations/                    21 plików, uruchamiane po kolei
+├── migrations/                    22 plików, uruchamiane po kolei
 │   ├── 0001_schema.sql            typy, tabele, indeksy, triggery updated_at
 │   ├── 0002_rls.sql               RLS + 4 polityki na każdej tabeli, bez wyjątków
 │   ├── 0003_storage.sql           prywatny bucket na paragony + polityki
@@ -33,7 +33,8 @@ supabase/
 │   ├── 0018_expense_categories.sql  kategorie wydatków jako dane konta, nie stała w kodzie
 │   ├── 0019_recurring_expenses.sql  wydatki cykliczne — szablon + next_due
 │   ├── 0020_payment_method.sql      czym zapłacone (gotówka/karta/przelew)
-│   └── 0021_savings_deposits.sql    historia odkładania — kiedy, ile, skąd
+│   ├── 0021_savings_deposits.sql    historia odkładania — kiedy, ile, skąd
+│   └── 0022_savings_held_in.sql     gdzie leżą odłożone (chroni przed podwójnym liczeniem)
 └── tests/
     └── rls.test.mjs               87 testów na PGlite (Postgres w WASM)
 ```
@@ -41,7 +42,7 @@ supabase/
 ## Jak wgrać bazę do Supabase
 
 1. Załóż projekt na [supabase.com](https://supabase.com) (plan darmowy).
-2. SQL Editor → wklej i uruchom pliki **po kolei**, od `0001` do `0021`.
+2. SQL Editor → wklej i uruchom pliki **po kolei**, od `0001` do `0022`.
 3. Authentication → Providers → Email: włącz **Confirm email**.
 4. Authentication → URL Configuration: ustaw adres apki (potrzebne do potwierdzenia maila i resetu hasła).
 

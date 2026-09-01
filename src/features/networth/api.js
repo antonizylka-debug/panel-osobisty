@@ -6,10 +6,15 @@ import { todayISO } from '../../lib/date'
  *
  * AKTYWA
  *   + gotowka w domu (ostatni spis minus wydatki gotowkowe od tego spisu)
- *   + odlozone na cel oszczednosciowy
+ *   + odlozone na cel — TYLKO gdy savings_goal.held_in = 'separate'
  *   + dniowki nierozliczone (praca wykonana, pieniadze jeszcze nie wyplacone)
  * PASYWA
  *   − ile zostalo do splaty zobowiazan
+ *
+ * O odlozonych: jesli trzymasz je w gotowce w domu, to sa TE SAME banknoty,
+ * ktore juz policzyl spis gotowki. Dodanie ich drugi raz zawyzaloby wartosc
+ * netto o cala odlozona kwote (patrz migracja 0022). Wtedy pokazujemy je
+ * jako etykiete na czesci gotowki, a nie jako osobne aktywo.
  *
  * Swiadomie NIE liczymy salda konta bankowego — apka nie zna stanu konta,
  * wiec dopisanie go z powietrza dawaloby liczbe, ktora wyglada dokladnie,
@@ -24,7 +29,13 @@ export async function fetchNetWorth() {
     // Wydatki gotowkowe pobieramy dopiero po ustaleniu daty spisu (nizej),
     // ale zeby zmiescic sie w jednym przelocie bierzemy szerzej i tniemy w JS.
     supabase.from('expenses').select('date, amount, created_at').eq('payment_method', 'cash'),
-    supabase.from('savings_goal').select('current_amount').maybeSingle(),
+    // held_in istnieje dopiero od migracji 0022. Pytanie o nieistniejaca
+    // kolumne wywala CALY select, wiec przy bledzie ponawiamy bez niej —
+    // inaczej odlozone cicho spadaly do zera.
+    supabase.from('savings_goal').select('current_amount, held_in').maybeSingle()
+      .then((res) => (res.error
+        ? supabase.from('savings_goal').select('current_amount').maybeSingle()
+        : res)),
     supabase.from('work_days').select('pay_amount').eq('pay_status', 'pending').not('pay_amount', 'is', null),
     supabase.from('debts').select('id, total_amount, monthly_payment, active').eq('active', true),
     supabase.from('debt_payments').select('debt_id, paid'),
@@ -59,6 +70,10 @@ export async function fetchNetWorth() {
   const cashCountedAt = lastCount?.date ?? null
 
   const saved = savings.error ? 0 : Number(savings.data?.current_amount ?? 0)
+  // Brak kolumny held_in (migracja 0022) traktujemy jak 'cash' — czyli nie
+  // dodajemy odlozonych osobno. Bezpieczniej zaniżyc niz podwoic.
+  const savedSeparately = !savings.error && savings.data?.held_in === 'separate'
+
   const owedToYou = pending.error
     ? 0
     : (pending.data ?? []).reduce((s, d) => s + Number(d.pay_amount ?? 0), 0)
@@ -76,13 +91,15 @@ export async function fetchNetWorth() {
     }
   }
 
-  const assets = effectiveCash + saved + owedToYou
+  const assets = effectiveCash + (savedSeparately ? saved : 0) + owedToYou
 
   return {
     assets,
     liabilities: debtLeft,
     netWorth: assets - debtLeft,
     parts: { cash: effectiveCash, saved, owedToYou, debtLeft },
+    // Gdy odlozone leza w gotowce, sa czescia jej kwoty — nie osobna pozycja.
+    savedSeparately,
     cashCountedAt,
     spentSinceCount,
     missing,

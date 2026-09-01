@@ -65,11 +65,16 @@ export default function BalanceOverviewCard({ refreshKey = 0 }) {
               {formatPLN(allTime.balance)}
             </b>
           </span>
+          {/* Wymieniamy WSZYSTKIE trzy skladowe, nie dwie — inaczej liczba
+              nie zgadza sie z tym, co widac obok, i wyglada na blad. */}
           <span className="balance-sub">
             {allTime.earned > 0
-              ? `${formatPLN(allTime.earned, { short: true })} zarobione · `
-                + `${formatPLN(allTime.spent, { short: true })} wydane · `
-                + `zostało ${Math.round((allTime.balance / allTime.earned) * 100)}%`
+              ? `${formatPLN(allTime.earned, { short: true })} zarobione`
+                + ` − ${formatPLN(allTime.spent, { short: true })} wydane`
+                + (allTime.installments > 0
+                  ? ` − ${formatPLN(allTime.installments, { short: true })} raty`
+                  : '')
+                + ` · zostało ${Math.round((allTime.balance / allTime.earned) * 100)}%`
               : 'brak przychodu w historii'}
           </span>
         </div>

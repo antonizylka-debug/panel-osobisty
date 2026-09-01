@@ -11,8 +11,10 @@ import { fetchDebts, fetchPayments } from '../debts/api'
 import { fetchRealHourlyRate, fetchRange } from '../work/api'
 import { todayISO, addDaysISO, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
-import { compareLabel } from '../../lib/compare'
-import { Card, CardHead, ProgressBar, BarChart, PieChart, EmptyState, Sheet, Segmented, StatRow, Kebab } from '../../components/ui'
+import { rangeDays } from '../../lib/period'
+import { usePeriod } from '../period/PeriodContext'
+import PeriodPicker from '../../components/PeriodPicker'
+import { Card, CardHead, ProgressBar, BarChart, PieChart, EmptyState, Sheet, StatRow, SummaryRow, Kebab } from '../../components/ui'
 import { IconEdit, IconTrash } from '../../components/icons'
 import { PageLoader } from '../../components/FullScreenSpinner'
 import BudgetSplitCard from '../budget/BudgetSplitCard'
@@ -27,8 +29,10 @@ export default function ExpensesPage() {
   const today = todayISO()
   const navigate = useNavigate()
   const location = useLocation()
+  const { period, range, previous } = usePeriod()
 
   const [expenses, setExpenses] = useState([])
+  const [prevExpenses, setPrevExpenses] = useState([])
   const [budgets, setBudgets] = useState([])
   const [debts, setDebts] = useState([])
   const [payments, setPayments] = useState([])
@@ -45,26 +49,32 @@ export default function ExpensesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // Wszystko pobierane w granicach wybranego okresu — zaden ekran nie tnie
+  // juz danych po fakcie na "biezacy miesiac".
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [exp, bud, dbt, pay, rate, days, extra] = await Promise.all([
-        fetchExpenses({ from: addDaysISO(today, -120), to: today }),
+      const [exp, prevExp, bud, dbt, pay, rate, days, extra] = await Promise.all([
+        fetchExpenses({ from: range.from, to: range.to }),
+        previous
+          ? fetchExpenses({ from: previous.from, to: previous.to })
+          : Promise.resolve([]),
         fetchBudgets(monthStart(today)),
         fetchDebts(),
         fetchPayments(),
         fetchRealHourlyRate(addDaysISO(today, -30)),
-        fetchRange(monthStart(today), today),
-        fetchExtraIncome({ from: addDaysISO(today, -120), to: today }).catch(() => []),
+        fetchRange(range.from, range.to),
+        fetchExtraIncome({ from: range.from, to: range.to }).catch(() => []),
       ])
-      setExpenses(exp); setBudgets(bud); setDebts(dbt); setPayments(pay)
+      setExpenses(exp); setPrevExpenses(prevExp)
+      setBudgets(bud); setDebts(dbt); setPayments(pay)
       setHourlyRate(rate); setWorkDays(days); setExtraIncome(extra)
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }, [today])
+  }, [today, range.from, range.to, previous])
 
   useEffect(() => { load() }, [load])
 
@@ -73,67 +83,37 @@ export default function ExpensesPage() {
     if (location.pathname.endsWith('/nowy')) navigate('/wydatki', { replace: true })
   }
 
-  const thisMonth = useMemo(
-    () => expenses.filter((e) => e.date >= monthStart(today)),
-    [expenses, today]
-  )
-
-  const monthTotal = thisMonth.reduce((s, e) => s + Number(e.amount), 0)
+  // Pobrane juz w granicach okresu — nie ma czego dodatkowo filtrowac.
+  const inRange = expenses
+  const periodTotal = inRange.reduce((s, e) => s + Number(e.amount), 0)
+  const prevTotal = prevExpenses.reduce((s, e) => s + Number(e.amount), 0)
   const overallBudget = budgets.find((b) => !b.category)
 
-  const monday = useMemo(() => {
-    const now = new Date()
-    const dow = (now.getDay() + 6) % 7
-    return addDaysISO(today, -dow)
-  }, [today])
-
-  // Porownanie do poprzedniego miesiaca / tygodnia — pokazuje, czy wydajesz
-  // wiecej czy mniej niz zwykle, nie tylko ile w liczbach bezwzglednych.
-  const comparison = useMemo(() => {
-    const prevMonthStart = monthStart(addDaysISO(monthStart(today), -1))
-    const prevMonthEnd = addDaysISO(monthStart(today), -1)
-    const prevMonthTotal = expenses
-      .filter((e) => e.date >= prevMonthStart && e.date <= prevMonthEnd)
-      .reduce((s, e) => s + Number(e.amount), 0)
-
-    const weekTotal = expenses.filter((e) => e.date >= monday).reduce((s, e) => s + Number(e.amount), 0)
-    const prevMonday = addDaysISO(monday, -7)
-    const prevSunday = addDaysISO(monday, -1)
-    const prevWeekTotal = expenses
-      .filter((e) => e.date >= prevMonday && e.date <= prevSunday)
-      .reduce((s, e) => s + Number(e.amount), 0)
-
-    return { prevMonthTotal, weekTotal, prevWeekTotal }
-  }, [expenses, today, monday])
+  // Limit miesieczny ma sens tylko wtedy, gdy patrzysz na biezacy miesiac.
+  // Przy dowolnym zakresie (np. 1-20 sierpnia) porownywanie z limitem
+  // calego miesiaca wprowadzaloby w blad, wiec ta karta wtedy znika.
+  const showBudgetCard = period.preset === 'month'
 
   const byContext = useMemo(() => {
     let priv = 0, workSelf = 0, workOther = 0
-    for (const e of thisMonth) {
+    for (const e of inRange) {
       const amt = Number(e.amount)
       if (e.context === 'private') priv += amt
       else if (e.for_whom === 'self') workSelf += amt
       else workOther += amt
     }
     return { priv, workSelf, workOther }
-  }, [thisMonth])
-
-  // Prognoza: przy obecnym tempie w tym tygodniu wydasz ok. X zl
-  const weekForecast = useMemo(() => {
-    const now = new Date()
-    const dow = (now.getDay() + 6) % 7
-    const elapsed = dow + 1
-    return elapsed > 0 ? (comparison.weekTotal / elapsed) * 7 : 0
-  }, [comparison.weekTotal])
+  }, [inRange])
 
   const monthForecast = useMemo(() => {
     const day = Number(today.slice(8))
-    return day > 0 ? (monthTotal / day) * daysInMonth(today) : 0
-  }, [monthTotal, today])
+    return day > 0 ? (periodTotal / day) * daysInMonth(today) : 0
+  }, [periodTotal, today])
 
   // Rozbicie na kategorie — od razu widoczne, posortowane od najwiekszej.
   const byCategory = useMemo(() => {
     const map = new Map()
-    for (const e of thisMonth) {
+    for (const e of inRange) {
       const key = e.category || 'Bez kategorii'
       map.set(key, (map.get(key) ?? 0) + Number(e.amount))
     }
@@ -141,11 +121,11 @@ export default function ExpensesPage() {
       .map(([name, amount]) => ({
         name,
         amount,
-        share: monthTotal > 0 ? amount / monthTotal : 0,
+        share: periodTotal > 0 ? amount / periodTotal : 0,
         limit: budgets.find((b) => b.category === name)?.limit_amount ?? null,
       }))
       .sort((a, b) => b.amount - a.amount)
-  }, [thisMonth, monthTotal, budgets])
+  }, [inRange, periodTotal, budgets])
 
   const subscriptions = useMemo(() => expenses.filter((e) => e.type === 'subscription'), [expenses])
   const subsMonthly = subscriptions.reduce((s, e) => {
@@ -154,57 +134,55 @@ export default function ExpensesPage() {
     return s + amt * factor
   }, 0)
 
+  // Wykres dzienny: dla krotkich okresow dzien po dniu, dla dlugich ostatnie
+  // 30 dni okresu — 365 slupkow i tak nie da sie odczytac.
   const chartData = useMemo(() => {
-    const days = 14
+    const span = Math.min(rangeDays(range), 30)
     const out = []
-    for (let i = days - 1; i >= 0; i--) {
-      const d = addDaysISO(today, -i)
-      const sum = expenses.filter((e) => e.date === d).reduce((s, e) => s + Number(e.amount), 0)
+    for (let i = span - 1; i >= 0; i--) {
+      const d = addDaysISO(range.to, -i)
+      if (d < range.from) continue
+      const sum = inRange.filter((e) => e.date === d).reduce((s, e) => s + Number(e.amount), 0)
       out.push({ label: d.slice(8), value: sum })
     }
     return out
-  }, [expenses, today])
+  }, [inRange, range])
 
   const visible = useMemo(() => {
-    let list = thisMonth
+    let list = inRange
     if (filter === 'private') list = list.filter((e) => e.context === 'private')
     if (filter === 'work-self') list = list.filter((e) => e.context === 'work' && e.for_whom === 'self')
     if (filter === 'work-other') list = list.filter((e) => e.context === 'work' && e.for_whom === 'someone_else')
     if (filter === 'subs') list = list.filter((e) => e.type === 'subscription')
     if (category) list = list.filter((e) => e.category === category)
     return list
-  }, [thisMonth, filter, category])
+  }, [inRange, filter, category])
 
-  // Liczniki przy zakladkach — jak "General 12" u Altezzy. Licza sie z tego
-  // miesiaca bez kategorii, zeby przelaczanie zakladek nie zmienialo liczb.
+  // Liczniki przy zakladkach — licza sie z calego okresu bez kategorii, zeby
+  // przelaczanie zakladek nie zmienialo liczb pod palcem.
   const filterCounts = useMemo(() => ({
-    all: thisMonth.length,
-    private: thisMonth.filter((e) => e.context === 'private').length,
-    'work-self': thisMonth.filter((e) => e.context === 'work' && e.for_whom === 'self').length,
-    'work-other': thisMonth.filter((e) => e.context === 'work' && e.for_whom === 'someone_else').length,
-    subs: thisMonth.filter((e) => e.type === 'subscription').length,
-  }), [thisMonth])
+    all: inRange.length,
+    private: inRange.filter((e) => e.context === 'private').length,
+    'work-self': inRange.filter((e) => e.context === 'work' && e.for_whom === 'self').length,
+    'work-other': inRange.filter((e) => e.context === 'work' && e.for_whom === 'someone_else').length,
+    subs: inRange.filter((e) => e.type === 'subscription').length,
+  }), [inRange])
 
   useEffect(() => { setVisibleCount(20) }, [filter, category])
 
   const budgetTone = overallBudget
-    ? monthTotal / Number(overallBudget.limit_amount) >= 1 ? 'danger'
-      : monthTotal / Number(overallBudget.limit_amount) >= 0.8 ? 'warn' : 'accent'
+    ? periodTotal / Number(overallBudget.limit_amount) >= 1 ? 'danger'
+      : periodTotal / Number(overallBudget.limit_amount) >= 0.8 ? 'warn' : 'accent'
     : 'accent'
 
-  const extraIncomeThisMonth = useMemo(
-    () => extraIncome.filter((e) => e.date >= monthStart(today)),
-    [extraIncome, today]
-  )
-
-  // Ile realnie zostalo z tego, co w tym miesiacu zarobiles.
+  // Ile realnie zostalo z tego, co w tym okresie zarobiles.
   const left = useMemo(() => {
     const earned = workDays.reduce((s, d) => s + Number(d.pay_amount ?? 0), 0)
-      + extraIncomeThisMonth.reduce((s, e) => s + Number(e.amount), 0)
+      + extraIncome.reduce((s, e) => s + Number(e.amount), 0)
     const installments = debts
       .filter((d) => d.active)
       .reduce((s, d) => s + Number(d.monthly_payment), 0)
-    const remaining = earned - monthTotal - installments
+    const remaining = earned - periodTotal - installments
 
     const day = Number(today.slice(8))
     const daysLeft = Math.max(1, daysInMonth(today) - day + 1)
@@ -216,7 +194,7 @@ export default function ExpensesPage() {
       daysLeft,
       perDay: remaining > 0 ? remaining / daysLeft : 0,
     }
-  }, [workDays, extraIncomeThisMonth, debts, monthTotal, today])
+  }, [workDays, extraIncome, debts, periodTotal, today])
 
   if (loading) return <PageLoader />
 
@@ -224,51 +202,70 @@ export default function ExpensesPage() {
     <div className="page-pad">
       <div className="page-head">
         <h1 className="page-title">Wydatki</h1>
-        <button className="btn btn-primary" onClick={() => setAddOpen(true)}>+ Dodaj wydatek</button>
+        <div className="page-head-tools">
+          <PeriodPicker />
+          <button className="btn btn-primary" onClick={() => setAddOpen(true)}>+ Dodaj wydatek</button>
+        </div>
       </div>
       {error && <p className="form-error" role="alert">{error}</p>}
 
+      <SummaryRow
+        items={[
+          {
+            label: 'Wydane w okresie',
+            value: formatPLN(periodTotal),
+            delta: previous ? periodTotal - prevTotal : null,
+            deltaGood: 'down',
+            deltaLabel: formatPLN(Math.abs(periodTotal - prevTotal), { short: true }),
+            deltaHint: `vs ${formatPLN(prevTotal, { short: true })}`,
+            hint: previous ? undefined : 'Brak okresu do porównania',
+          },
+          {
+            label: 'Liczba wydatków',
+            value: String(inRange.length),
+            hint: `${rangeDays(range)} dni w okresie`,
+          },
+          {
+            label: 'Średnio dziennie',
+            value: formatPLN(periodTotal / Math.max(1, rangeDays(range)), { short: true }),
+            hint: hourlyRate ? `≈ ${formatHours(periodTotal / hourlyRate)} pracy` : undefined,
+          },
+          {
+            label: 'Zostało z zarobionego',
+            value: formatPLN(left.remaining),
+            tone: left.remaining < 0 ? 'negative' : undefined,
+            hint: `Zarobione ${formatPLN(left.earned, { short: true })}`,
+          },
+        ]}
+      />
 
-      <Card>
-        <CardHead
-          title="Ten miesiąc"
-          hint={overallBudget ? `Limit ${formatPLN(overallBudget.limit_amount)}` : 'Brak ustawionego limitu'}
-          action={<button className="chip" onClick={() => setBudgetOpen(true)}>Budżet</button>}
-        />
-        <p className="big-number">{formatPLN(monthTotal)}</p>
-        {hourlyRate && (
-          <p className="muted" style={{ marginTop: '.3rem' }}>
-            ≈ {formatHours(monthTotal / hourlyRate)} Twojej pracy
-          </p>
-        )}
-        {compareLabel(monthForecast, comparison.prevMonthTotal, 'poprzedni miesiąc', (v) => formatPLN(v, { short: true })) && (
-          <p className="muted" style={{ marginTop: '.3rem' }}>
-            W tym tempie: {compareLabel(monthForecast, comparison.prevMonthTotal, 'poprzedni miesiąc', (v) => formatPLN(v, { short: true }))}
-          </p>
-        )}
-        {overallBudget && (
-          <div style={{ marginTop: '.8rem' }}>
-            <ProgressBar value={monthTotal} max={Number(overallBudget.limit_amount)} tone={budgetTone} />
-            <p className="muted" style={{ marginTop: '.4rem' }}>
-              {monthTotal >= Number(overallBudget.limit_amount)
-                ? `Limit przekroczony o ${formatPLN(monthTotal - Number(overallBudget.limit_amount))}`
-                : `Zostało ${formatPLN(Number(overallBudget.limit_amount) - monthTotal)}`}
-              {' · '}prognoza na koniec miesiąca {formatPLN(monthForecast, { short: true })}
-            </p>
-          </div>
-        )}
-        <div className="converter is-muted mt-1">
-          Przy obecnym tempie w tym tygodniu wydasz ok. {formatPLN(weekForecast, { short: true })}
-          {compareLabel(weekForecast, comparison.prevWeekTotal, 'poprzedni tydzień', (v) => formatPLN(v, { short: true })) && (
-            <><br />{compareLabel(weekForecast, comparison.prevWeekTotal, 'poprzedni tydzień', (v) => formatPLN(v, { short: true }))}</>
+      {showBudgetCard && (
+        <Card>
+          <CardHead
+            title="Limit miesiąca"
+            hint={overallBudget ? `Limit ${formatPLN(overallBudget.limit_amount)}` : 'Brak ustawionego limitu'}
+            action={<button className="chip" onClick={() => setBudgetOpen(true)}>Budżet</button>}
+          />
+          {overallBudget ? (
+            <>
+              <ProgressBar value={periodTotal} max={Number(overallBudget.limit_amount)} tone={budgetTone} />
+              <p className="muted" style={{ marginTop: '.4rem' }}>
+                {periodTotal >= Number(overallBudget.limit_amount)
+                  ? `Limit przekroczony o ${formatPLN(periodTotal - Number(overallBudget.limit_amount))}`
+                  : `Zostało ${formatPLN(Number(overallBudget.limit_amount) - periodTotal)}`}
+                {' · '}prognoza na koniec miesiąca {formatPLN(monthForecast, { short: true })}
+              </p>
+            </>
+          ) : (
+            <EmptyState>Ustaw limit, a pokażę ile z niego zostało.</EmptyState>
           )}
-        </div>
-      </Card>
+        </Card>
+      )}
 
       <Card>
         <CardHead
           title="Zostało z zarobionego"
-          hint={`Zarobione ${formatPLN(left.earned, { short: true })} · wydane ${formatPLN(monthTotal, { short: true })}${left.installments > 0 ? ` · raty ${formatPLN(left.installments, { short: true })}` : ''}`}
+          hint={`Zarobione ${formatPLN(left.earned, { short: true })} · wydane ${formatPLN(periodTotal, { short: true })}${left.installments > 0 ? ` · raty ${formatPLN(left.installments, { short: true })}` : ''}`}
         />
         <p className={'big-number ' + (left.remaining >= 0 ? 'is-positive' : 'is-negative')}>
           {formatPLN(left.remaining)}
@@ -277,15 +274,15 @@ export default function ExpensesPage() {
         {left.earned > 0 && (
           <div style={{ marginTop: '.8rem' }}>
             <ProgressBar
-              value={Math.min(monthTotal + left.installments, left.earned)}
+              value={Math.min(periodTotal + left.installments, left.earned)}
               max={left.earned}
               tone={
-                (monthTotal + left.installments) / left.earned >= 1 ? 'danger'
-                  : (monthTotal + left.installments) / left.earned >= 0.8 ? 'warn' : 'accent'
+                (periodTotal + left.installments) / left.earned >= 1 ? 'danger'
+                  : (periodTotal + left.installments) / left.earned >= 0.8 ? 'warn' : 'accent'
               }
             />
             <p className="muted" style={{ marginTop: '.4rem' }}>
-              Rozdysponowane {Math.round(((monthTotal + left.installments) / left.earned) * 100)}% zarobku
+              Rozdysponowane {Math.round(((periodTotal + left.installments) / left.earned) * 100)}% zarobku
             </p>
           </div>
         )}
@@ -315,7 +312,7 @@ export default function ExpensesPage() {
           hint="Napiwek, znalezione, sprzedane coś — co dostałeś poza dniówką"
           action={<button className="chip is-active" onClick={() => setExtraOpen(true)}>+ Dodaj</button>}
         />
-        {extraIncomeThisMonth.length === 0 ? (
+        {extraIncome.length === 0 ? (
           <EmptyState>Nic jeszcze nie dopisane w tym miesiącu.</EmptyState>
         ) : (
           <table className="ledger">
@@ -328,7 +325,7 @@ export default function ExpensesPage() {
               </tr>
             </thead>
             <tbody>
-              {extraIncomeThisMonth.map((e) => (
+              {extraIncome.map((e) => (
                 <ExtraIncomeRow key={e.id} entry={e} onDeleted={load} />
               ))}
             </tbody>
@@ -336,7 +333,7 @@ export default function ExpensesPage() {
         )}
       </Card>
 
-      <BudgetSplitCard income={left.earned} expenses={thisMonth} />
+      <BudgetSplitCard income={left.earned} expenses={inRange} />
 
       <StatRow
         items={[
@@ -380,7 +377,7 @@ export default function ExpensesPage() {
                       <div className="ledger-bar">
                         <ProgressBar
                           value={c.amount}
-                          max={c.limit ? Number(c.limit) : monthTotal}
+                          max={c.limit ? Number(c.limit) : periodTotal}
                           tone={ratio == null ? 'accent' : ratio >= 1 ? 'danger' : ratio >= 0.8 ? 'warn' : 'accent'}
                         />
                       </div>

@@ -8,6 +8,7 @@ import AccentMenu from './AccentMenu'
 import {
   IconStart, IconGratitude, IconExpenses, IconWorkHours, IconJournal, IconDoItNow,
   IconBody, IconSun, IconMoon, IconSearch, IconSettings, IconLogout, IconLogo, IconCollapse,
+  IconPayout,
 } from './icons'
 
 /** Zakladki pogrupowane w sekcje — jak CRM/CLIENTS/ACTIVITY w bocznym panelu Altezzy. */
@@ -19,6 +20,7 @@ const NAV_GROUPS = [
   {
     label: 'Finanse',
     items: [
+      { to: '/przychody', label: 'Przychody', Icon: IconPayout },
       { to: '/wydatki', label: 'Wydatki', Icon: IconExpenses },
       { to: '/godziny-pracy', label: 'Godziny', Icon: IconWorkHours },
     ],
@@ -41,6 +43,7 @@ const NAV_GROUPS = [
 const PAGE_LABELS = {
   '/': 'Dashboard',
   '/wdziecznosc': 'Wdzięczność',
+  '/przychody': 'Przychody',
   '/wydatki': 'Wydatki',
   '/godziny-pracy': 'Godziny pracy',
   '/cialo': 'Zdrowie',

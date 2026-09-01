@@ -535,7 +535,7 @@ a { color: var(--accent); }
 .bottom-nav {
   flex: none;
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(8, 1fr);
   gap: .2rem;
   background: var(--surface);
   border-radius: 6px;
@@ -1153,6 +1153,114 @@ a { color: var(--accent); }
   .ledger td.ledger-actions::before { content: none; }
 }
 
+/* ---------------------------------------------------------------------------
+   WYBOR OKRESU — wspolny dla Wydatkow, Przychodow i Godzin pracy.
+   --------------------------------------------------------------------------- */
+.period { position: relative; }
+.period-trigger {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  font: inherit;
+  padding: .4rem .65rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+.period-trigger:hover { border-color: var(--line-hard); background: var(--surface-2); }
+.period-trigger-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.period-trigger-label { font-size: .82rem; font-weight: 600; }
+.period-trigger-range { font-size: .7rem; color: var(--ink-faint); white-space: nowrap; }
+.period-chevron { width: 14px; height: 14px; flex: none; color: var(--ink-faint); }
+
+.period-popover {
+  position: absolute;
+  top: calc(100% + .35rem);
+  right: 0;
+  z-index: 60;
+  width: max-content;
+  min-width: 260px;
+  max-width: min(92vw, 340px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: .75rem;
+  box-shadow: var(--shadow-card);
+}
+.period-section {
+  display: block;
+  font-size: .62rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: .45rem;
+}
+.period-presets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .25rem;
+  margin-bottom: .9rem;
+}
+.period-option {
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 500;
+  text-align: left;
+  padding: .4rem .5rem;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink-mid);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.period-option:hover { background: var(--surface-2); color: var(--ink); }
+.period-option.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.period-custom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .5rem;
+  margin-bottom: .6rem;
+}
+.period-custom .field { font-size: .72rem; }
+.period-custom .field input { padding: .45rem .55rem; font-size: .8rem; border-radius: 3px; }
+
+/* --- rzad podsumowania okresu: kilka duzych liczb obok siebie --- */
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.summary-cell { background: var(--surface); padding: .8rem .9rem; }
+.summary-label {
+  display: block;
+  font-size: .62rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: .3rem;
+}
+.summary-value {
+  display: block;
+  font-size: 1.3rem; font-weight: 600; letter-spacing: -.015em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.summary-value.is-negative { color: var(--danger); }
+.summary-delta { display: block; margin-top: .25rem; font-size: .72rem; color: var(--ink-faint); }
+.summary-delta.is-up { color: #12805A; }
+.summary-delta.is-down { color: var(--danger); }
+:root[data-theme='dark'] .summary-delta.is-up { color: #4FBF8B; }
+
 /* --- male przyciski akcji/filtrow — bordowane prostokaty jak "Select Date"
    / "All Activities" u Altezzy, nie pelne pigulki (te sa zarezerwowane dla
    .badge — status/liczniki). Ujednolica wyglad kazdego malego przycisku w
@@ -1528,6 +1636,15 @@ li:last-child > .row-item--flat { border-bottom: none; }
   gap: 1rem; margin-bottom: 1rem;
 }
 .page-head .page-title { margin: 0; }
+/* Prawa strona naglowka: wybor okresu + glowna akcja. Zawija sie na waskim
+   ekranie, zeby przycisk nie wypychal daty poza krawedz. */
+.page-head-tools {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
 
 /* --- wskaznik offline --- */
 .offline-pill {

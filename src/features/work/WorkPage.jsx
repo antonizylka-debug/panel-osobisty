@@ -4,28 +4,26 @@ import WorkDayForm from './WorkDayForm'
 import { fetchDay, fetchRange, fetchPending, settlePayment, doorToDoorHours } from './api'
 import { fetchBlocksRange } from './blocksApi'
 import { categoryLabel } from './TimeBlocks'
-import { todayISO, addDaysISO, isoDate, daysBetweenISO, formatDatePl } from '../../lib/date'
+import { todayISO, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
-import { compareLabel } from '../../lib/compare'
-import { Card, CardHead, BarChart, EmptyState, StatRow, Sheet, Segmented } from '../../components/ui'
+import { rangeDays } from '../../lib/period'
+import { usePeriod } from '../period/PeriodContext'
+import PeriodPicker from '../../components/PeriodPicker'
+import { Card, CardHead, BarChart, EmptyState, SummaryRow, Sheet } from '../../components/ui'
 import { PageLoader } from '../../components/FullScreenSpinner'
-import { IconWorkHours, IconPayout, IconCheck } from '../../components/icons'
 
 const DAY_TYPE_LABEL = { work: 'Praca', off: 'Wolne', vacation: 'Urlop', sick: 'L4' }
 
-function monthStart(iso) {
-  return iso.slice(0, 8) + '01'
-}
-
 export default function WorkPage() {
   const today = todayISO()
+  const { range: periodRange, previous } = usePeriod()
   const [params, setParams] = useSearchParams()
   const [date, setDate] = useState(params.get('data') ?? today)
   const [entry, setEntry] = useState(null)
-  const [month, setMonth] = useState([])
+  const [days, setDays] = useState([])
+  const [prevDays, setPrevDays] = useState([])
   const [pending, setPending] = useState([])
   const [blocks, setBlocks] = useState([])
-  const [range, setRange] = useState('week')
   const [settleOpen, setSettleOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -33,14 +31,16 @@ export default function WorkPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [day, days, pend, blks] = await Promise.all([
+      const [day, inRange, before, pend, blks] = await Promise.all([
         fetchDay(date),
-        fetchRange(addDaysISO(today, -60), today),
+        fetchRange(periodRange.from, periodRange.to),
+        previous ? fetchRange(previous.from, previous.to) : Promise.resolve([]),
         fetchPending(),
-        fetchBlocksRange(addDaysISO(today, -60), today).catch(() => []),
+        fetchBlocksRange(periodRange.from, periodRange.to).catch(() => []),
       ])
       setEntry(day)
-      setMonth(days)
+      setDays(inRange)
+      setPrevDays(before)
       setPending(pend)
       setBlocks(blks)
     } catch (err) {
@@ -48,7 +48,7 @@ export default function WorkPage() {
     } finally {
       setLoading(false)
     }
-  }, [date, today])
+  }, [date, periodRange.from, periodRange.to, previous])
 
   useEffect(() => { load() }, [load])
 
@@ -59,28 +59,12 @@ export default function WorkPage() {
 
   function handleSaved(saved) {
     setEntry(saved)
-    setMonth((prev) => [saved, ...prev.filter((d) => d.date !== saved.date)].sort((a, b) => (a.date < b.date ? 1 : -1)))
+    setDays((prev) => [saved, ...prev.filter((d) => d.date !== saved.date)].sort((a, b) => (a.date < b.date ? 1 : -1)))
     fetchPending().then(setPending).catch(() => {})
   }
 
-  const thisMonth = useMemo(() => month.filter((d) => d.date >= monthStart(today)), [month, today])
-  const thisWeek = useMemo(() => {
-    const now = new Date()
-    const dow = (now.getDay() + 6) % 7
-    const monday = isoDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow))
-    return month.filter((d) => d.date >= monday)
-  }, [month])
-
-  const scope = range === 'week' ? thisWeek : thisMonth
-
-  // Poczatek wybranego zakresu — potrzebny osobno, bo bloki czasu
-  // filtrujemy po dacie, a nie po liscie dni z work_days.
-  const scopeFrom = useMemo(() => {
-    if (range === 'month') return monthStart(today)
-    const now = new Date()
-    const dow = (now.getDay() + 6) % 7
-    return isoDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow))
-  }, [range, today])
+  // Pobrane juz w granicach wybranego okresu.
+  const scope = days
 
   const totals = useMemo(() => {
     let hours = 0, pay = 0, workDays = 0, offDays = 0
@@ -92,31 +76,21 @@ export default function WorkPage() {
     }
 
     // Godziny poza dniowka biora sie z blokow czasu, nie z pol na work_days.
-    // Liczymy po dacie, nie po tym, czy dzien ma wpis w work_days — blok moze
-    // istniec w dniu, w ktorym nie bylo zadnej dniowki.
+    // Bloki sa juz pobrane w tym samym zakresie, wiec nie trzeba ich ciac.
     const byCategory = {}
     for (const b of blocks) {
-      if (b.date < scopeFrom) continue
       byCategory[b.category] = (byCategory[b.category] ?? 0) + Number(b.hours ?? 0)
     }
 
     return { hours, pay, workDays, offDays, byCategory }
-  }, [scope, blocks, scopeFrom])
+  }, [scope, blocks])
 
-  // Ten sam kawalek poprzedniego okresu (do tego samego dnia tygodnia / miesiaca) —
-  // zeby porownanie bylo uczciwe, a nie caly poprzedni tydzien vs kilka dni biezacego.
+  // Poprzedni odcinek tej samej dlugosci — zeby porownanie bylo uczciwe.
   const prevTotals = useMemo(() => {
-    const elapsed = daysBetweenISO(scopeFrom, today)
-    const prevFrom = range === 'week'
-      ? addDaysISO(scopeFrom, -7)
-      : monthStart(addDaysISO(scopeFrom, -1))
-    const prevTo = addDaysISO(prevFrom, elapsed)
-    const prevScope = month.filter((d) => d.date >= prevFrom && d.date <= prevTo)
-
     let hours = 0, pay = 0
-    for (const d of prevScope) { hours += Number(d.hours_worked ?? 0); pay += Number(d.pay_amount ?? 0) }
+    for (const d of prevDays) { hours += Number(d.hours_worked ?? 0); pay += Number(d.pay_amount ?? 0) }
     return { hours, pay }
-  }, [month, range, scopeFrom, today])
+  }, [prevDays])
 
   const realRate = useMemo(() => {
     let pay = 0, span = 0
@@ -128,35 +102,28 @@ export default function WorkPage() {
   }, [scope])
 
   const chartData = useMemo(
-    () => [...scope].sort((a, b) => (a.date < b.date ? -1 : 1)).slice(-14)
+    () => [...scope].sort((a, b) => (a.date < b.date ? -1 : 1)).slice(-30)
       .map((d) => ({ label: d.date.slice(8), value: Number(d.hours_worked ?? 0) })),
     [scope]
   )
 
   // Srednia liczona tylko z dni, w ktorych faktycznie byly godziny —
-  // dzielenie przez 7 czy 30 zanizaloby ja o dni wolne.
+  // dzielenie przez wszystkie dni okresu zanizaloby ja o dni wolne.
   const averages = useMemo(() => {
-    const now = new Date()
-    const dow = (now.getDay() + 6) % 7
-    const monday = isoDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow))
+    const worked = scope.filter((d) => Number(d.hours_worked ?? 0) > 0)
+    const total = worked.reduce((s, d) => s + Number(d.hours_worked), 0)
+    const pay = worked.reduce((s, d) => s + Number(d.pay_amount ?? 0), 0)
+    const weeks = rangeDays(periodRange) / 7
 
-    function avgSince(from, label) {
-      const days = month.filter((d) => d.date >= from && Number(d.hours_worked ?? 0) > 0)
-      const total = days.reduce((s, d) => s + Number(d.hours_worked), 0)
-      const pay = days.reduce((s, d) => s + Number(d.pay_amount ?? 0), 0)
-      const weeks = (daysBetweenISO(from, today) + 1) / 7
-      return {
-        label, days: days.length, total, avg: days.length ? total / days.length : 0,
-        pay, avgPerWeek: weeks > 0 ? pay / weeks : 0,
-      }
-    }
-
-    return [
-      avgSince(monday, 'Ten tydzień'),
-      avgSince(addDaysISO(today, -13), 'Ostatnie 2 tygodnie'),
-      avgSince(monthStart(today), 'Ten miesiąc'),
-    ]
-  }, [month, today])
+    return [{
+      label: 'Wybrany okres',
+      days: worked.length,
+      total,
+      avg: worked.length ? total / worked.length : 0,
+      pay,
+      avgPerWeek: weeks > 0 ? pay / weeks : 0,
+    }]
+  }, [scope, periodRange])
 
   const pendingTotal = pending.reduce((s, d) => s + Number(d.pay_amount ?? 0), 0)
 
@@ -164,8 +131,45 @@ export default function WorkPage() {
 
   return (
     <div className="page-pad">
-      <h1 className="page-title">Godziny pracy</h1>
+      <div className="page-head">
+        <h1 className="page-title">Godziny pracy</h1>
+        <div className="page-head-tools">
+          <PeriodPicker />
+        </div>
+      </div>
       {error && <p className="form-error" role="alert">{error}</p>}
+
+      <SummaryRow
+        items={[
+          {
+            label: 'Przepracowane godziny',
+            value: formatHours(totals.hours),
+            delta: previous ? totals.hours - prevTotals.hours : null,
+            deltaGood: 'up',
+            deltaLabel: formatHours(Math.abs(totals.hours - prevTotals.hours)),
+            deltaHint: `vs ${formatHours(prevTotals.hours)}`,
+            hint: previous ? undefined : 'Brak okresu do porównania',
+          },
+          {
+            label: 'Zarobione',
+            value: formatPLN(totals.pay),
+            delta: previous ? totals.pay - prevTotals.pay : null,
+            deltaGood: 'up',
+            deltaLabel: formatPLN(Math.abs(totals.pay - prevTotals.pay), { short: true }),
+            deltaHint: `vs ${formatPLN(prevTotals.pay, { short: true })}`,
+          },
+          {
+            label: 'Dni pracy',
+            value: String(totals.workDays),
+            hint: `${rangeDays(periodRange)} dni w okresie`,
+          },
+          {
+            label: 'Realna stawka',
+            value: realRate != null ? `${formatPLN(realRate)}/h` : '—',
+            hint: 'Od wyjazdu do powrotu',
+          },
+        ]}
+      />
 
       <Card>
         <CardHead
@@ -185,25 +189,8 @@ export default function WorkPage() {
         <WorkDayForm date={date} entry={entry} onSaved={handleSaved} />
       </Card>
 
-      <Segmented
-        ariaLabel="Zakres"
-        value={range}
-        onChange={setRange}
-        options={[{ value: 'week', label: 'Ten tydzień' }, { value: 'month', label: 'Ten miesiąc' }]}
-      />
-
-      <div style={{ height: '1rem' }} />
-
-      <StatRow
-        items={[
-          { label: 'godzin', value: Math.round(totals.hours), icon: <IconWorkHours />, tone: 'violet' },
-          { label: 'dniówki', value: formatPLN(totals.pay, { short: true }), icon: <IconPayout />, tone: 'green' },
-          { label: 'dni pracy', value: totals.workDays, icon: <IconCheck />, tone: 'amber' },
-        ]}
-      />
-
       <Card>
-        <CardHead title="Na co szedł czas" hint={range === 'week' ? 'Ten tydzień' : 'Ten miesiąc'} />
+        <CardHead title="Na co szedł czas" hint="W wybranym okresie" />
         <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
           {formatHours(totals.hours)} za pieniądze
           {Object.entries(totals.byCategory).map(([cat, h]) => (
@@ -219,20 +206,6 @@ export default function WorkPage() {
           <div className="converter mt-1">Realna stawka w tym okresie: {formatPLN(realRate)}/h</div>
         )}
         <p className="muted mt-1">Dni wolnych, urlopu i L4: {totals.offDays}</p>
-
-        {(() => {
-          const noun = range === 'week' ? 'ten sam moment poprzedniego tygodnia' : 'ten sam dzień poprzedniego miesiąca'
-          const hoursLabel = compareLabel(totals.hours, prevTotals.hours, noun, formatHours)
-          const payLabel = compareLabel(totals.pay, prevTotals.pay, noun, (v) => formatPLN(v, { short: true }))
-          if (!hoursLabel && !payLabel) return null
-          return (
-            <p className="muted mt-1">
-              {hoursLabel}
-              {hoursLabel && payLabel && <br />}
-              {payLabel}
-            </p>
-          )
-        })()}
       </Card>
 
       <Card>
@@ -263,19 +236,10 @@ export default function WorkPage() {
             ))}
           </tbody>
         </table>
-        {averages[0].days > 0 && averages[2].days > 0 && (
-          <div className="converter mt-1">
-            {averages[0].avg > averages[2].avg
-              ? `W tym tygodniu robisz o ${formatHours(averages[0].avg - averages[2].avg)} dziennie więcej niż średnio w miesiącu.`
-              : averages[0].avg < averages[2].avg
-                ? `W tym tygodniu robisz o ${formatHours(averages[2].avg - averages[0].avg)} dziennie mniej niż średnio w miesiącu.`
-                : 'Trzymasz równe tempo względem miesiąca.'}
-          </div>
-        )}
       </Card>
 
       <Card>
-        <CardHead title="Godziny dzień po dniu" hint="Ostatnie dwa tygodnie z zakresu" />
+        <CardHead title="Godziny dzień po dniu" hint="W wybranym okresie" />
         <BarChart data={chartData} height={90} format={formatHours} />
       </Card>
 

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
 import { ThemeProvider } from './theme/ThemeContext'
 import { SyncProvider } from './offline/SyncContext'
+import { PeriodProvider } from './features/period/PeriodContext'
 import ProtectedRoute from './auth/ProtectedRoute'
 import GuestRoute from './auth/GuestRoute'
 import AppShell from './components/AppShell'
@@ -17,6 +18,7 @@ import StartPage from './features/start/StartPage'
 import GratitudePage from './features/gratitude/GratitudePage'
 import WorkPage from './features/work/WorkPage'
 import ExpensesPage from './features/expenses/ExpensesPage'
+import IncomePage from './features/income/IncomePage'
 import JournalPage from './features/journal/JournalPage'
 import ProcrastinationPage from './features/procrastination/ProcrastinationPage'
 import BodyPage from './features/body/BodyPage'
@@ -31,6 +33,7 @@ export default function App() {
       <AuthProvider>
         <ThemeProvider>
           <SyncProvider>
+          <PeriodProvider>
           <Routes>
             <Route element={<GuestRoute />}>
               <Route path="/logowanie" element={<LoginPage />} />
@@ -53,6 +56,7 @@ export default function App() {
                 <Route path="/godziny-pracy/nowy" element={<WorkPage />} />
                 <Route path="/wydatki" element={<ExpensesPage />} />
                 <Route path="/wydatki/nowy" element={<ExpensesPage />} />
+                <Route path="/przychody" element={<IncomePage />} />
                 <Route path="/cialo" element={<BodyPage />} />
                 <Route path="/mysli-i-cele" element={<JournalPage />} />
                 <Route path="/zrob-to-teraz" element={<ProcrastinationPage />} />
@@ -65,6 +69,7 @@ export default function App() {
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </PeriodProvider>
           </SyncProvider>
         </ThemeProvider>
       </AuthProvider>

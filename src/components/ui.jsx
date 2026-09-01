@@ -91,6 +91,42 @@ export function EmptyState({ children }) {
   return <p className="empty-state">{children}</p>
 }
 
+/**
+ * Rzad glownych liczb okresu.
+ * `items`: [{ label, value, delta?, deltaGood?, tone? }]
+ *  - delta        — zmiana wzgledem poprzedniego okresu (liczba, moze byc ujemna)
+ *  - deltaGood    — czy wzrost jest dobry ('up' | 'down'); przy wydatkach
+ *                   wzrost jest zly, przy zarobkach dobry
+ */
+export function SummaryRow({ items }) {
+  return (
+    <div className="summary-row">
+      {items.map((it) => {
+        const hasDelta = it.delta != null && Number.isFinite(it.delta)
+        const rising = hasDelta && it.delta > 0
+        const flat = hasDelta && Math.abs(it.delta) < 0.5
+        const good = it.deltaGood === 'down' ? !rising : rising
+
+        return (
+          <div className="summary-cell" key={it.label}>
+            <span className="summary-label">{it.label}</span>
+            <b className={'summary-value' + (it.tone === 'negative' ? ' is-negative' : '')}>
+              {it.value}
+            </b>
+            {hasDelta && (
+              <span className={'summary-delta' + (flat ? '' : good ? ' is-up' : ' is-down')}>
+                {flat ? 'bez zmian' : `${rising ? '▲' : '▼'} ${it.deltaLabel}`}
+                {it.deltaHint ? ` ${it.deltaHint}` : ''}
+              </span>
+            )}
+            {!hasDelta && it.hint && <span className="summary-delta">{it.hint}</span>}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export function Segmented({ options, value, onChange, ariaLabel }) {
   return (
     <div className="segmented" role="group" aria-label={ariaLabel}>

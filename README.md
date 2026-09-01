@@ -12,7 +12,7 @@ bloki czasu, koperty budżetowe i motywy kolorystyczne dorobione poza nią.
 
 ```
 supabase/
-├── migrations/                    16 plików, uruchamiane po kolei
+├── migrations/                    17 plików, uruchamiane po kolei
 │   ├── 0001_schema.sql            typy, tabele, indeksy, triggery updated_at
 │   ├── 0002_rls.sql               RLS + 4 polityki na każdej tabeli, bez wyjątków
 │   ├── 0003_storage.sql           prywatny bucket na paragony + polityki
@@ -28,7 +28,8 @@ supabase/
 │   ├── 0013_budget_buckets.sql    podział przychodu 50/30/20
 │   ├── 0014_repair_budget_category_map.sql  naprawa mapowania po buggu w starym saveBuckets()
 │   ├── 0015_savings_target_date.sql  termin celu oszczędnościowego
-│   └── 0016_extra_income.sql      dodatkowa kasa poza dniówką (napiwki, znalezione itd.)
+│   ├── 0016_extra_income.sql      dodatkowa kasa poza dniówką (napiwki, znalezione itd.)
+│   └── 0017_cash_on_hand.sql      gotówka w domu — spisy z natury, nie ruchy
 └── tests/
     └── rls.test.mjs               87 testów na PGlite (Postgres w WASM)
 ```
@@ -36,7 +37,7 @@ supabase/
 ## Jak wgrać bazę do Supabase
 
 1. Załóż projekt na [supabase.com](https://supabase.com) (plan darmowy).
-2. SQL Editor → wklej i uruchom pliki **po kolei**, od `0001` do `0016`.
+2. SQL Editor → wklej i uruchom pliki **po kolei**, od `0001` do `0017`.
 3. Authentication → Providers → Email: włącz **Confirm email**.
 4. Authentication → URL Configuration: ustaw adres apki (potrzebne do potwierdzenia maila i resetu hasła).
 

@@ -13,6 +13,7 @@ import {
 import { IconTrash } from '../../components/icons'
 import { PageLoader } from '../../components/FullScreenSpinner'
 import PeriodPicker from '../../components/PeriodPicker'
+import CashOnHandCard from '../cash/CashOnHandCard'
 
 export default function IncomePage() {
   const { range, previous } = usePeriod()
@@ -117,6 +118,10 @@ export default function IncomePage() {
           },
         ]}
       />
+
+      {/* Gotowka w domu nie zalezy od wybranego okresu — to stan na teraz,
+          nie suma z zakresu dat. */}
+      <CashOnHandCard />
 
       <Card>
         <CardHead title="Jak to się rozkłada" hint="W wybranym okresie" />

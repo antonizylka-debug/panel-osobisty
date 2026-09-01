@@ -1367,6 +1367,58 @@ a { color: var(--accent); }
   .meditation-circle { transition: none !important; }
 }
 
+/* --- bilans w kilku okresach obok siebie --- */
+/* Kazdy kafelek ma wlasna ramke zamiast sztuczki z tlem i 1px odstepem —
+   przy zawijaniu (4 + 1) puste miejsce w rzedzie nie zostawialoby wtedy
+   podbarwionej dziury. */
+.balance-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: .4rem;
+}
+.balance-cell {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: .65rem .75rem;
+}
+/* "Od zawsze" idzie przez cala szerokosc pod okresami — inaczej zawijalo sie
+   samo w drugi rzad i zostawialo pusta dziure obok. Przy okazji dostaje
+   wieksza liczbe, bo to jedyna wartosc, ktora nie zeruje sie co miesiac. */
+.balance-cell.is-total {
+  grid-column: 1 / -1;
+  background: var(--surface-2);
+  box-shadow: inset 2px 0 0 var(--accent);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .3rem 1rem;
+}
+.balance-cell.is-total .balance-value { font-size: 1.5rem; }
+.balance-cell.is-total .balance-label { margin-bottom: 0; }
+/* Etykieta i podpis chowaja sie po bokach, liczba zostaje w srodku uwagi. */
+.balance-total-main { display: flex; flex-direction: column; gap: .2rem; }
+.balance-label {
+  display: block;
+  font-size: .6rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: .25rem;
+  white-space: nowrap;
+}
+.balance-value {
+  display: block;
+  font-size: 1.15rem; font-weight: 600; letter-spacing: -.015em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+.balance-value.is-positive { color: var(--ink); }
+.balance-value.is-negative { color: var(--danger); }
+.balance-sub {
+  display: block; margin-top: .2rem;
+  font-size: .68rem; color: var(--ink-faint);
+}
+
 /* --- szybki wydatek na Pulpicie --- */
 .quick-expense { display: flex; flex-direction: column; gap: .7rem; }
 .quick-expense-row { display: flex; gap: .6rem; flex-wrap: wrap; }

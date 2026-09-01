@@ -21,6 +21,7 @@ import { IconWorkHours, IconPayout, IconExpenses } from '../../components/icons'
 import BudgetSplitCard from '../budget/BudgetSplitCard'
 import SavingsGoalSheet from '../budget/SavingsGoalSheet'
 import NetWorthCard from '../networth/NetWorthCard'
+import BalanceOverviewCard from '../balance/BalanceOverviewCard'
 import QuickAddExpense from '../expenses/QuickAddExpense'
 import { generateDueExpenses } from '../expenses/recurringApi'
 import { savingsProjection } from '../../lib/savings'
@@ -226,8 +227,12 @@ export default function StartPage() {
         )}
       </div>
 
-      {/* Wszystkie pieniadze w jednej liczbie — najwyzej na stronie, bo to
-          jedyna wartosc, ktora sprawdza sie codziennie. */}
+      {/* Bilans w kilku okresach naraz — "ile mi zostaje" w skali dnia,
+          tygodnia, miesiaca, roku i calej historii. */}
+      <BalanceOverviewCard refreshKey={refreshKey} />
+
+      {/* Wszystkie pieniadze w jednej liczbie — jedyna wartosc, ktora
+          sprawdza sie codziennie. */}
       <NetWorthCard key={`nw-${refreshKey}`} />
 
       {/* Dopisanie wydatku bez wchodzenia w Wydatki — najczestsza czynnosc

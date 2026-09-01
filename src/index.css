@@ -535,7 +535,9 @@ a { color: var(--accent); }
 .bottom-nav {
   flex: none;
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
+  /* Na telefonie widac 4 glowne zakladki + "Więcej" (reszta chowa sie pod
+     .desktop-only-nav). Na desktopie ten sam <nav> zamienia sie w kolumne. */
+  grid-template-columns: repeat(5, 1fr);
   gap: .2rem;
   background: var(--surface);
   border-radius: 6px;
@@ -572,6 +574,50 @@ a { color: var(--accent); }
 .side-nav-list, .side-nav-group, .side-brand-row { display: contents; }
 .mobile-only { display: inline-flex; }
 .desktop-only { display: none; }
+/* Zakladki spoza czworki glownej — tylko desktop; na telefonie sa w "Więcej". */
+.desktop-only-nav { display: none; }
+.mobile-only-nav { display: flex; }
+
+/* --- pelna lista zakladek na telefonie --- */
+.more-backdrop {
+  position: fixed; inset: 0; z-index: 80;
+  background: rgba(15,17,18,.5);
+  display: flex; align-items: flex-end; justify-content: center;
+  padding: 1rem;
+}
+.more-sheet {
+  width: 100%; max-width: 520px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  max-height: 80dvh;
+  overflow-y: auto;
+}
+.more-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: .4rem;
+  padding: 0 1rem 1.25rem;
+}
+.more-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .4rem;
+  padding: .85rem .5rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--ink-mid);
+  text-decoration: none;
+  font-size: .74rem;
+  font-weight: 500;
+  text-align: center;
+}
+.more-item svg { width: 20px; height: 20px; }
+.more-item:hover { border-color: var(--line-hard); color: var(--ink); }
+.more-item.is-active {
+  color: var(--ink);
+  border-color: var(--accent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
 
 /* ---------------------------------------------------------------------------
    DESKTOP — nawigacja przenosi sie z dolu na bok, jako ciemny panel z
@@ -607,6 +653,9 @@ a { color: var(--accent); }
   .shell-top .shell-brand { display: none; }
   .mobile-only { display: none; }
   .desktop-only { display: inline-flex; }
+  /* Na desktopie boczny panel pokazuje wszystko, a "Więcej" jest zbedne. */
+  .desktop-only-nav { display: flex; }
+  .mobile-only-nav { display: none; }
 
   .shell-breadcrumb {
     display: flex;

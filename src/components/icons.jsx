@@ -199,6 +199,49 @@ export function IconCollapse(props) {
   )
 }
 
+/** Czytanie — otwarta ksiazka. */
+export function IconBook(props) {
+  return (
+    <svg {...common} {...props}>
+      <path d="M12 6.5v13" />
+      <path d="M12 6.5C10.5 5 8.5 4.5 4 4.5v13c4.5 0 6.5.5 8 2" />
+      <path d="M12 6.5C13.5 5 15.5 4.5 20 4.5v13c-4.5 0-6.5.5-8 2" />
+    </svg>
+  )
+}
+
+/** Bez nalogu — tarcza. */
+export function IconShield(props) {
+  return (
+    <svg {...common} {...props}>
+      <path d="M12 3.5 5 6.2v5c0 4.2 2.9 7.5 7 9.3 4.1-1.8 7-5.1 7-9.3v-5L12 3.5Z" />
+      <path d="m9.2 11.8 2 2 3.6-3.8" />
+    </svg>
+  )
+}
+
+/** Lista rzeczy — koszyk. */
+export function IconWish(props) {
+  return (
+    <svg {...common} {...props}>
+      <path d="M3.5 5.5h2l2 9.5h9.5l2-7H7" />
+      <circle cx="9.5" cy="19" r="1.4" />
+      <circle cx="16.5" cy="19" r="1.4" />
+    </svg>
+  )
+}
+
+/** "Wiecej" na dolnym pasku — trzy kropki w poziomie. */
+export function IconMore2(props) {
+  return (
+    <svg {...common} {...props}>
+      <circle cx="5" cy="12" r="1.6" />
+      <circle cx="12" cy="12" r="1.6" />
+      <circle cx="19" cy="12" r="1.6" />
+    </svg>
+  )
+}
+
 /** Medytacja — koncentryczne kregi, jak rozchodzacy sie oddech. */
 export function IconMeditation(props) {
   return (

@@ -23,6 +23,9 @@ import JournalPage from './features/journal/JournalPage'
 import ProcrastinationPage from './features/procrastination/ProcrastinationPage'
 import BodyPage from './features/body/BodyPage'
 import MeditationPage from './features/meditation/MeditationPage'
+import ReadingPage from './features/reading/ReadingPage'
+import QuitPage from './features/quit/QuitPage'
+import WishlistPage from './features/wishlist/WishlistPage'
 import WeeklyReviewPage from './features/extras/WeeklyReviewPage'
 import FavoritesPage from './features/extras/FavoritesPage'
 import SearchPage from './features/extras/SearchPage'
@@ -60,6 +63,9 @@ export default function App() {
                 <Route path="/przychody" element={<IncomePage />} />
                 <Route path="/cialo" element={<BodyPage />} />
                 <Route path="/medytacja" element={<MeditationPage />} />
+                <Route path="/czytanie" element={<ReadingPage />} />
+                <Route path="/bez-nalogu" element={<QuitPage />} />
+                <Route path="/lista-rzeczy" element={<WishlistPage />} />
                 <Route path="/mysli-i-cele" element={<JournalPage />} />
                 <Route path="/zrob-to-teraz" element={<ProcrastinationPage />} />
                 <Route path="/przeglad-tygodnia" element={<WeeklyReviewPage />} />

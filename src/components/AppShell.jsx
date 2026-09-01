@@ -8,7 +8,7 @@ import AccentMenu from './AccentMenu'
 import {
   IconStart, IconGratitude, IconExpenses, IconWorkHours, IconJournal, IconDoItNow,
   IconBody, IconSun, IconMoon, IconSearch, IconSettings, IconLogout, IconLogo, IconCollapse,
-  IconPayout, IconMeditation,
+  IconPayout, IconMeditation, IconBook, IconShield, IconWish, IconMore2,
 } from './icons'
 
 /** Zakladki pogrupowane w sekcje — jak CRM/CLIENTS/ACTIVITY w bocznym panelu Altezzy. */
@@ -23,6 +23,7 @@ const NAV_GROUPS = [
       { to: '/przychody', label: 'Przychody', Icon: IconPayout },
       { to: '/wydatki', label: 'Wydatki', Icon: IconExpenses },
       { to: '/godziny-pracy', label: 'Godziny', Icon: IconWorkHours },
+      { to: '/lista-rzeczy', label: 'Lista rzeczy', Icon: IconWish },
     ],
   },
   {
@@ -31,6 +32,8 @@ const NAV_GROUPS = [
       { to: '/wdziecznosc', label: 'Wdzięczność', Icon: IconGratitude },
       { to: '/cialo', label: 'Zdrowie', Icon: IconBody },
       { to: '/medytacja', label: 'Medytacja', Icon: IconMeditation },
+      { to: '/czytanie', label: 'Czytanie', Icon: IconBook },
+      { to: '/bez-nalogu', label: 'Bez nałogu', Icon: IconShield },
       { to: '/mysli-i-cele', label: 'Notatki', Icon: IconJournal },
     ],
   },
@@ -39,6 +42,16 @@ const NAV_GROUPS = [
     items: [{ to: '/zrob-to-teraz', label: 'Fokus', Icon: IconDoItNow }],
   },
 ]
+
+/**
+ * Dolny pasek na telefonie miesci sensownie 5 pozycji — przy 12 zakladkach
+ * kazda mialaby ~30 px i nie dalo sie w nia trafic. Pokazujemy wiec cztery
+ * uzywane codziennie i "Więcej", ktore otwiera pelna liste.
+ * Na desktopie nic sie nie zmienia: boczny panel pokazuje wszystko.
+ */
+const PRIMARY_MOBILE = ['/', '/wydatki', '/godziny-pracy', '/przychody']
+
+const ALL_ITEMS = NAV_GROUPS.flatMap((g) => g.items)
 
 /** Etykiety do okruszkow w gornym pasku — obejmuje tez ekrany spoza menu bocznego. */
 const PAGE_LABELS = {
@@ -49,6 +62,9 @@ const PAGE_LABELS = {
   '/godziny-pracy': 'Godziny pracy',
   '/cialo': 'Zdrowie',
   '/medytacja': 'Medytacja',
+  '/czytanie': 'Czytanie',
+  '/bez-nalogu': 'Bez nałogu',
+  '/lista-rzeczy': 'Lista rzeczy',
   '/mysli-i-cele': 'Notatki',
   '/zrob-to-teraz': 'Fokus',
   '/przeglad-tygodnia': 'Przegląd tygodnia',
@@ -94,6 +110,7 @@ export default function AppShell() {
   const { user, profile, signOut } = useAuth()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const breadcrumb = useBreadcrumbLabel()
 
   useLocalReminder(user)
@@ -186,7 +203,12 @@ export default function AppShell() {
                   to={to}
                   end={end}
                   title={label}
-                  className={({ isActive }) => 'bottom-nav-item' + (isActive ? ' is-active' : '')}
+                  className={({ isActive }) =>
+                    'bottom-nav-item' + (isActive ? ' is-active' : '')
+                    // Poza czterema glownymi zakladki chowaja sie na telefonie
+                    // za "Więcej" — na desktopie pokazuja sie normalnie.
+                    + (PRIMARY_MOBILE.includes(to) ? '' : ' desktop-only-nav')
+                  }
                 >
                   <Icon />
                   <span>{label}</span>
@@ -195,6 +217,15 @@ export default function AppShell() {
             </div>
           </div>
         ))}
+
+        <button
+          type="button"
+          className={'bottom-nav-item mobile-only-nav' + (moreOpen ? ' is-active' : '')}
+          onClick={() => setMoreOpen(true)}
+        >
+          <IconMore2 />
+          <span>Więcej</span>
+        </button>
 
         <div className="side-footer">
           <Link className="side-profile" to="/ustawienia">
@@ -209,6 +240,40 @@ export default function AppShell() {
           </button>
         </div>
       </nav>
+
+      {moreOpen && (
+        <div className="more-backdrop" onClick={() => setMoreOpen(false)}>
+          <div className="more-sheet" role="dialog" aria-label="Wszystkie zakładki"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-head">
+              <h2 className="sheet-title">Wszystkie zakładki</h2>
+              <button className="sheet-close" onClick={() => setMoreOpen(false)} aria-label="Zamknij">×</button>
+            </div>
+            <div className="more-grid">
+              {ALL_ITEMS.map(({ to, label, Icon, end }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={end}
+                  onClick={() => setMoreOpen(false)}
+                  className={({ isActive }) => 'more-item' + (isActive ? ' is-active' : '')}
+                >
+                  <Icon />
+                  <span>{label}</span>
+                </NavLink>
+              ))}
+              <NavLink to="/przeglad-tygodnia" onClick={() => setMoreOpen(false)}
+                className={({ isActive }) => 'more-item' + (isActive ? ' is-active' : '')}>
+                <IconStart /><span>Przegląd tygodnia</span>
+              </NavLink>
+              <NavLink to="/ulubione" onClick={() => setMoreOpen(false)}
+                className={({ isActive }) => 'more-item' + (isActive ? ' is-active' : '')}>
+                <IconGratitude /><span>Ulubione</span>
+              </NavLink>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

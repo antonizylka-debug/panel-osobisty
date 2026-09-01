@@ -1,16 +1,30 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { readFileSync } from 'node:fs'
 
-const ACCENT = '#15A46B'
+const ACCENT = '#4A505A'
 const BG = '#EAECED'
 
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
+
 export default defineConfig({
+  // Wstrzykiwane na etapie budowania — pokazywane w Ustawieniach → Diagnostyka,
+  // zeby dalo sie stwierdzic, ktora wersja faktycznie siedzi w przegladarce.
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      devOptions: { enabled: true },
+      // Wylaczone w dev: service worker w trybie deweloperskim potrafi
+      // przytrzymac stary, zbuforowany bundle mimo zmian w kodzie — trzeba
+      // zamknac wszystkie karty, zeby nowy SW przejal kontrole. Podczas
+      // aktywnej pracy nad UI to tylko myli ("zmiana niby jest, a nie widac").
+      // Produkcyjny build i tak dostaje pelne PWA/offline bez tej flagi.
+      devOptions: { enabled: false },
       includeAssets: ['icons/mask-icon.svg'],
       manifest: {
         id: '/',

@@ -41,21 +41,44 @@ export default function DebtsSection({ debts, payments, onChanged }) {
         {active.length === 0 ? (
           <EmptyState>Nie masz aktywnych zobowiązań.</EmptyState>
         ) : (
-          <ul className="row-list">
-            {active.map((debt) => {
-              const prog = debtProgress(debt, payments)
-              const paidThisMonth = payments.find((p) => p.debt_id === debt.id && p.month === monthKey)?.paid
-              return (
-                <li key={debt.id}>
-                  <div className="entry">
-                    <div className="entry-head">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', flex: 1, minWidth: 0 }}>
-                        <button className="row-title" onClick={() => setDetail(debt)}
-                          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', font: 'inherit', fontWeight: 700 }}>
-                          {debt.name}
-                        </button>
-                        <span className="row-value">{formatPLN(debt.monthly_payment)}</span>
+          <table className="ledger">
+            <thead>
+              <tr>
+                <th>Zobowiązanie</th>
+                <th className="num">Rata</th>
+                <th className="num">Spłacono</th>
+                <th className="num">Zostało</th>
+                <th className="status">Ten miesiąc</th>
+                <th className="ledger-actions" />
+              </tr>
+            </thead>
+            <tbody>
+              {active.map((debt) => {
+                const prog = debtProgress(debt, payments)
+                const paidThisMonth = payments.find((p) => p.debt_id === debt.id && p.month === monthKey)?.paid
+                return (
+                  <tr key={debt.id}>
+                    <td className="ledger-main" data-label="Zobowiązanie">
+                      <button className="ledger-link" onClick={() => setDetail(debt)}>{debt.name}</button>
+                      {debt.end_date && <span className="ledger-sub">do {formatDatePl(debt.end_date)}</span>}
+                      <div className="ledger-bar">
+                        <ProgressBar value={prog.paidAmount} max={prog.total} />
                       </div>
+                    </td>
+                    <td className="num" data-label="Rata">{formatPLN(debt.monthly_payment, { short: true })}</td>
+                    <td className="num" data-label="Spłacono">{formatPLN(prog.paidAmount, { short: true })}</td>
+                    <td className="num" data-label="Zostało">
+                      {formatPLN(Math.max(0, prog.total - prog.paidAmount), { short: true })}
+                    </td>
+                    <td className="status" data-label="Ten miesiąc">
+                      <button
+                        className={'chip' + (paidThisMonth ? ' is-active' : '')}
+                        onClick={() => handleTogglePaid(debt)}
+                      >
+                        {paidThisMonth ? 'Zapłacona' : 'Oznacz'}
+                      </button>
+                    </td>
+                    <td className="ledger-actions" data-label="">
                       <Kebab items={[
                         { label: 'Edytuj', icon: <IconEdit />, onClick: () => setDetail(debt) },
                         {
@@ -63,27 +86,12 @@ export default function DebtsSection({ debts, payments, onChanged }) {
                           onClick: async () => { await deleteDebt(debt.id); onChanged() },
                         },
                       ]} />
-                    </div>
-                    <div style={{ margin: '.6rem 0 .4rem' }}>
-                      <ProgressBar value={prog.paidAmount} max={prog.total} />
-                    </div>
-                    <div className="entry-head">
-                      <span className="row-sub">
-                        {formatPLN(prog.paidAmount, { short: true })} z {formatPLN(prog.total, { short: true })}
-                        {debt.end_date && ` · do ${formatDatePl(debt.end_date)}`}
-                      </span>
-                      <button
-                        className={'chip' + (paidThisMonth ? ' is-active' : '')}
-                        onClick={() => handleTogglePaid(debt)}
-                      >
-                        {paidThisMonth ? 'Zapłacona ✓' : 'Oznacz jako zapłaconą'}
-                      </button>
-                    </div>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         )}
       </Card>
 

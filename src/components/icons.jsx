@@ -188,6 +188,26 @@ export function IconTrash(props) {
   )
 }
 
+/** Zwijanie bocznego panelu — pudelko z pionowa kreska, jak w Altezzy. */
+export function IconCollapse(props) {
+  return (
+    <svg {...common} {...props}>
+      <rect x="3" y="4.5" width="18" height="15" rx="3.5" />
+      <path d="M9.5 4.5v15" />
+      <path d="M14.5 10 12.3 12l2.2 2" />
+    </svg>
+  )
+}
+
+/** Malutka strzalka w dol — rozwijane przyciski, jak "Create Activity ▾". */
+export function IconChevronDown(props) {
+  return (
+    <svg {...common} strokeWidth={2.4} {...props}>
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
+}
+
 export function IconSettings(props) {
   return (
     <svg {...common} {...props}>

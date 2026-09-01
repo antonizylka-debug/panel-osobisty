@@ -186,21 +186,21 @@ export default function StartPage() {
         <span className="mini-stats-label">Ten tydzień</span>
         <div className="mini-stats-row">
           <div className="mini-stat">
-            <span className="mini-stat-icon" style={{ '--icon-tone': 'var(--tone-violet)' }}><IconWorkHours /></span>
+            <span className="mini-stat-icon"><IconWorkHours /></span>
             <div>
               <b>{Math.round(derived.weekHours)}</b>
               <span className="mini-stat-label">godzin</span>
             </div>
           </div>
           <div className="mini-stat">
-            <span className="mini-stat-icon" style={{ '--icon-tone': 'var(--tone-green)' }}><IconPayout /></span>
+            <span className="mini-stat-icon"><IconPayout /></span>
             <div>
               <b>{formatPLN(derived.weekPay, { short: true })}</b>
               <span className="mini-stat-label">dniówki</span>
             </div>
           </div>
           <div className="mini-stat">
-            <span className="mini-stat-icon" style={{ '--icon-tone': 'var(--tone-amber)' }}><IconExpenses /></span>
+            <span className="mini-stat-icon"><IconExpenses /></span>
             <div>
               <b>{formatPLN(derived.weekSpent, { short: true })}</b>
               <span className="mini-stat-label">wydatki</span>
@@ -234,7 +234,7 @@ export default function StartPage() {
                   {data.gratitudeToday ? 'Zapisane ✓' : 'Jeszcze nie dodałeś'}
                 </span>
               </div>
-              <span className={'badge' + (data.gratitudeToday ? ' is-accent' : '')}>
+              <span className={'badge' + (data.gratitudeToday ? ' is-success' : '')}>
                 {data.gratitudeToday ? 'Gotowe' : 'Dodaj'}
               </span>
             </Link>
@@ -249,7 +249,7 @@ export default function StartPage() {
                     : 'Jeszcze nie zapisałeś'}
                 </span>
               </div>
-              <span className={'badge' + (derived.workedToday ? ' is-accent' : '')}>
+              <span className={'badge' + (derived.workedToday ? ' is-success' : '')}>
                 {derived.workedToday ? 'Gotowe' : 'Zapisz'}
               </span>
             </Link>

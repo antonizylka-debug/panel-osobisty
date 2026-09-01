@@ -19,8 +19,10 @@
 
   /* Akcent bierze sie z palety wybranej w Ustawieniach (data-accent na <html>).
      Kazda paleta definiuje wariant jasny (-l) i ciemny (-d); motyw wybiera ktory. */
-  --accent: var(--accent-l, #15A46B);
-  --accent-bg: var(--accent-bg-l, #E1F5EA);
+  --accent: var(--accent-l, #454B57);
+  --accent-bg: var(--accent-bg-l, #ECEEF1);
+  /* Tekst NA akcencie. W jasnym motywie akcenty sa ciemne -> tekst bialy. */
+  --accent-ink: #FFFFFF;
   --primary: #14171A;
   --primary-ink: #FFFFFF;
   --danger: #C4433A;
@@ -42,8 +44,9 @@
     --line: #2B2F31;
     --line-hard: #3A3F41;
 
-    --accent: var(--accent-d, #34D399);
-    --accent-bg: var(--accent-bg-d, #123527);
+    --accent: var(--accent-d, #A9B1C0);
+    --accent-bg: var(--accent-bg-d, #22262E);
+    --accent-ink: #14171A;
     --primary: #F4F5F5;
     --primary-ink: #14171A;
     --danger: #F2867B;
@@ -65,8 +68,9 @@
   --line: #2B2F31;
   --line-hard: #3A3F41;
 
-  --accent: var(--accent-d, #34D399);
-  --accent-bg: var(--accent-bg-d, #123527);
+  --accent: var(--accent-d, #A9B1C0);
+  --accent-bg: var(--accent-bg-d, #22262E);
+  --accent-ink: #14171A;
   --primary: #F4F5F5;
   --primary-ink: #14171A;
   --danger: #F2867B;
@@ -80,20 +84,17 @@
    PALETY AKCENTU — data-accent na <html>, zapisywane w profiles.accent.
    Kazda podaje wariant na jasne tlo (-l) i na ciemne (-d).
    --------------------------------------------------------------------------- */
-:root[data-accent='orange']  { --accent-l:#F5891F; --accent-bg-l:#FEE9D6; --accent-d:#FFA94D; --accent-bg-d:#3D2409; }
-:root[data-accent='sage']    { --accent-l:#6B7F5E; --accent-bg-l:#E6EADD; --accent-d:#9AB088; --accent-bg-d:#252E1F; }
-:root[data-accent='lime']    { --accent-l:#15A46B; --accent-bg-l:#E1F5EA; --accent-d:#34D399; --accent-bg-d:#123527; }
-:root[data-accent='violet']  { --accent-l:#6D4AE0; --accent-bg-l:#EBE6FD; --accent-d:#A78BFA; --accent-bg-d:#241C48; }
-:root[data-accent='amber']   { --accent-l:#B7791F; --accent-bg-l:#FBF0DA; --accent-d:#E7B75A; --accent-bg-d:#332508; }
-:root[data-accent='cyan']    { --accent-l:#0E7C99; --accent-bg-l:#DDF1F7; --accent-d:#4FC5E8; --accent-bg-d:#0C2E3A; }
-:root[data-accent='rose']    { --accent-l:#C2415F; --accent-bg-l:#FCE6EB; --accent-d:#F291A9; --accent-bg-d:#3A1420; }
-:root[data-accent='crimson'] { --accent-l:#C0392B; --accent-bg-l:#FBE7E3; --accent-d:#F08C7B; --accent-bg-d:#38150F; }
-:root[data-accent='ocean']   { --accent-l:#2563C7; --accent-bg-l:#E3ECFB; --accent-d:#7FAEF5; --accent-bg-d:#122542; }
-:root[data-accent='earth']   { --accent-l:#8A6A45; --accent-bg-l:#F2EAE0; --accent-d:#CBA97D; --accent-bg-d:#2E2317; }
-:root[data-accent='mint']    { --accent-l:#0E8C7F; --accent-bg-l:#DCF2EF; --accent-d:#5EEAD4; --accent-bg-d:#0D302C; }
-:root[data-accent='indigo']  { --accent-l:#4F46E5; --accent-bg-l:#E6E5FC; --accent-d:#A5B4FC; --accent-bg-d:#1B1C46; }
-:root[data-accent='magenta'] { --accent-l:#A8357D; --accent-bg-l:#FAE3F1; --accent-d:#EE9FD0; --accent-bg-d:#360F28; }
-:root[data-accent='slate']   { --accent-l:#4A6076; --accent-bg-l:#E6EBF0; --accent-d:#9FB6CC; --accent-bg-d:#1B242D; }
+/* Szesc stonowanych barw zamiast pietnastu kredek. Wszystkie sa przygaszone
+   i ciemne na jasnym motywie (jasne na ciemnym), zeby akcent czytal sie jak
+   znacznik w panelu, a nie jak kolor z zabawki.
+   --accent-ink to kolor tekstu NA akcencie (przycisk, aktywna pozycja menu):
+   akcenty w jasnym motywie sa ciemne, wiec tekst jest bialy — i odwrotnie. */
+:root[data-accent='graphite'] { --accent-l:#4A505A; --accent-bg-l:#EDEEF0; --accent-d:#A7ADB8; --accent-bg-d:#23262B; }
+:root[data-accent='navy']     { --accent-l:#37506E; --accent-bg-l:#EAEDF2; --accent-d:#93A6C2; --accent-bg-d:#1B222C; }
+:root[data-accent='steel']    { --accent-l:#456070; --accent-bg-l:#EBEFF1; --accent-d:#98B0BD; --accent-bg-d:#1D252A; }
+:root[data-accent='forest']   { --accent-l:#3D5B4C; --accent-bg-l:#EAEFEB; --accent-d:#8FAE9C; --accent-bg-d:#1D2621; }
+:root[data-accent='burgundy'] { --accent-l:#6B454C; --accent-bg-l:#F1EBEC; --accent-d:#BC9AA0; --accent-bg-d:#2A2022; }
+:root[data-accent='amber']    { --accent-l:#726039; --accent-bg-l:#F1EDE5; --accent-d:#BFAC85; --accent-bg-d:#28241B; }
 
 /* ---------------------------------------------------------------------------
    STYL POWIERZCHNI — data-surface na <html>, zapisywany w profiles.surface.
@@ -111,6 +112,23 @@
 
 :root[data-surface='tinted'] { --tint: 9%; --tint-soft: 3%; }
 
+/* ---------------------------------------------------------------------------
+   GESTOSC — data-density na <html>, trzymana w localStorage (per urzadzenie).
+   "Zwarta" sciska wiersze tabel i karty, zeby zmiescic wiecej danych naraz.
+   --------------------------------------------------------------------------- */
+:root[data-density='compact'] .card { padding: .85rem .95rem; margin-bottom: .7rem; }
+:root[data-density='compact'] .card-head { margin-bottom: .6rem; }
+:root[data-density='compact'] .ledger { font-size: .8rem; }
+:root[data-density='compact'] .ledger td { padding: .45rem 0; }
+:root[data-density='compact'] .ledger-bar { display: none; }
+:root[data-density='compact'] .entry { padding: .55rem 0; }
+:root[data-density='compact'] .row-item { padding: .45rem 0; }
+:root[data-density='compact'] .habit-row { padding: .45rem 0; }
+:root[data-density='compact'] .todo-row { padding: .45rem 0; }
+:root[data-density='compact'] .page-title { font-size: 1.35rem; }
+:root[data-density='compact'] .big-number,
+:root[data-density='compact'] .page-header-figure { font-size: 1.45rem; }
+
 /* Na ciemnym tle ta sama domieszka rozjasnia za mocno — potrzeba jej mniej. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light'])[data-surface='tinted'] { --tint: 7%; --tint-soft: 4%; }
@@ -126,18 +144,21 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 15.5px;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   font-variant-numeric: tabular-nums;
 }
 
-/* Manrope do naglowkow, duzych liczb i marki — Inter do reszty tekstu. */
+/* Naglowki i liczby: ta sama rodzina, umiarkowana waga (600, nie 800).
+   Ciezkie, geometryczne naglowki czytaja sie "konsumencko" — panele
+   analityczne trzymaja wage nisko i polegaja na hierarchii rozmiaru. */
 .page-title, .card-title, .big-number, .page-header-figure, .page-header-stat b,
 .shell-brand, .side-brand, .mini-stat b, .stat-cell b, .auth-card-title, .onboard-title,
 .sheet-title, .cal-title, .timer-count {
-  font-family: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-weight: 700;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-weight: 600;
+  letter-spacing: -.015em;
 }
 
 a { color: var(--accent); }
@@ -263,7 +284,7 @@ a { color: var(--accent); }
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid color-mix(in srgb, white 40%, transparent);
-  border-radius: 24px;
+  border-radius: 6px;
   padding: 2.5rem 2.25rem;
   box-shadow: 0 20px 60px -20px rgba(20,23,26,.25), 0 1px 2px rgba(20,23,26,.06);
 }
@@ -271,7 +292,7 @@ a { color: var(--accent); }
   width: 100%;
   max-width: 460px;
   background: var(--surface);
-  border-radius: 18px;
+  border-radius: 4px;
   padding: 2.5rem 2.25rem;
   box-shadow: var(--shadow-card);
 }
@@ -308,21 +329,58 @@ a { color: var(--accent); }
 
 .field { display: flex; flex-direction: column; gap: .45rem; font-size: .88rem; font-weight: 700; }
 
-.field input, .field textarea {
+.field input, .field textarea, .field select {
   font: inherit;
   font-weight: 500;
   padding: .8rem 1rem;
   border: 1.5px solid transparent;
-  border-radius: 16px;
+  border-radius: 4px;
   background: var(--surface-2);
   color: var(--ink);
   resize: vertical;
 }
 .field input::placeholder, .field textarea::placeholder { color: var(--ink-faint); font-weight: 400; }
-.field input:focus, .field textarea:focus {
+.field input:focus, .field textarea:focus, .field select:focus {
   outline: none;
   border-color: var(--accent);
   background: var(--surface);
+}
+
+/* Natywny <select> ma wlasna, systemowa strzalke ktora nie da sie zestylowac
+   — wylaczamy ja (appearance:none) i rysujemy wlasna, jak w rozwijanych
+   przyciskach ("All Activities ▾") w referencyjnym panelu. */
+.field select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: 2.6rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23767c7e' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 15px;
+}
+
+/* Natywny kalendarz w <input type="date"> zostaje (najlepszy na mobile),
+   ale ikonka dostaje kolor dopasowany do motywu zamiast systemowego czarnego,
+   a wyskakujacy panel kalendarza podaza za jasnym/ciemnym motywem apki. */
+.field input[type='date'], .field input[type='time'] { color-scheme: light; }
+:root[data-theme='dark'] .field input[type='date'],
+:root[data-theme='dark'] .field input[type='time'] { color-scheme: dark; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .field input[type='date'],
+  :root:not([data-theme='light']) .field input[type='time'] { color-scheme: dark; }
+}
+.field input[type='date']::-webkit-calendar-picker-indicator,
+.field input[type='time']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: .55;
+  border-radius: 2px;
+  padding: 3px;
+}
+.field input[type='date']::-webkit-calendar-picker-indicator:hover,
+.field input[type='time']::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background: var(--accent-bg);
 }
 
 .form-error {
@@ -330,18 +388,21 @@ a { color: var(--accent); }
   padding: .7rem .9rem;
   background: var(--danger-bg);
   color: var(--danger);
-  border-radius: 14px;
+  border-radius: 4px;
   font-size: .86rem;
   font-weight: 600;
 }
 
 /* ---------- przyciski ---------- */
+/* Prostokat z zaokraglonymi rogami, NIE pigulka — jak "Create Activity" czy
+   "Edit Group" u Altezzy. Pigulki (border-radius:999px) zostaja tylko tam,
+   gdzie naprawde nalezy: .badge (status/licznik) i przelacznik .switch. */
 .btn {
   font: inherit;
   font-weight: 700;
   font-size: .95rem;
   padding: .85rem 1.6rem;
-  border-radius: 999px;
+  border-radius: 4px;
   border: 1.5px solid transparent;
   cursor: pointer;
   min-height: 50px;
@@ -350,8 +411,10 @@ a { color: var(--accent); }
 .btn:disabled { opacity: .55; cursor: default; }
 .btn-block { width: 100%; }
 
-.btn-primary { background: var(--primary); color: var(--primary-ink); }
-.btn-primary:hover:not(:disabled) { filter: brightness(1.12); }
+/* Zloty, jak przycisk "Create Activity" u Altezzy — ciemny tekst na jasnym akcencie,
+   niezalezny od --primary (ten zostaje ciemny gdzie indziej, np. w trybie fokusu). */
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
 
 .btn-ghost { background: var(--surface-2); color: var(--ink); border-color: transparent; }
 .btn-ghost:hover:not(:disabled) { background: var(--accent-bg); color: var(--accent); }
@@ -381,7 +444,7 @@ a { color: var(--accent); }
   flex-direction: column;
   gap: .1rem;
   padding: .7rem .9rem;
-  border-radius: 16px;
+  border-radius: 4px;
   background: var(--surface-2);
 }
 .onboard-tab-name { font-weight: 800; font-size: .95rem; }
@@ -411,10 +474,15 @@ a { color: var(--accent); }
   padding: calc(env(safe-area-inset-top, 0px) + 1.1rem) 1.25rem .75rem;
   flex: none;
 }
+/* Logo pisane recznie — jedyne miejsce w apce z krojem odrecznym. Reszta
+   interfejsu zostaje na Interze; znak firmowy ma sie wyrozniac, nie zlewac.
+   Caveat jest optycznie mniejszy niz Inter przy tym samym rozmiarze, wiec
+   dostaje wieksze font-size i normalny tracking. */
 .shell-brand {
   display: flex; align-items: center; gap: .5rem;
-  font-family: "Caveat", "Manrope", system-ui, sans-serif;
-  font-weight: 700; font-size: 1.55rem; letter-spacing: normal;
+  font-family: "Caveat", "Segoe Script", cursive;
+  font-weight: 700; font-size: 1.7rem; letter-spacing: 0;
+  line-height: 1;
   color: var(--ink);
   text-decoration: none;
 }
@@ -424,14 +492,14 @@ a { color: var(--accent); }
   display: grid;
   place-items: center;
   width: 42px; height: 42px;
-  border-radius: 14px;
-  border: none;
+  border-radius: 3px;
+  border: 1px solid var(--line);
   background: var(--surface);
   color: var(--ink);
   cursor: pointer;
-  box-shadow: var(--shadow-float);
+  box-shadow: none;
 }
-.theme-toggle:hover { color: var(--accent); }
+.theme-toggle:hover { color: var(--accent); border-color: var(--line-hard); }
 .theme-toggle svg { width: 20px; height: 20px; }
 
 .user-avatar {
@@ -444,7 +512,8 @@ a { color: var(--accent); }
   font-weight: 800;
   font-size: .95rem;
   text-decoration: none;
-  box-shadow: var(--shadow-float);
+  box-shadow: none;
+  border: 1px solid var(--line);
   flex: none;
 }
 
@@ -460,7 +529,7 @@ a { color: var(--accent); }
   margin: 0 auto;
   padding: 1rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
 }
-.page-title { margin: 0 0 .5rem; font-size: 1.9rem; font-weight: 800; letter-spacing: normal; }
+.page-title { margin: 0 0 .5rem; font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; }
 .page-lede { margin: 0 0 1.5rem; color: var(--ink-mid); font-size: .98rem; line-height: 1.6; max-width: 52ch; }
 
 .bottom-nav {
@@ -469,7 +538,7 @@ a { color: var(--accent); }
   grid-template-columns: repeat(7, 1fr);
   gap: .2rem;
   background: var(--surface);
-  border-radius: 24px;
+  border-radius: 6px;
   box-shadow: var(--shadow-float);
   margin: 0 .75rem calc(.75rem + env(safe-area-inset-bottom, 0px));
   padding: .4rem;
@@ -482,7 +551,7 @@ a { color: var(--accent); }
   justify-content: center;
   gap: .2rem;
   padding: .5rem .2rem;
-  border-radius: 16px;
+  border-radius: 4px;
   color: var(--ink-faint);
   text-decoration: none;
   font-size: .62rem;
@@ -493,10 +562,16 @@ a { color: var(--accent); }
 .bottom-nav-item.is-active { color: var(--accent); background: var(--accent-bg); }
 
 .side-brand,
-.side-profile, .side-search, .side-accent, .side-section-label, .side-nav-list, .side-footer {
+.side-profile, .side-search, .side-accent, .side-section-label, .side-footer,
+.side-collapse-toggle, .shell-breadcrumb {
   display: none;
 }
+/* Wrapper na potrzeby sekcji menu na desktopie — na telefonie ma "znikac"
+   w layoucie (display:contents), zeby .bottom-nav-item zostaly bezposrednimi
+   dziecmi siatki 7 kolumn i dalej trafialy w dolny pasek. */
+.side-nav-list, .side-nav-group, .side-brand-row { display: contents; }
 .mobile-only { display: inline-flex; }
+.desktop-only { display: none; }
 
 /* ---------------------------------------------------------------------------
    DESKTOP — nawigacja przenosi sie z dolu na bok, jako ciemny panel z
@@ -518,14 +593,38 @@ a { color: var(--accent); }
     border-radius: 0;
     overflow: hidden;
     background: var(--surface);
+    transition: grid-template-columns .18s ease;
   }
+  .shell.is-nav-collapsed { grid-template-columns: 84px minmax(0, 1fr); }
 
-  .shell-top  { grid-area: top; padding: 1.5rem 2rem 1rem; background: var(--surface); }
+  .shell-top {
+    grid-area: top;
+    padding: 1.4rem 2rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
   .shell-main { grid-area: main; background: var(--surface); }
   .shell-top .shell-brand { display: none; }
   .mobile-only { display: none; }
+  .desktop-only { display: inline-flex; }
 
-  /* Ciemny panel wtopiony w lewa krawedz calej bryly. */
+  .shell-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    font-size: .92rem;
+    font-weight: 700;
+    color: var(--ink-faint);
+  }
+  .shell-breadcrumb-sep { color: var(--line-hard); }
+  .shell-breadcrumb b { color: var(--ink); font-weight: 800; letter-spacing: normal; }
+
+  .theme-toggle { box-shadow: none; border: 1px solid var(--line); }
+  .theme-toggle:hover { border-color: var(--line-hard); }
+  .user-avatar { box-shadow: none; border: 1px solid var(--line); }
+
+  /* Granatowy panel wtopiony w lewa krawedz calej bryly — sekcje jak w bocznym
+     menu Altezzy (CRM / CLIENTS / ACTIVITY...), zloty akcent na aktywnej pozycji. */
   .bottom-nav {
     grid-area: nav;
     display: flex;
@@ -536,27 +635,49 @@ a { color: var(--accent); }
     padding: 1.5rem 1.1rem;
     border-radius: 0;
     box-shadow: none;
-    background: #1B1D19;
+    background: #14151E;
     border-right: none;
     overflow-y: auto;
+    overflow-x: hidden;
   }
 
+  .side-brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .4rem;
+    margin: 0 0 1.25rem .35rem;
+  }
   .side-brand {
     display: flex;
     align-items: center;
     gap: .6rem;
-    margin: 0 0 1.25rem .35rem;
-    font-family: "Caveat", "Manrope", system-ui, sans-serif;
-    font-size: 1.6rem;
+    font-family: "Caveat", "Segoe Script", cursive;
+    font-size: 1.7rem;
     font-weight: 700;
-    color: #F5F2E9;
-    letter-spacing: normal;
+    color: #F3F4F8;
+    letter-spacing: 0;
+    line-height: 1;
     text-decoration: none;
+    min-width: 0;
   }
   .side-brand-dot {
     width: 28px; height: 28px; flex: none;
     color: var(--accent);
   }
+  .side-brand-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .side-collapse-toggle {
+    display: grid; place-items: center;
+    flex: none;
+    width: 30px; height: 30px;
+    border: none; border-radius: 2px;
+    background: transparent;
+    color: #8B8FA6;
+    cursor: pointer;
+  }
+  .side-collapse-toggle:hover { background: rgba(255,255,255,.08); color: #F3F4F8; }
+  .side-collapse-toggle svg { width: 17px; height: 17px; }
 
   .side-search {
     display: flex;
@@ -564,13 +685,13 @@ a { color: var(--accent); }
     gap: .6rem;
     padding: .65rem .8rem;
     margin-bottom: 1rem;
-    border-radius: 14px;
-    background: rgba(255,255,255,.07);
-    color: #A8A499;
+    border-radius: 4px;
+    background: rgba(255,255,255,.06);
+    color: #8B8FA6;
     text-decoration: none;
     font-size: .85rem;
   }
-  .side-search:hover { background: rgba(255,255,255,.11); color: #F5F2E9; }
+  .side-search:hover { background: rgba(255,255,255,.1); color: #F3F4F8; }
   .side-search svg { width: 17px; height: 17px; flex: none; }
 
   .side-accent {
@@ -578,23 +699,26 @@ a { color: var(--accent); }
     align-items: center;
     justify-content: space-between;
     padding: 0 .35rem;
-    margin-bottom: 1.4rem;
-    color: #A8A499;
+    margin-bottom: 1.1rem;
+    color: #8B8FA6;
     font-size: .78rem;
     font-weight: 600;
   }
   .side-accent .theme-toggle {
     width: 32px; height: 32px;
-    background: rgba(255,255,255,.07);
+    border: none;
+    background: rgba(255,255,255,.06);
     box-shadow: none;
   }
-  .side-accent .theme-toggle:hover { background: rgba(255,255,255,.14); }
+  .side-accent .theme-toggle:hover { background: rgba(255,255,255,.12); }
+
+  .side-nav-group { display: block; margin-bottom: 1.1rem; }
 
   .side-section-label {
     display: block;
     padding: 0 .35rem;
     margin-bottom: .5rem;
-    color: #726E60;
+    color: #585C72;
     font-size: .68rem;
     font-weight: 800;
     letter-spacing: .08em;
@@ -618,7 +742,7 @@ a { color: var(--accent); }
     flex: 1;
     min-width: 0;
     padding: .4rem;
-    border-radius: 12px;
+    border-radius: 4px;
     text-decoration: none;
   }
   .side-profile:hover { background: rgba(255,255,255,.06); }
@@ -627,29 +751,29 @@ a { color: var(--accent); }
     width: 34px; height: 34px; flex: none;
     border-radius: 50%;
     background: var(--accent);
-    color: var(--primary-ink);
-    font-weight: 800; font-size: .85rem;
+    color: var(--accent-ink);
+    font-weight: 700; font-size: .85rem;
   }
   .side-profile-text { display: flex; flex-direction: column; min-width: 0; }
   .side-profile-name {
-    color: #F5F2E9;
+    color: #F3F4F8;
     font-weight: 700;
     font-size: .82rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .side-profile-sub { color: #726E60; font-size: .72rem; }
+  .side-profile-sub { color: #585C72; font-size: .72rem; }
   .side-logout {
     display: grid; place-items: center;
     width: 34px; height: 34px; flex: none;
-    border-radius: 10px;
+    border-radius: 3px;
     border: none;
     background: none;
-    color: #A8A499;
+    color: #8B8FA6;
     cursor: pointer;
   }
-  .side-logout:hover { background: rgba(255,255,255,.08); color: #F5F2E9; }
+  .side-logout:hover { background: rgba(255,255,255,.08); color: #F3F4F8; }
   .side-logout svg { width: 17px; height: 17px; }
 
   .bottom-nav-item {
@@ -658,25 +782,70 @@ a { color: var(--accent); }
     align-items: center;
     gap: .75rem;
     padding: .6rem .65rem;
-    border-radius: 12px;
-    color: #A8A499;
+    border-radius: 3px;
+    color: #8B8FA6;
     font-size: .85rem;
     font-weight: 600;
     min-height: 40px;
   }
-  .bottom-nav-item:hover { color: #F5F2E9; background: rgba(255,255,255,.06); }
-  .bottom-nav-item span { display: inline; }
+  .bottom-nav-item:hover { color: #F3F4F8; background: rgba(255,255,255,.06); }
+  .bottom-nav-item span { display: inline; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bottom-nav-item svg { width: 18px; height: 18px; flex: none; }
+  /* Aktywna pozycja: przygaszone tlo + cienki pasek akcentu przy krawedzi,
+     zamiast pelnego wypelnienia kolorem. Dziala z kazdym akcentem (takze
+     ciemnym, ktory na ciemnym panelu bylby nieczytelny jako tlo) i jest
+     standardem w panelach bocznych. */
   .bottom-nav-item.is-active {
-    color: #F5F2E9;
-    background: var(--accent);
+    color: #F3F4F8;
+    background: rgba(255,255,255,.08);
+    box-shadow: inset 2px 0 0 var(--accent);
+    font-weight: 600;
   }
-  .bottom-nav-item.is-active:hover { background: var(--accent); }
+  .bottom-nav-item.is-active:hover { background: rgba(255,255,255,.11); }
 
-  .page-pad { max-width: 780px; padding-left: 2rem; padding-right: 2rem; }
+  .page-pad { max-width: 780px; padding: .75rem 1.5rem 2rem; }
 
-  /* Na desktopie nie ma dolnego paska, wiec przycisk moze usiasc nizej. */
-  .fab { bottom: 1.75rem; right: 2rem; }
+  /* Na monitorze upychamy wiecej na ekran: mysz celuje precyzyjniej niz palec,
+     wiec wysokie wiersze i szerokie odstepy tylko wymuszaja przewijanie. */
+  .card { padding: .9rem 1rem; margin-bottom: .7rem; }
+  .card-head { margin-bottom: .65rem; }
+  .card-title { font-size: .92rem; }
+  .card-hint { font-size: .78rem; }
+  .page-title { font-size: 1.35rem; margin-bottom: .35rem; }
+  .page-lede { font-size: .88rem; margin-bottom: 1rem; }
+  .page-head { margin-bottom: .75rem; }
+  .big-number, .page-header-figure { font-size: 1.5rem; }
+  .page-header-panel { gap: 1rem; padding-bottom: .9rem; margin-bottom: .9rem; }
+  .mini-stats { margin-bottom: .9rem; }
+  .quote-line { margin-bottom: .9rem; padding-bottom: .9rem; }
+  .quote-line p { font-size: 1rem; }
+  .ledger { font-size: .8rem; }
+  .ledger td { padding: .5rem 0; }
+  .entry { padding: .6rem 0; }
+  .row-item { padding: .5rem 0; }
+  .habit-row, .todo-row { padding: .5rem 0; }
+  .btn { min-height: 38px; padding: .5rem 1rem; font-size: .85rem; }
+  .stat-cell { padding: .65rem .6rem; }
+  .stat-cell b { font-size: 1.15rem; }
+
+  /* --- panel zwiniety: same ikony, wysrodkowane, bez tekstu --- */
+  .bottom-nav.is-collapsed { padding: 1.5rem .7rem; }
+  .bottom-nav.is-collapsed .side-brand-row { justify-content: center; margin-left: 0; }
+  .bottom-nav.is-collapsed .side-brand-text,
+  .bottom-nav.is-collapsed .side-search span,
+  .bottom-nav.is-collapsed .side-accent-label,
+  .bottom-nav.is-collapsed .side-section-label,
+  .bottom-nav.is-collapsed .bottom-nav-item span,
+  .bottom-nav.is-collapsed .side-profile-text {
+    display: none;
+  }
+  .bottom-nav.is-collapsed .side-search,
+  .bottom-nav.is-collapsed .side-accent,
+  .bottom-nav.is-collapsed .bottom-nav-item,
+  .bottom-nav.is-collapsed .side-footer {
+    justify-content: center;
+  }
+  .bottom-nav.is-collapsed .side-profile { flex: none; padding: .4rem 0; }
 }
 
 /* ---------------------------------------------------------------------------
@@ -691,17 +860,8 @@ a { color: var(--accent); }
     column-count: 2;
     column-gap: 1.25rem;
   }
-}
 
-@media (min-width: 1750px) {
-  .page-pad {
-    max-width: 2200px;
-    column-count: 3;
-  }
-
-  /* Tylko naglowek strony idzie przez cala szerokosc. Paski statystyk
-     zostaja w kolumnie — rozciagniete na cala szerokosc wygladaly
-     jak trzy puste billboardy. */
+  /* Naglowek strony zawsze przez cala szerokosc. */
   .page-pad > .page-title,
   .page-pad > .page-lede,
   .page-pad > .page-head,
@@ -713,6 +873,11 @@ a { color: var(--accent); }
     column-span: all;
   }
 
+  /* Karta z tabela idzie przez cala szerokosc: tabela potrzebuje miejsca na
+     kolumny, a w waskiej kolumnie rozpadlaby sie na pionowa liste etykiet
+     (patrz container query przy .ledger). */
+  .page-pad > .card:has(.ledger) { column-span: all; }
+
   /* Karta nigdy nie rozpada sie miedzy kolumnami */
   .page-pad > .card,
   .page-pad > .stat-row,
@@ -721,6 +886,13 @@ a { color: var(--accent); }
   .page-pad > .converter {
     break-inside: avoid;
     -webkit-column-break-inside: avoid;
+  }
+}
+
+@media (min-width: 1750px) {
+  .page-pad {
+    max-width: 2200px;
+    column-count: 3;
   }
 }
 
@@ -736,7 +908,7 @@ a { color: var(--accent); }
 .cal-nav { display: flex; gap: .35rem; }
 .cal-nav button {
   width: 34px; height: 34px;
-  border: none; border-radius: 11px;
+  border: none; border-radius: 3px;
   background: var(--surface-2); color: var(--ink);
   font-size: 1rem; line-height: 1; cursor: pointer;
 }
@@ -751,7 +923,7 @@ a { color: var(--accent); }
 .cal-cell {
   aspect-ratio: 1;
   border: 1.5px solid transparent;
-  border-radius: 12px;
+  border-radius: 4px;
   background: transparent;
   color: var(--ink-faint);
   font: inherit; font-size: .74rem; font-weight: 600;
@@ -781,13 +953,13 @@ a { color: var(--accent); }
 .habit-actions { display: flex; gap: .35rem; flex: none; }
 .habit-act {
   width: 34px; height: 34px;
-  border: none; border-radius: 11px;
-  background: var(--surface); color: var(--ink-mid);
+  border: none; border-radius: 3px;
+  background: var(--surface-2); color: var(--ink-mid);
   display: grid; place-items: center; cursor: pointer;
   font-size: .9rem;
 }
 .habit-act:hover { color: var(--accent); }
-.habit-act.is-on { background: var(--accent); color: #fff; }
+.habit-act.is-on { background: var(--accent); color: var(--accent-ink); }
 .habit-act.is-rest-on { background: var(--line-hard); color: var(--ink); }
 .habit-act svg { width: 15px; height: 15px; }
 .habit-act:disabled { opacity: .45; cursor: default; }
@@ -799,10 +971,12 @@ a { color: var(--accent); }
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 1.5rem;
+  border-radius: 4px;
+  padding: 1.15rem 1.25rem;
   box-shadow: none;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
+  /* Punkt odniesienia dla container queries tabel w srodku (patrz .ledger). */
+  container: card / inline-size;
 }
 
 .card-head {
@@ -810,9 +984,9 @@ a { color: var(--accent); }
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: .8rem;
 }
-.card-title { margin: 0; font-size: 1.05rem; font-weight: 800; letter-spacing: normal; }
+.card-title { margin: 0; font-size: .98rem; font-weight: 800; letter-spacing: -.01em; }
 .card-hint { margin: .2rem 0 0; font-size: .82rem; color: var(--ink-mid); }
 
 .field-label { font-size: .88rem; font-weight: 700; }
@@ -856,9 +1030,9 @@ a { color: var(--accent); }
 }
 .page-header-figure {
   margin: .3rem 0 0;
-  font-size: 2.6rem;
+  font-size: 2rem;
   font-weight: 800;
-  letter-spacing: normal;
+  letter-spacing: -.02em;
   line-height: 1;
 }
 .page-header-figure.is-positive { color: var(--accent); }
@@ -887,38 +1061,116 @@ a { color: var(--accent); }
 .mini-stat-label { display: block; font-size: .74rem; color: var(--ink-faint); }
 .mini-stat .mini-stat-icon {
   display: grid; place-items: center;
-  width: 36px; height: 36px; flex: none;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--icon-tone, var(--ink-mid)) 85%, transparent);
-  color: #fff;
+  width: 30px; height: 30px; flex: none;
+  border-radius: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--ink-mid);
 }
-.mini-stat-icon svg { width: 17px; height: 17px; }
+.mini-stat-icon svg { width: 15px; height: 15px; }
 
-/* Ten sam kolorowy kwadrat-ikona, do uzycia poza .mini-stat (np. koperty budzetu). */
-.icon-badge {
-  display: grid; place-items: center;
-  width: 34px; height: 34px; flex: none;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--icon-tone, var(--ink-mid)) 85%, transparent);
-  color: #fff;
+/* ---------------------------------------------------------------------------
+   LEDGER — tabela danych finansowych.
+   Zamiast stosu obwiedzionych kart (kazda z ikona, paskiem i pigulkami)
+   dane ida w kolumny z naglowkami i wyrownaniem liczb do prawej. To jest
+   podstawowa forma prezentacji w panelach operacyjnych/ksiegowych.
+   Na waskim ekranie tabela rozklada sie na wiersze etykieta/wartosc.
+   --------------------------------------------------------------------------- */
+.ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .84rem;
 }
-.icon-badge svg { width: 16px; height: 16px; }
+.ledger th {
+  text-align: left;
+  font-size: .64rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding: 0 0 .5rem;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.ledger td {
+  padding: .7rem 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.ledger tbody tr:last-child td { border-bottom: none; }
+.ledger th.num, .ledger td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  padding-left: 1.25rem;
+  white-space: nowrap;
+}
+.ledger td.num { font-weight: 600; color: var(--ink); }
+.ledger td.num.is-negative { color: var(--danger); }
+.ledger-name { font-weight: 600; color: var(--ink); display: block; }
+.ledger-sub { font-size: .72rem; color: var(--ink-faint); display: block; margin-top: .1rem; }
+.ledger-bar { margin-top: .45rem; max-width: 220px; }
+.ledger th.status, .ledger td.status { text-align: right; padding-left: 1.25rem; white-space: nowrap; }
+/* Kolumna na menu "kropki" — waska, bez naglowka. */
+.ledger th.ledger-actions, .ledger td.ledger-actions { width: 1%; padding-left: .5rem; text-align: right; }
+/* Nazwa jako przycisk otwierajacy szczegoly — wyglada jak tekst, nie jak guzik. */
+.ledger-link {
+  background: none; border: none; padding: 0;
+  font: inherit; font-weight: 600; color: var(--ink);
+  cursor: pointer; text-align: left; display: block;
+}
+.ledger-link:hover { color: var(--accent); }
 
-/* --- pigulki filtrow --- */
+/* Rozpad tabeli zalezy od szerokosci KARTY, nie okna: na szerokim ekranie
+   karty i tak ida w 2-3 kolumnach, wiec tabela bywa waska mimo szerokiego
+   viewportu. Container query mierzy realnie dostepne miejsce. */
+@container card (max-width: 620px) {
+  .ledger thead { display: none; }
+  .ledger, .ledger tbody, .ledger tr, .ledger td { display: block; width: 100%; }
+  .ledger tr { border-bottom: 1px solid var(--line); padding: .75rem 0; }
+  .ledger tbody tr:last-child { border-bottom: none; }
+  .ledger td {
+    border-bottom: none;
+    padding: .12rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .ledger td.num, .ledger td.status { padding-left: 0; text-align: right; }
+  .ledger td::before {
+    content: attr(data-label);
+    font-size: .64rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .ledger td.ledger-main { display: block; margin-bottom: .35rem; }
+  .ledger td.ledger-main::before { display: none; }
+  .ledger-bar { max-width: none; }
+  /* Menu "kropki" na mobile wraca nad wiersz, po prawej. */
+  .ledger td.ledger-actions { width: auto; padding-left: 0; justify-content: flex-end; }
+  .ledger td.ledger-actions::before { content: none; }
+}
+
+/* --- male przyciski akcji/filtrow — bordowane prostokaty jak "Select Date"
+   / "All Activities" u Altezzy, nie pelne pigulki (te sa zarezerwowane dla
+   .badge — status/liczniki). Ujednolica wyglad kazdego malego przycisku w
+   naglowku karty (Zmien, Kategorie, Budzet, Import CSV...) w calej apce. */
 .chip {
   font: inherit;
   font-size: .78rem;
   font-weight: 700;
-  padding: .45rem .9rem;
-  border-radius: 999px;
-  border: none;
-  background: var(--surface-2);
+  padding: .45rem .85rem;
+  border-radius: 2px;
+  border: 1px solid var(--line);
+  background: var(--surface);
   color: var(--ink-mid);
   cursor: pointer;
   white-space: nowrap;
 }
-.chip:hover { color: var(--ink); }
-.chip.is-active { background: var(--primary); color: var(--primary-ink); }
+.chip:hover { color: var(--ink); border-color: var(--line-hard); background: var(--surface-2); }
+.chip.is-active { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
 
 .chip-row { display: flex; gap: .4rem; flex-wrap: wrap; }
 
@@ -929,25 +1181,38 @@ a { color: var(--accent); }
   flex-wrap: wrap;
   padding: .3rem;
   background: var(--surface-2);
-  border-radius: 12px;
+  border-radius: 4px;
 }
 .tab-item {
   font: inherit;
   font-size: .8rem;
   font-weight: 700;
   padding: .5rem .8rem;
-  border-radius: 9px;
-  border: none;
+  border-radius: 2px;
+  border: 1px solid transparent;
   background: transparent;
   color: var(--ink-mid);
   cursor: pointer;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
 }
 .tab-item:hover { color: var(--ink); }
+/* Licznik przy nazwie zakladki — jak "General 12" u Altezzy. */
+.tab-item-count {
+  font-size: .68rem;
+  font-weight: 800;
+  color: var(--ink-faint);
+  background: var(--surface-2);
+  border-radius: 2px;
+  padding: .05rem .35rem;
+}
+.tab-item.is-active .tab-item-count { color: var(--ink-mid); }
 .tab-item.is-active {
   background: var(--surface);
   color: var(--ink);
-  box-shadow: var(--shadow-float);
+  border: 1px solid var(--line);
 }
 
 /* --- przelacznik segmentowy --- */
@@ -965,17 +1230,17 @@ a { color: var(--accent); }
   font-weight: 700;
   padding: .55rem .8rem;
   border-radius: 999px;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   color: var(--ink-mid);
   cursor: pointer;
   white-space: nowrap;
 }
-.segmented-item.is-active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-float); }
+.segmented-item.is-active { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
 
 /* --- pasek postepu --- */
 .progress {
-  height: 10px;
+  height: 6px;
   border-radius: 999px;
   background: var(--surface-2);
   overflow: hidden;
@@ -996,10 +1261,11 @@ a { color: var(--accent); }
 }
 .stat-cell {
   background: var(--surface);
-  border-radius: 14px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
   padding: .9rem .7rem;
   text-align: center;
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
 }
 .stat-cell b { display: block; font-size: 1.4rem; font-weight: 800; letter-spacing: normal; }
 .stat-cell span {
@@ -1008,38 +1274,32 @@ a { color: var(--accent); }
   text-transform: uppercase; color: var(--ink-faint);
 }
 
-/* Pastelowe warianty karty statystyki — opcjonalne, wlaczane przez tone/icon. */
-:root {
-  /* Jeden, stonowany odcien zamiast teczy — formalniej, mniej "zabawkowo".
-     Nazwy zostaja (uzywane w kodzie), ale wszystkie wskazuja na ten sam grafit. */
-  --tone-violet: #3A3F47;
-  --tone-green:  #3A3F47;
-  --tone-amber:  #3A3F47;
-}
-.stat-cell--tone {
-  background: color-mix(in srgb, var(--stat-tone) 20%, var(--surface));
-  text-align: left;
-}
+/* Ikona w karcie statystyki: neutralna, jak wszystkie pozostale. Kolor w tej
+   apce niesie znaczenie (status, alert), nie dekoruje. */
+.stat-cell--tone { text-align: left; }
 .stat-cell-icon {
   display: grid;
   place-items: center;
-  width: 28px; height: 28px;
-  border-radius: 10px;
+  width: 26px; height: 26px;
+  border-radius: 3px;
   margin-bottom: .5rem;
-  background: color-mix(in srgb, var(--stat-tone) 45%, var(--surface));
-  color: var(--stat-tone);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--ink-mid);
 }
 .stat-cell-icon svg { width: 16px; height: 16px; }
 
-/* --- duza liczba (bilans) --- */
+/* --- duza liczba (bilans) ---
+   Glowna liczba w kolorze tekstu, nie marki. Kolor niesie tu znaczenie
+   (ujemny bilans = czerwony), a nie dekoracje. */
 .big-number {
-  font-size: 2.6rem;
-  font-weight: 800;
-  letter-spacing: normal;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -.015em;
   line-height: 1.05;
   margin: 0;
 }
-.big-number.is-positive { color: var(--accent); }
+.big-number.is-positive { color: var(--ink); }
 .big-number.is-negative { color: var(--danger); }
 
 /* --- wykres --- */
@@ -1076,12 +1336,22 @@ a { color: var(--accent); }
 }
 
 /* --- listy wpisow --- */
-.entry-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .7rem; }
+/* WIERSZE, NIE PUDELKA.
+   Kazda lista w apce (koperty budzetu, wydatki, dlugi, dziennik, ulubione)
+   byla dotad zestawem obwiedzionych kart w srodku innej karty — "pudelko w
+   pudelku w pudelku". Panele operacyjne buduje sie odwrotnie: plaskie wiersze
+   rozdzielone wlosowa linia, rozciagniete na cala szerokosc karty. Ta jedna
+   zmiana przebudowuje strukture kazdego ekranu naraz. */
+.entry-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .entry {
-  background: var(--surface-2);
-  border-radius: 12px;
-  padding: .85rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: .85rem 0;
 }
+.entry-list > li:last-child > .entry,
+.entry-list > .entry:last-child { border-bottom: none; padding-bottom: 0; }
 .entry-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .entry-date { font-size: .78rem; font-weight: 700; color: var(--ink-mid); }
 .entry-actions { display: flex; align-items: center; gap: .4rem; }
@@ -1110,7 +1380,7 @@ a { color: var(--accent); }
   flex: 1;
   font: inherit; font-weight: 500;
   padding: .8rem 1rem;
-  border: 1.5px solid transparent; border-radius: 16px;
+  border: 1.5px solid transparent; border-radius: 4px;
   background: var(--surface-2); color: var(--ink);
 }
 .gratitude-item-row input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
@@ -1124,8 +1394,8 @@ a { color: var(--accent); }
 .gratitude-add {
   align-self: flex-start;
   font: inherit; font-size: .82rem; font-weight: 700;
-  padding: .5rem .9rem; border-radius: 999px;
-  border: none; background: var(--surface-2); color: var(--ink-mid); cursor: pointer;
+  padding: .5rem .9rem; border-radius: 2px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-mid); cursor: pointer;
 }
 .gratitude-add:hover { color: var(--accent); }
 
@@ -1135,11 +1405,11 @@ a { color: var(--accent); }
 .mood-dot {
   font: inherit; font-weight: 700; font-size: .95rem;
   aspect-ratio: 1; min-height: 48px;
-  border: none; border-radius: 16px;
+  border: none; border-radius: 4px;
   background: var(--surface-2); color: var(--ink-mid); cursor: pointer;
 }
 .mood-dot:hover { color: var(--ink); }
-.mood-dot.is-selected { background: var(--accent); color: #fff; }
+.mood-dot.is-selected { background: var(--accent); color: var(--accent-ink); }
 .mood-picker-label { font-size: .78rem; font-weight: 600; color: var(--ink-faint); }
 
 /* --- arkusz (podekran) --- */
@@ -1153,7 +1423,8 @@ a { color: var(--accent); }
   width: 100%; max-width: 560px;
   max-height: 88dvh;
   background: var(--surface);
-  border-radius: 20px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
   box-shadow: var(--shadow-card);
   display: flex; flex-direction: column;
   overflow: hidden;
@@ -1173,16 +1444,23 @@ a { color: var(--accent); }
 .sheet-body { padding: 0 1.25rem 1.5rem; overflow-y: auto; }
 
 /* --- rzedy list (wydatki, dlugi, cele) --- */
-.row-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
+.row-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .row-item {
   display: flex; align-items: center; gap: .75rem;
-  background: var(--surface-2);
-  border-radius: 12px;
-  padding: .8rem 1rem;
+  background: none;
+  border-radius: 0;
+  padding: .7rem 0;
   width: 100%; text-align: left;
-  border: none; font: inherit; color: inherit; cursor: pointer;
+  border: none; border-bottom: 1px solid var(--line);
+  font: inherit; color: inherit; cursor: pointer;
 }
-.row-item:hover { background: var(--accent-bg); }
+/* Podswietlenie wychodzi poza padding karty, zeby czytalo sie jak wiersz
+   tabeli, a nie jak osobny klocek. */
+.row-item:hover {
+  background: var(--surface-2);
+  box-shadow: -.75rem 0 0 var(--surface-2), .75rem 0 0 var(--surface-2);
+}
+.row-list > li:last-child > .row-item { border-bottom: none; }
 
 /* Plaski wariant — do uzycia wewnatrz karty, zeby nie robic "pudelka w pudelku". */
 .row-item--flat {
@@ -1200,63 +1478,45 @@ li:last-child > .row-item--flat { border-bottom: none; }
 .row-value.is-negative { color: var(--danger); }
 
 /* --- odznaki --- */
+/* Znacznik statusu: prostokatny, obwiedziony, bez wypelnienia i bez kropki.
+   Wypelnione pastelowe pigulki z kropka to jezyk aplikacji konsumenckich;
+   panele operacyjne uzywaja waskiego tagu z cienka ramka. */
 .badge {
   display: inline-block;
-  font-size: .62rem; font-weight: 800;
-  letter-spacing: .06em; text-transform: uppercase;
-  padding: .2rem .5rem; border-radius: 999px;
-  background: var(--surface-2); color: var(--ink-faint);
+  font-size: .64rem; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase;
+  padding: .15rem .4rem; border-radius: 2px;
+  background: transparent;
+  border: 1px solid var(--line-hard);
+  color: var(--ink-mid);
 }
-.badge.is-accent { background: var(--accent-bg); color: var(--accent); }
-.badge.is-warn { background: #FCF0DA; color: #8A6114; }
-.badge.is-danger { background: var(--danger-bg); color: var(--danger); }
+.badge.is-accent { border-color: color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent); }
+.badge.is-warn { border-color: #D8A93F; color: #8A6114; }
+.badge.is-danger { border-color: color-mix(in srgb, var(--danger) 45%, transparent); color: var(--danger); }
+.badge.is-success { border-color: #9CCFB4; color: #12805A; }
+:root[data-theme='dark'] .badge.is-warn { color: #E8C578; }
+:root[data-theme='dark'] .badge.is-success { border-color: #2F6B4E; color: #4FBF8B; }
 
 /* --- przelicznik godzin --- */
+/* Bordowane, neutralne pole zamiast wielkiego bloku w kolorze akcentu —
+   korporacyjne panele trzymaja kolor dla nielicznych akcentow (ikony,
+   statusy), nie zalewaja nim calych bloków tekstu. */
 .converter {
-  background: var(--accent-bg);
-  color: var(--accent);
-  border-radius: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 4px;
   padding: .8rem 1rem;
-  font-size: .92rem;
-  font-weight: 700;
+  font-size: .86rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
-.converter.is-muted { background: var(--surface-2); color: var(--ink-faint); font-weight: 600; }
+.converter.is-muted { color: var(--ink-faint); font-weight: 500; }
+.converter strong, .converter b { color: var(--accent); }
 
 /* --- pasek akcji --- */
 .action-bar { display: flex; gap: .6rem; margin-bottom: 1rem; }
 .action-bar .btn { flex: 1; }
-
-/* --- glowna akcja ekranu (plywajaca) --- */
-.fab {
-  position: fixed;
-  right: 1rem;
-  bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
-  z-index: 40;
-
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-
-  font: inherit;
-  font-weight: 700;
-  font-size: .95rem;
-  letter-spacing: normal;
-  padding: .9rem 1.4rem .9rem 1.1rem;
-  border: none;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 4px 12px -2px rgba(20,23,26,.3), 0 12px 28px -8px rgba(20,23,26,.35);
-}
-.fab:hover { filter: brightness(1.15); }
-.fab:active { transform: translateY(1px); }
-.fab-plus { font-size: 1.4rem; line-height: 1; font-weight: 400; }
-
-@media (prefers-reduced-motion: reduce) { .fab:active { transform: none; } }
-
-/* Zeby plywajacy przycisk nie zaslanial ostatniej pozycji listy. */
-.page-pad { padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px)); }
 
 /* --- siatka formularza --- */
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
@@ -1281,41 +1541,44 @@ li:last-child > .row-item--flat { border-bottom: none; }
 /* --- checkboxy nawykow --- */
 .habit-row {
   display: flex; align-items: center; gap: .75rem;
-  background: var(--surface-2); border-radius: 18px;
-  padding: .75rem 1rem; width: 100%;
-  border: none; font: inherit; color: inherit; cursor: pointer; text-align: left;
+  background: none; border-radius: 0;
+  padding: .65rem 0; width: 100%;
+  border: none; border-bottom: 1px solid var(--line);
+  font: inherit; color: inherit; cursor: pointer; text-align: left;
 }
 .habit-check {
   width: 26px; height: 26px; flex: none;
-  border-radius: 9px; border: 2px solid var(--line-hard);
+  border-radius: 2px; border: 2px solid var(--line-hard);
   display: grid; place-items: center;
   color: transparent;
 }
-.habit-row.is-done .habit-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+.habit-row.is-done .habit-check { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .habit-row.is-done .row-title { color: var(--ink-mid); }
 .habit-check svg { width: 15px; height: 15px; }
 .habit-streak { font-size: .72rem; font-weight: 700; color: var(--ink-faint); }
 
 /* --- nawyk z celem liczbowym --- */
 .habit-progress {
-  background: var(--surface-2);
-  border-radius: 18px;
-  padding: .85rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: .75rem 0;
   display: flex;
   flex-direction: column;
   gap: .6rem;
 }
 .habit-progress-head { display: flex; align-items: center; gap: .75rem; }
-.habit-progress.is-done .habit-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+.habit-progress.is-done .habit-check { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .habit-progress.is-done .row-title { color: var(--ink-mid); }
 
 .habit-stepper { display: flex; align-items: center; gap: .5rem; }
 .stepper-btn {
   width: 40px; height: 40px; flex: none;
-  border: none; border-radius: 13px;
-  background: var(--surface); color: var(--ink);
+  border: none; border-radius: 4px;
+  background: var(--surface-2); color: var(--ink);
   font-size: 1.35rem; font-weight: 700; line-height: 1;
-  cursor: pointer; box-shadow: var(--shadow-float);
+  cursor: pointer; box-shadow: none;
 }
 .stepper-btn:disabled { opacity: .4; cursor: default; box-shadow: none; }
 .stepper-btn.is-plus { background: var(--primary); color: var(--primary-ink); }
@@ -1332,9 +1595,9 @@ li:last-child > .row-item--flat { border-bottom: none; }
   display: flex;
   align-items: center;
   gap: .3rem;
-  background: var(--surface);
+  background: var(--surface-2);
   border: 1.5px solid transparent;
-  border-radius: 13px;
+  border-radius: 4px;
   padding: 0 .6rem;
 }
 .stepper-field:focus-within { border-color: var(--accent); }
@@ -1378,7 +1641,7 @@ li:last-child > .row-item--flat { border-bottom: none; }
 .emotion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
 .emotion-tile {
   font: inherit; font-weight: 700; font-size: .9rem;
-  padding: 1.1rem .8rem; border-radius: 20px;
+  padding: 1.1rem .8rem; border-radius: 4px;
   border: 2px solid transparent; background: var(--surface-2); color: var(--ink);
   cursor: pointer; text-align: center;
 }
@@ -1387,7 +1650,7 @@ li:last-child > .row-item--flat { border-bottom: none; }
 .emotion-advice {
   margin: 1rem 0 0; padding: 1rem 1.1rem;
   background: var(--accent-bg); color: var(--accent);
-  border-radius: 18px; font-size: .95rem; font-weight: 600; line-height: 1.5;
+  border-radius: 4px; font-size: .95rem; font-weight: 600; line-height: 1.5;
 }
 
 /* --- lista zadan --- */
@@ -1405,7 +1668,7 @@ li:last-child > .row-item--flat { border-bottom: none; }
   font-weight: 500;
   padding: .8rem 1rem;
   border: 1.5px solid transparent;
-  border-radius: 16px;
+  border-radius: 4px;
   background: var(--surface-2);
   color: var(--ink);
 }
@@ -1416,13 +1679,15 @@ li:last-child > .row-item--flat { border-bottom: none; }
   display: flex;
   align-items: center;
   gap: .75rem;
-  background: var(--surface-2);
-  border-radius: 18px;
-  padding: .75rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: .65rem 0;
 }
 .todo-check {
   width: 28px; height: 28px; flex: none;
-  border-radius: 10px;
+  border-radius: 3px;
   border: 2px solid var(--line-hard);
   background: transparent;
   color: transparent;
@@ -1441,9 +1706,9 @@ li:last-child > .row-item--flat { border-bottom: none; }
 /* --- wyszukiwarka --- */
 .search-input {
   width: 100%; font: inherit; font-weight: 500;
-  padding: .85rem 1.1rem; border-radius: 999px;
-  border: 1.5px solid transparent; background: var(--surface); color: var(--ink);
-  box-shadow: var(--shadow-float);
+  padding: .85rem 1.1rem; border-radius: 4px;
+  border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
+  box-shadow: none;
 }
 .search-input:focus { outline: none; border-color: var(--accent); }
 .search-group-title {
@@ -1453,7 +1718,7 @@ li:last-child > .row-item--flat { border-bottom: none; }
 }
 
 /* --- tabelka importu CSV --- */
-.table-wrap { overflow-x: auto; border-radius: 16px; background: var(--surface-2); }
+.table-wrap { overflow-x: auto; border-radius: 4px; background: var(--surface-2); }
 .data-table { width: 100%; border-collapse: collapse; font-size: .8rem; min-width: 420px; }
 .data-table th, .data-table td { padding: .55rem .7rem; text-align: left; border-bottom: 1px solid var(--line); }
 .data-table th { font-size: .64rem; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-faint); font-weight: 800; }
@@ -1493,7 +1758,7 @@ li:last-child > .row-item--flat { border-bottom: none; }
 .kebab-trigger {
   display: grid; place-items: center;
   width: 30px; height: 30px;
-  border-radius: 9px;
+  border-radius: 2px;
   border: none;
   background: transparent;
   color: var(--ink-faint);
@@ -1506,11 +1771,18 @@ li:last-child > .row-item--flat { border-bottom: none; }
   top: calc(100% + .35rem);
   right: 0;
   z-index: 60;
-  min-width: 160px;
+  min-width: 170px;
   background: var(--surface);
-  border-radius: 14px;
-  padding: .4rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: .5rem;
   box-shadow: var(--shadow-card);
+}
+.kebab-menu-label {
+  display: block;
+  padding: .3rem .6rem .5rem;
+  font-size: .62rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-faint);
 }
 .kebab-item {
   display: flex;
@@ -1520,7 +1792,7 @@ li:last-child > .row-item--flat { border-bottom: none; }
   padding: .55rem .6rem;
   border: none;
   background: none;
-  border-radius: 10px;
+  border-radius: 3px;
   color: var(--ink);
   font: inherit;
   font-size: .85rem;
@@ -1539,7 +1811,8 @@ li:last-child > .row-item--flat { border-bottom: none; }
   right: 0;
   z-index: 60;
   background: var(--surface);
-  border-radius: 20px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
   padding: .9rem;
   box-shadow: var(--shadow-card);
   width: max-content;
@@ -1560,7 +1833,7 @@ li:last-child > .row-item--flat { border-bottom: none; }
   width: 36px; height: 36px;
   display: grid; place-items: center;
   border: 2px solid transparent;
-  border-radius: 12px;
+  border-radius: 4px;
   background: transparent;
   cursor: pointer;
   padding: 0;
@@ -1581,7 +1854,7 @@ li:last-child > .row-item--flat { border-bottom: none; }
 .accent-swatch {
   display: flex; flex-direction: column; align-items: center; gap: .4rem;
   padding: .7rem .4rem;
-  border: 2px solid transparent; border-radius: 16px;
+  border: 2px solid transparent; border-radius: 4px;
   background: var(--surface-2); color: var(--ink-mid);
   font: inherit; font-size: .72rem; font-weight: 700;
   cursor: pointer;
@@ -1600,7 +1873,7 @@ li:last-child > .row-item--flat { border-bottom: none; }
   gap: .1rem;
   background: var(--surface-2);
   border: 1.5px solid transparent;
-  border-radius: 16px;
+  border-radius: 4px;
   padding: .35rem .7rem;
 }
 .time-input:focus-within { border-color: var(--accent); background: var(--surface); }

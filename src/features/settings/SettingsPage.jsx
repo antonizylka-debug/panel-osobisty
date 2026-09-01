@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../auth/AuthContext'
-import { useTheme, ACCENTS, SURFACES } from '../../theme/ThemeContext'
+import { useTheme, ACCENTS, SURFACES, DENSITIES } from '../../theme/ThemeContext'
+import { useSync } from '../../offline/SyncContext'
 import {
   fetchQuotes, createQuote, deleteQuote, toggleQuoteFavorite,
   fetchPrompts, createPrompt, deletePrompt,
@@ -10,6 +11,21 @@ import {
 import { toCsv, downloadText } from '../../lib/csv'
 import { Card, CardHead, EmptyState, Sheet, Segmented } from '../../components/ui'
 import ReminderSettings from '../reminders/ReminderSettings'
+
+/* Stale wstrzykiwane przez Vite (define w vite.config.js). Czytane przez
+   typeof, bo przy starym procesie dev-servera (config wczytywany raz, przy
+   starcie) po prostu ich nie ma — a brak wersji nie moze wywalac calej strony. */
+const APP_VERSION = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : 'dev'
+const BUILD_TIME = typeof __BUILD_TIME__ === 'string' ? __BUILD_TIME__ : null
+
+/** Host projektu Supabase bez protokolu — do pokazania w diagnostyce. */
+function supabaseHost() {
+  try {
+    return new URL(import.meta.env.VITE_SUPABASE_URL).host
+  } catch {
+    return 'nieskonfigurowany'
+  }
+}
 
 const EXPORT_TABLES = [
   'profiles', 'main_goal', 'savings_goal', 'motivation_quotes', 'reflection_prompts',
@@ -20,7 +36,8 @@ const EXPORT_TABLES = [
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth()
-  const { theme, setTheme, accent, setAccent, surface, setSurface } = useTheme()
+  const { theme, setTheme, accent, setAccent, surface, setSurface, density, setDensity } = useTheme()
+  const { online, pending, syncing, sync } = useSync()
   const [quotes, setQuotes] = useState([])
   const [prompts, setPrompts] = useState([])
   const [quotesOpen, setQuotesOpen] = useState(false)
@@ -68,6 +85,48 @@ export default function SettingsPage() {
     }
   }
 
+  /** Pelny zrzut w jednym pliku — w odroznieniu od CSV zachowuje typy,
+   *  zagniezdzenia i wartosci puste, wiec nadaje sie na backup/import. */
+  async function exportJson() {
+    setExporting(true)
+    setError('')
+    try {
+      const dump = { exported_at: new Date().toISOString(), user_id: user.id, tables: {} }
+      for (const table of EXPORT_TABLES) {
+        const { data, error } = await supabase.from(table).select('*')
+        if (error) throw error
+        dump.tables[table] = data ?? []
+      }
+      downloadText(`panel-backup-${new Date().toISOString().slice(0, 10)}.json`,
+        JSON.stringify(dump, null, 2))
+      setMessage('Backup JSON pobrany.')
+      setTimeout(() => setMessage(''), 4000)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  /** Wyrejestrowuje service workera i czysci cache przegladarki.
+   *  Ratunek, gdy apka serwuje starą wersję mimo wdrożenia nowej. */
+  async function resetCache() {
+    setError('')
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations()
+        await Promise.all(regs.map((r) => r.unregister()))
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys()
+        await Promise.all(keys.map((k) => caches.delete(k)))
+      }
+      window.location.reload()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   return (
     <div className="page-pad">
       <h1 className="page-title">Ustawienia</h1>
@@ -88,6 +147,20 @@ export default function SettingsPage() {
             { value: 'dark', label: 'Ciemny' },
           ]}
         />
+
+        <span className="field-label" style={{ display: 'block', margin: '1.25rem 0 .6rem' }}>
+          Gęstość
+        </span>
+        <Segmented
+          ariaLabel="Gęstość interfejsu"
+          value={density}
+          onChange={setDensity}
+          options={DENSITIES.map((x) => ({ value: x.value, label: x.label }))}
+        />
+        <p className="muted" style={{ marginTop: '.5rem' }}>
+          Zwarta ściska wiersze i ukrywa paski postępu — więcej danych na ekranie.
+          Ustawienie dotyczy tego urządzenia.
+        </p>
 
         <span className="field-label" style={{ display: 'block', margin: '1.25rem 0 .6rem' }}>
           Powierzchnia
@@ -162,10 +235,83 @@ export default function SettingsPage() {
       </Card>
 
       <Card>
-        <CardHead title="Twoje dane" hint="Wszystko, co zapisałeś, w plikach CSV" />
-        <button className="btn btn-ghost btn-block" onClick={exportAll} disabled={exporting}>
-          {exporting ? 'Przygotowuję…' : 'Eksportuj dane do CSV'}
-        </button>
+        <CardHead title="Eksport danych" hint="Wszystko, co zapisałeś" />
+        <div className="stack">
+          <button className="btn btn-ghost btn-block" onClick={exportJson} disabled={exporting}>
+            {exporting ? 'Przygotowuję…' : 'Backup JSON (pełny, 1 plik)'}
+          </button>
+          <button className="btn btn-ghost btn-block" onClick={exportAll} disabled={exporting}>
+            {exporting ? 'Przygotowuję…' : 'CSV (po pliku na tabelę)'}
+          </button>
+          <p className="muted">
+            JSON zachowuje typy i wartości puste — to jest format na backup.
+            CSV nadaje się do arkusza, ale gubi strukturę.
+          </p>
+        </div>
+      </Card>
+
+      <Card>
+        <CardHead title="Diagnostyka" hint="Stan aplikacji na tym urządzeniu" />
+        <table className="ledger">
+          <tbody>
+            <tr>
+              <td className="ledger-main" data-label="Połączenie">
+                <span className="ledger-name">Połączenie</span>
+              </td>
+              <td className="status" data-label="">
+                <span className={'badge' + (online ? ' is-success' : ' is-warn')}>
+                  {online ? 'Online' : 'Offline'}
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td className="ledger-main" data-label="Kolejka offline">
+                <span className="ledger-name">Kolejka offline</span>
+                <span className="ledger-sub">Zmiany czekające na wysłanie</span>
+              </td>
+              <td className="status" data-label="">
+                {pending > 0 ? (
+                  <button className="chip" onClick={sync} disabled={!online || syncing}>
+                    {syncing ? 'Wysyłam…' : `Wyślij (${pending})`}
+                  </button>
+                ) : (
+                  <span className="badge is-success">Pusta</span>
+                )}
+              </td>
+            </tr>
+            <tr>
+              <td className="ledger-main" data-label="Wersja">
+                <span className="ledger-name">Wersja</span>
+              </td>
+              <td className="num" data-label="">{APP_VERSION}</td>
+            </tr>
+            <tr>
+              <td className="ledger-main" data-label="Zbudowano">
+                <span className="ledger-name">Zbudowano</span>
+              </td>
+              <td className="num" data-label="">
+                {BUILD_TIME ? new Date(BUILD_TIME).toLocaleString('pl-PL') : '—'}
+              </td>
+            </tr>
+            <tr>
+              <td className="ledger-main" data-label="Backend">
+                <span className="ledger-name">Backend</span>
+                <span className="ledger-sub">Projekt Supabase</span>
+              </td>
+              <td className="num" data-label="">{supabaseHost()}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div className="stack mt-1">
+          <button className="btn btn-ghost btn-block" onClick={resetCache}>
+            Wyczyść cache i przeładuj
+          </button>
+          <p className="muted">
+            Usuwa service workera i pamięć podręczną przeglądarki. Użyj, jeśli
+            aplikacja pokazuje starą wersję mimo wdrożenia nowej.
+          </p>
+        </div>
       </Card>
 
       <Card>

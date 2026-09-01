@@ -75,27 +75,39 @@ export default function TimeBlocks({ date, onChanged }) {
       {blocks.length === 0 ? (
         <EmptyState>Nic nie dopisane na ten dzień.</EmptyState>
       ) : (
-        <ul className="row-list">
-          {blocks.map((b) => (
-            <li key={b.id}>
-              <div className="row-item" style={{ cursor: 'default' }}>
-                <div className="row-main">
-                  <span className="row-title">{b.label || categoryLabel(b.category, customCats)}</span>
-                  <span className="row-sub">
-                    {categoryLabel(b.category, customCats)}
-                    {b.start_time && b.end_time &&
-                      ` · ${b.start_time.slice(0, 5)}–${b.end_time.slice(0, 5)}`}
-                  </span>
-                </div>
-                <span className="row-value">{formatHours(b.hours)}</span>
-                <button type="button" className="chip" style={{ color: 'var(--danger)' }}
-                  disabled={busy} onClick={() => remove(b.id)}>
-                  Usuń
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <table className="ledger">
+          <thead>
+            <tr>
+              <th>Zajęcie</th>
+              <th>Kategoria</th>
+              <th>Godziny</th>
+              <th className="num">Czas</th>
+              <th className="ledger-actions" />
+            </tr>
+          </thead>
+          <tbody>
+            {blocks.map((b) => (
+              <tr key={b.id}>
+                <td className="ledger-main" data-label="Zajęcie">
+                  <span className="ledger-name">{b.label || categoryLabel(b.category, customCats)}</span>
+                </td>
+                <td data-label="Kategoria">{categoryLabel(b.category, customCats)}</td>
+                <td data-label="Godziny">
+                  {b.start_time && b.end_time
+                    ? `${b.start_time.slice(0, 5)}–${b.end_time.slice(0, 5)}`
+                    : '—'}
+                </td>
+                <td className="num" data-label="Czas">{formatHours(b.hours)}</td>
+                <td className="ledger-actions">
+                  <button type="button" className="chip" style={{ color: 'var(--danger)' }}
+                    disabled={busy} onClick={() => remove(b.id)}>
+                    Usuń
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
 
       {blocks.length > 0 && (

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EMOTIONS, EMOTION_LABEL, fetchSessions, createSession, updateSession } from './api'
 import { formatDatePl } from '../../lib/date'
-import { Card, CardHead, EmptyState, BarChart, Sheet, Fab } from '../../components/ui'
+import { Card, CardHead, EmptyState, BarChart, Sheet } from '../../components/ui'
 import { IconCheck } from '../../components/icons'
 import TimeInput from '../../components/TimeInput'
 import { PageLoader } from '../../components/FullScreenSpinner'
@@ -44,7 +44,10 @@ export default function ProcrastinationPage() {
 
   return (
     <div className="page-pad">
-      <h1 className="page-title">Zrób to teraz</h1>
+      <div className="page-head">
+        <h1 className="page-title">Zrób to teraz</h1>
+        <button className="btn btn-primary" onClick={() => setWizardOpen(true)}>+ Utknąłem</button>
+      </div>
       <p className="page-lede">
         Lista zadań, a gdy przy którymś utkniesz — cztery pytania, żeby ruszyć.
       </p>
@@ -91,8 +94,6 @@ export default function ProcrastinationPage() {
           </ul>
         </Card>
       )}
-
-      <Fab onClick={() => setWizardOpen(true)}>Utknąłem</Fab>
 
       <WizardSheet
         open={wizardOpen}

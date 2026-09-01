@@ -9,9 +9,6 @@ import { formatPLN } from '../../lib/money'
 import { todayISO, formatDatePl } from '../../lib/date'
 import { savingsProjection } from '../../lib/savings'
 import { Card, CardHead, ProgressBar, EmptyState, Sheet } from '../../components/ui'
-import { IconExpenses, IconPayout } from '../../components/icons'
-
-const BUCKET_TONES = ['violet', 'amber']
 
 /**
  * Podzial przychodu na koperty procentowe (50/30/20 i odmiany).
@@ -85,59 +82,72 @@ export default function BudgetSplitCard({ income, expenses }) {
               Z {formatPLN(income)} zarobionych w tym miesiącu:
             </p>
 
-            <ul className="row-list mt-1">
-              {summary.rows.map((b, i) => {
-                const tone = b.is_savings ? 'green' : BUCKET_TONES[i % BUCKET_TONES.length]
-                return (
-                <li key={b.id}>
-                  <div className="entry">
-                    <div className="entry-head">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '.65rem' }}>
-                        <span className="icon-badge" style={{ '--icon-tone': `var(--tone-${tone})` }}>
-                          {b.is_savings ? <IconPayout /> : <IconExpenses />}
-                        </span>
-                        <span className="row-title">
-                          {b.name}
-                          <span className="badge" style={{ marginLeft: '.4rem' }}>
-                            {Math.round(b.percent)}%
-                          </span>
-                        </span>
-                      </div>
-                      <span className="row-value">{formatPLN(b.planned, { short: true })}</span>
-                    </div>
+            <table className="ledger mt-1">
+              <thead>
+                <tr>
+                  <th>Koperta</th>
+                  <th className="num">Plan</th>
+                  <th className="num">Wydane</th>
+                  <th className="num">Zostało</th>
+                  <th className="status">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {summary.rows.map((b) => {
+                  const over = !b.is_savings && b.left < 0
+                  const status = b.is_savings
+                    ? b.spent >= b.planned
+                      ? { label: 'Zrealizowany', tone: ' is-success' }
+                      : { label: 'W trakcie', tone: '' }
+                    : b.ratio >= 1
+                      ? { label: 'Przekroczono', tone: ' is-danger' }
+                      : b.ratio >= 0.8
+                        ? { label: 'Blisko limitu', tone: ' is-warn' }
+                        : { label: 'W budżecie', tone: ' is-success' }
 
-                    <div style={{ marginTop: '.5rem' }}>
-                      <ProgressBar
-                        value={Math.min(b.spent, b.planned)}
-                        max={b.planned || 1}
-                        tone={
-                          b.is_savings
-                            ? b.ratio >= 1 ? 'accent' : b.ratio >= 0.6 ? 'warn' : 'danger'
-                            : b.ratio >= 1 ? 'danger' : b.ratio >= 0.8 ? 'warn' : 'accent'
-                        }
-                      />
-                    </div>
+                  return (
+                    <tr key={b.id}>
+                      <td className="ledger-main" data-label="Koperta">
+                        <span className="ledger-name">{b.name}</span>
+                        <span className="ledger-sub">{Math.round(b.percent)}% przychodu</span>
+                        <div className="ledger-bar">
+                          <ProgressBar
+                            value={Math.min(b.spent, b.planned)}
+                            max={b.planned || 1}
+                            tone={
+                              b.is_savings
+                                ? b.ratio >= 1 ? 'accent' : b.ratio >= 0.6 ? 'warn' : 'danger'
+                                : b.ratio >= 1 ? 'danger' : b.ratio >= 0.8 ? 'warn' : 'accent'
+                            }
+                          />
+                        </div>
+                      </td>
+                      <td className="num" data-label="Plan">{formatPLN(b.planned, { short: true })}</td>
+                      <td className="num" data-label={b.is_savings ? 'Odłożone' : 'Wydane'}>
+                        {formatPLN(b.spent, { short: true })}
+                      </td>
+                      <td className={'num' + (over ? ' is-negative' : '')}
+                        data-label={b.is_savings ? 'Brakuje' : over ? 'Przekroczono' : 'Zostało'}>
+                        {b.is_savings
+                          ? formatPLN(Math.max(0, b.planned - b.spent), { short: true })
+                          : formatPLN(Math.abs(b.left), { short: true })}
+                      </td>
+                      <td className="status" data-label="Status">
+                        <span className={'badge' + status.tone}>{status.label}</span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
 
-                    <p className="row-sub" style={{ marginTop: '.4rem' }}>
-                      {b.is_savings ? (
-                        b.spent >= b.planned
-                          ? `Odłożone ${formatPLN(b.spent)} — cel dowieziony`
-                          : `Odłożone ${formatPLN(b.spent)} · brakuje ${formatPLN(b.planned - b.spent)}`
-                      ) : (
-                        b.left >= 0
-                          ? `Wydane ${formatPLN(b.spent)} · zostało ${formatPLN(b.left)}`
-                          : `Wydane ${formatPLN(b.spent)} · przekroczone o ${formatPLN(-b.left)} (${Math.round((b.ratio - 1) * 100)}% ponad limit)`
-                      )}
-                    </p>
-
-                    {b.is_savings && (
-                      <SavingsGoalBlock savings={savings} monthlyRate={b.spent} onEdit={() => setSavingsOpen(true)} />
-                    )}
-                  </div>
-                </li>
-                )
-              })}
-            </ul>
+            {summary.rows.some((b) => b.is_savings) && (
+              <SavingsGoalBlock
+                savings={savings}
+                monthlyRate={summary.rows.find((b) => b.is_savings)?.spent ?? 0}
+                onEdit={() => setSavingsOpen(true)}
+              />
+            )}
 
             {summary.unassigned > 0 && (
               <div className="converter is-muted mt-1">

@@ -8,21 +8,20 @@ function systemPrefersDark() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
+/* Stonowana, krotka paleta. Kazdy kolor jest przygaszony i wystarczajaco
+   ciemny, zeby bialy tekst na nim byl czytelny (patrz --accent-ink). */
 export const ACCENTS = [
-  { value: 'orange',  label: 'Pomarańczowy', swatch: '#F5891F' },
-  { value: 'sage',    label: 'Szałwia',    swatch: '#748966' },
-  { value: 'lime',    label: 'Limonkowy',  swatch: '#15A46B' },
-  { value: 'violet',  label: 'Fioletowy',  swatch: '#6D4AE0' },
-  { value: 'amber',   label: 'Bursztyn',   swatch: '#B7791F' },
-  { value: 'cyan',    label: 'Cyjan',      swatch: '#0E7C99' },
-  { value: 'rose',    label: 'Różowy',     swatch: '#C2415F' },
-  { value: 'crimson', label: 'Karmazyn',   swatch: '#C0392B' },
-  { value: 'ocean',   label: 'Oceaniczny', swatch: '#2563C7' },
-  { value: 'earth',   label: 'Ziemia',     swatch: '#8A6A45' },
-  { value: 'mint',    label: 'Mięta',      swatch: '#0E8C7F' },
-  { value: 'indigo',  label: 'Indygo',     swatch: '#4F46E5' },
-  { value: 'magenta', label: 'Magenta',    swatch: '#A8357D' },
-  { value: 'slate',   label: 'Stal',       swatch: '#4A6076' },
+  { value: 'graphite', label: 'Grafit',   swatch: '#4A505A' },
+  { value: 'navy',     label: 'Granat',   swatch: '#37506E' },
+  { value: 'steel',    label: 'Stal',     swatch: '#456070' },
+  { value: 'forest',   label: 'Zieleń',   swatch: '#3D5B4C' },
+  { value: 'burgundy', label: 'Bordo',    swatch: '#6B454C' },
+  { value: 'amber',    label: 'Bursztyn', swatch: '#726039' },
+]
+
+export const DENSITIES = [
+  { value: 'comfortable', label: 'Standardowa' },
+  { value: 'compact',     label: 'Zwarta' },
 ]
 
 export const SURFACES = [
@@ -30,17 +29,36 @@ export const SURFACES = [
   { value: 'tinted',  label: 'Barwna' },
 ]
 
+const DEFAULT_ACCENT = 'graphite'
+const DENSITY_KEY = 'panel.density'
+
+function storedDensity() {
+  try {
+    const v = localStorage.getItem(DENSITY_KEY)
+    return DENSITIES.some((d) => d.value === v) ? v : 'comfortable'
+  } catch {
+    return 'comfortable'
+  }
+}
+
 export function ThemeProvider({ children }) {
   const { user, profile } = useAuth()
   const [theme, setThemeState] = useState('system')
-  const [accent, setAccentState] = useState('lime')
+  const [accent, setAccentState] = useState(DEFAULT_ACCENT)
   const [surface, setSurfaceState] = useState('neutral')
+  // Gestosc to preferencja urzadzenia, nie konta — na telefonie chcesz innej
+  // niz na monitorze. Dlatego localStorage, a nie kolumna w profilu.
+  const [density, setDensityState] = useState(storedDensity)
   const [systemDark, setSystemDark] = useState(systemPrefersDark)
 
   // Startowa wartosc przychodzi z profilu (zapamietana dla konta).
   useEffect(() => {
     if (profile?.theme) setThemeState(profile.theme)
-    if (profile?.accent) setAccentState(profile.accent)
+    // Konta zalozone przed zmianą palety maja zapisany kolor, ktorego juz nie
+    // ma na liscie — wtedy wracamy do domyslnego zamiast zostawiac pusty motyw.
+    if (profile?.accent) {
+      setAccentState(ACCENTS.some((a) => a.value === profile.accent) ? profile.accent : DEFAULT_ACCENT)
+    }
     if (profile?.surface) setSurfaceState(profile.surface)
   }, [profile?.theme, profile?.accent, profile?.surface])
 
@@ -51,6 +69,11 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     document.documentElement.dataset.surface = surface
   }, [surface])
+
+  useEffect(() => {
+    document.documentElement.dataset.density = density
+    try { localStorage.setItem(DENSITY_KEY, density) } catch { /* tryb prywatny */ }
+  }, [density])
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -103,9 +126,11 @@ export function ThemeProvider({ children }) {
     [user]
   )
 
+  const setDensity = useCallback((next) => setDensityState(next), [])
+
   const value = useMemo(
-    () => ({ theme, resolved, setTheme, toggle, accent, setAccent, surface, setSurface }),
-    [theme, resolved, setTheme, toggle, accent, setAccent, surface, setSurface]
+    () => ({ theme, resolved, setTheme, toggle, accent, setAccent, surface, setSurface, density, setDensity }),
+    [theme, resolved, setTheme, toggle, accent, setAccent, surface, setSurface, density, setDensity]
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

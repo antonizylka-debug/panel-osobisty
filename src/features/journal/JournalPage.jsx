@@ -5,7 +5,7 @@ import {
 } from './api'
 import { useSpeech } from './useSpeech'
 import { formatDatePl } from '../../lib/date'
-import { Card, CardHead, EmptyState, Sheet, Segmented, Fab } from '../../components/ui'
+import { Card, CardHead, EmptyState, Sheet, Segmented } from '../../components/ui'
 import { IconGratitude, IconMic } from '../../components/icons'
 import { PageLoader } from '../../components/FullScreenSpinner'
 
@@ -55,7 +55,10 @@ export default function JournalPage() {
 
   return (
     <div className="page-pad">
-      <h1 className="page-title">Notatki i cele</h1>
+      <div className="page-head">
+        <h1 className="page-title">Notatki i cele</h1>
+        <button className="btn btn-primary" onClick={() => setAddOpen(true)}>+ Nowy wpis</button>
+      </div>
       {error && <p className="form-error" role="alert">{error}</p>}
 
 
@@ -160,8 +163,6 @@ export default function JournalPage() {
           </div>
         )}
       </Sheet>
-
-      <Fab onClick={() => setAddOpen(true)}>Nowy wpis</Fab>
 
       <Sheet open={showArchive} title="Archiwum osiągniętych celów" onClose={() => setShowArchive(false)}>
         {archived.length === 0 ? (

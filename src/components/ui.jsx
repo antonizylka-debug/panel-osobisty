@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { IconMore } from './icons'
 
 /**
@@ -38,6 +39,7 @@ export function Kebab({ items, ariaLabel = 'Wiecej opcji' }) {
       </button>
       {open && (
         <div className="kebab-menu" role="menu">
+          <span className="kebab-menu-label">Więcej opcji</span>
           {items.map((it) => (
             <button
               key={it.label}
@@ -119,7 +121,10 @@ export function Sheet({ open, title, onClose, children }) {
 
   if (!open) return null
 
-  return (
+  // Portal do <body>: arkusz bywa wywolywany z wnetrza <tbody> (wiersz tabeli),
+  // a <div> jako dziecko <tbody> to niepoprawny HTML. Portal wyprowadza go
+  // poza tabele, niezaleznie od miejsca wywolania.
+  return createPortal(
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <div className="sheet-head">
@@ -128,7 +133,8 @@ export function Sheet({ open, title, onClose, children }) {
         </div>
         <div className="sheet-body">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -169,7 +175,11 @@ export function BarChart({ data, height = 120, format = (v) => v, tone = 'accent
   )
 }
 
-const PIE_COLORS = ['#4F86F7', '#E5584A', '#8BC34A', '#9B6EF3', '#4DBFB8', '#F5B942', '#F2799A', '#5DB7DE']
+/* Monochromatyczna rampa zamiast teczy. Dane sa posortowane malejaco, wiec
+   najciemniejszy odcien = najwiekszy udzial — kolor niesie informacje, a nie
+   tylko rozroznia. Osiem nasyconych barw czytalo sie jak wykres w podreczniku
+   do szkoly podstawowej. */
+const PIE_COLORS = ['#39414F', '#4E586A', '#667287', '#818CA1', '#9CA6B8', '#B7BFCD', '#D0D6E0', '#E4E8EE']
 
 /** Kolko "na co ida pieniadze" — bez zewnetrznych bibliotek. */
 export function PieChart({ data, format = (v) => v }) {
@@ -226,7 +236,6 @@ export function StatRow({ items }) {
         <div
           className={'stat-cell' + (it.tone ? ' stat-cell--tone' : '')}
           key={it.label}
-          style={it.tone ? { '--stat-tone': `var(--tone-${it.tone})` } : undefined}
         >
           {it.icon && <span className="stat-cell-icon">{it.icon}</span>}
           <b>{it.value}</b>
@@ -237,15 +246,3 @@ export function StatRow({ items }) {
   )
 }
 
-/**
- * Glowna akcja ekranu. Plywa nad paskiem nawigacji, zeby nie mylila sie
- * z zakladkami — przycisk w rzedzie obok innego czytal sie jak nawigacja.
- */
-export function Fab({ onClick, children }) {
-  return (
-    <button type="button" className="fab" onClick={onClick}>
-      <span className="fab-plus" aria-hidden="true">+</span>
-      {children}
-    </button>
-  )
-}

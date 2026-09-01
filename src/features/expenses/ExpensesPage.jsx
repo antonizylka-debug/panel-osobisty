@@ -12,7 +12,7 @@ import { fetchRealHourlyRate, fetchRange } from '../work/api'
 import { todayISO, addDaysISO, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { compareLabel } from '../../lib/compare'
-import { Card, CardHead, ProgressBar, BarChart, PieChart, EmptyState, Sheet, Segmented, StatRow, Fab, Kebab } from '../../components/ui'
+import { Card, CardHead, ProgressBar, BarChart, PieChart, EmptyState, Sheet, Segmented, StatRow, Kebab } from '../../components/ui'
 import { IconEdit, IconTrash } from '../../components/icons'
 import { PageLoader } from '../../components/FullScreenSpinner'
 import BudgetSplitCard from '../budget/BudgetSplitCard'
@@ -175,6 +175,16 @@ export default function ExpensesPage() {
     return list
   }, [thisMonth, filter, category])
 
+  // Liczniki przy zakladkach — jak "General 12" u Altezzy. Licza sie z tego
+  // miesiaca bez kategorii, zeby przelaczanie zakladek nie zmienialo liczb.
+  const filterCounts = useMemo(() => ({
+    all: thisMonth.length,
+    private: thisMonth.filter((e) => e.context === 'private').length,
+    'work-self': thisMonth.filter((e) => e.context === 'work' && e.for_whom === 'self').length,
+    'work-other': thisMonth.filter((e) => e.context === 'work' && e.for_whom === 'someone_else').length,
+    subs: thisMonth.filter((e) => e.type === 'subscription').length,
+  }), [thisMonth])
+
   useEffect(() => { setVisibleCount(20) }, [filter, category])
 
   const budgetTone = overallBudget
@@ -214,6 +224,7 @@ export default function ExpensesPage() {
     <div className="page-pad">
       <div className="page-head">
         <h1 className="page-title">Wydatki</h1>
+        <button className="btn btn-primary" onClick={() => setAddOpen(true)}>+ Dodaj wydatek</button>
       </div>
       {error && <p className="form-error" role="alert">{error}</p>}
 
@@ -307,11 +318,21 @@ export default function ExpensesPage() {
         {extraIncomeThisMonth.length === 0 ? (
           <EmptyState>Nic jeszcze nie dopisane w tym miesiącu.</EmptyState>
         ) : (
-          <ul className="row-list">
-            {extraIncomeThisMonth.map((e) => (
-              <ExtraIncomeRow key={e.id} entry={e} onDeleted={load} />
-            ))}
-          </ul>
+          <table className="ledger">
+            <thead>
+              <tr>
+                <th>Skąd</th>
+                <th>Data</th>
+                <th className="num">Kwota</th>
+                <th className="ledger-actions" />
+              </tr>
+            </thead>
+            <tbody>
+              {extraIncomeThisMonth.map((e) => (
+                <ExtraIncomeRow key={e.id} entry={e} onDeleted={load} />
+              ))}
+            </tbody>
+          </table>
         )}
       </Card>
 
@@ -339,33 +360,44 @@ export default function ExpensesPage() {
             data={byCategory.map((c) => ({ label: c.name, value: c.amount }))}
             format={(v) => formatPLN(v, { short: true })}
           />
-          <ul className="row-list mt-1">
-            {byCategory.map((c) => {
-              const ratio = c.limit ? c.amount / Number(c.limit) : null
-              return (
-                <li key={c.name}>
-                  <div className="entry">
-                    <div className="entry-head">
-                      <span className="row-title">{c.name}</span>
-                      <span className="row-value">{formatPLN(c.amount)}</span>
-                    </div>
-                    <div style={{ marginTop: '.5rem' }}>
-                      <ProgressBar
-                        value={c.amount}
-                        max={c.limit ? Number(c.limit) : monthTotal}
-                        tone={ratio == null ? 'accent' : ratio >= 1 ? 'danger' : ratio >= 0.8 ? 'warn' : 'accent'}
-                      />
-                    </div>
-                    <p className="row-sub" style={{ marginTop: '.4rem' }}>
-                      {Math.round(c.share * 100)}% wszystkich wydatków
-                      {c.limit && ` · limit ${formatPLN(c.limit, { short: true })}`}
-                      {hourlyRate && ` · ${formatHours(c.amount / hourlyRate)} pracy`}
-                    </p>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
+          <table className="ledger mt-1">
+            <thead>
+              <tr>
+                <th>Kategoria</th>
+                <th className="num">Kwota</th>
+                <th className="num">Udział</th>
+                <th className="num">Limit</th>
+                {hourlyRate && <th className="num">Czas pracy</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {byCategory.map((c) => {
+                const ratio = c.limit ? c.amount / Number(c.limit) : null
+                return (
+                  <tr key={c.name}>
+                    <td className="ledger-main" data-label="Kategoria">
+                      <span className="ledger-name">{c.name}</span>
+                      <div className="ledger-bar">
+                        <ProgressBar
+                          value={c.amount}
+                          max={c.limit ? Number(c.limit) : monthTotal}
+                          tone={ratio == null ? 'accent' : ratio >= 1 ? 'danger' : ratio >= 0.8 ? 'warn' : 'accent'}
+                        />
+                      </div>
+                    </td>
+                    <td className="num" data-label="Kwota">{formatPLN(c.amount)}</td>
+                    <td className="num" data-label="Udział">{Math.round(c.share * 100)}%</td>
+                    <td className={'num' + (ratio != null && ratio >= 1 ? ' is-negative' : '')} data-label="Limit">
+                      {c.limit ? formatPLN(c.limit, { short: true }) : '—'}
+                    </td>
+                    {hourlyRate && (
+                      <td className="num" data-label="Czas pracy">{formatHours(c.amount / hourlyRate)}</td>
+                    )}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
           </>
         )}
       </Card>
@@ -378,21 +410,28 @@ export default function ExpensesPage() {
       {subscriptions.length > 0 && (
         <Card>
           <CardHead title="Subskrypcje" hint={`${formatPLN(subsMonthly)} miesięcznie`} />
-          <ul className="row-list">
-            {subscriptions.map((s) => (
-              <li key={s.id}>
-                <div className="row-item" style={{ cursor: 'default' }}>
-                  <div className="row-main">
-                    <span className="row-title">{s.description || 'Subskrypcja'}</span>
-                    <span className="row-sub">
-                      {{ weekly: 'tygodniowo', monthly: 'miesięcznie', quarterly: 'kwartalnie', yearly: 'rocznie' }[s.subscription_cycle]}
-                    </span>
-                  </div>
-                  <span className="row-value">{formatPLN(s.amount)}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <table className="ledger">
+            <thead>
+              <tr>
+                <th>Subskrypcja</th>
+                <th>Cykl</th>
+                <th className="num">Kwota</th>
+              </tr>
+            </thead>
+            <tbody>
+              {subscriptions.map((s) => (
+                <tr key={s.id}>
+                  <td className="ledger-main" data-label="Subskrypcja">
+                    <span className="ledger-name">{s.description || 'Subskrypcja'}</span>
+                  </td>
+                  <td data-label="Cykl">
+                    {{ weekly: 'tygodniowo', monthly: 'miesięcznie', quarterly: 'kwartalnie', yearly: 'rocznie' }[s.subscription_cycle]}
+                  </td>
+                  <td className="num" data-label="Kwota">{formatPLN(s.amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </Card>
       )}
 
@@ -413,7 +452,10 @@ export default function ExpensesPage() {
             { v: 'subs', l: 'Subskrypcje' },
           ].map((f) => (
             <button key={f.v} className={'tab-item' + (filter === f.v ? ' is-active' : '')}
-              onClick={() => setFilter(f.v)}>{f.l}</button>
+              onClick={() => setFilter(f.v)}>
+              {f.l}
+              <span className="tab-item-count">{filterCounts[f.v]}</span>
+            </button>
           ))}
         </div>
         <div className="chip-row" style={{ marginBottom: '.75rem' }}>
@@ -428,11 +470,22 @@ export default function ExpensesPage() {
           <EmptyState>Brak wydatków dla tych filtrów.</EmptyState>
         ) : (
           <>
-            <ul className="row-list">
-              {visible.slice(0, visibleCount).map((e) => (
-                <ExpenseRow key={e.id} expense={e} hourlyRate={hourlyRate} onDeleted={load} />
-              ))}
-            </ul>
+            <table className="ledger">
+              <thead>
+                <tr>
+                  <th>Opis</th>
+                  <th>Data</th>
+                  <th>Kategoria</th>
+                  <th className="num">Kwota</th>
+                  <th className="ledger-actions" />
+                </tr>
+              </thead>
+              <tbody>
+                {visible.slice(0, visibleCount).map((e) => (
+                  <ExpenseRow key={e.id} expense={e} hourlyRate={hourlyRate} onDeleted={load} />
+                ))}
+              </tbody>
+            </table>
             {visible.length > visibleCount && (
               <button className="chip mt-1" onClick={() => setVisibleCount((n) => n + 20)}>
                 Załaduj więcej ({visible.length - visibleCount})
@@ -464,8 +517,6 @@ export default function ExpensesPage() {
         onClose={() => setImportOpen(false)}
         onDone={() => { setImportOpen(false); load() }}
       />
-
-      <Fab onClick={() => setAddOpen(true)}>Dodaj wydatek</Fab>
     </div>
   )
 }
@@ -486,24 +537,25 @@ function ExpenseRow({ expense, hourlyRate, onDeleted }) {
 
   return (
     <>
-      <li>
-        <div className="row-item" role="button" tabIndex={0} onClick={openDetail}
-          onKeyDown={(e) => { if (e.key === 'Enter') openDetail() }}>
-          <div className="row-main">
-            <span className="row-title">{expense.description || expense.category || 'Wydatek'}</span>
-            <span className="row-sub">
-              {formatDatePl(expense.date)} · {label}{whom ? ` ${whom}` : ''}
-              {expense.category ? ` · ${expense.category}` : ''}
-              {expense.imported ? ' · import' : ''}
-            </span>
-          </div>
-          <span className="row-value">{formatPLN(expense.amount)}</span>
+      <tr>
+        <td className="ledger-main" data-label="Opis">
+          <button className="ledger-link" onClick={openDetail}>
+            {expense.description || expense.category || 'Wydatek'}
+          </button>
+          <span className="ledger-sub">
+            {label}{whom ? ` ${whom}` : ''}{expense.imported ? ' · import' : ''}
+          </span>
+        </td>
+        <td data-label="Data">{formatDatePl(expense.date)}</td>
+        <td data-label="Kategoria">{expense.category || '—'}</td>
+        <td className="num" data-label="Kwota">{formatPLN(expense.amount)}</td>
+        <td className="ledger-actions">
           <Kebab items={[
             { label: 'Edytuj', icon: <IconEdit />, onClick: openDetail },
             { label: 'Usuń', icon: <IconTrash />, tone: 'danger', onClick: async () => { await deleteExpense(expense.id); onDeleted() } },
           ]} />
-        </div>
-      </li>
+        </td>
+      </tr>
 
       <Sheet open={open} title={expense.description || 'Wydatek'} onClose={() => setOpen(false)}>
         <div className="stack">
@@ -527,19 +579,21 @@ function ExpenseRow({ expense, hourlyRate, onDeleted }) {
 
 function ExtraIncomeRow({ entry, onDeleted }) {
   return (
-    <li>
-      <div className="row-item">
-        <div className="row-main">
-          <span className="row-title">{entry.note || 'Dodatkowa kasa'}</span>
-          <span className="row-sub">{formatDatePl(entry.date)}</span>
-        </div>
-        <span className="row-value">{formatPLN(entry.amount)}</span>
-        <button className="chip" style={{ marginLeft: '.6rem', color: 'var(--danger)' }}
-          onClick={async () => { await deleteExtraIncome(entry.id); onDeleted() }}>
-          Usuń
-        </button>
-      </div>
-    </li>
+    <tr>
+      <td className="ledger-main" data-label="Skąd">
+        <span className="ledger-name">{entry.note || 'Dodatkowa kasa'}</span>
+      </td>
+      <td data-label="Data">{formatDatePl(entry.date)}</td>
+      <td className="num" data-label="Kwota">{formatPLN(entry.amount)}</td>
+      <td className="ledger-actions">
+        <Kebab items={[
+          {
+            label: 'Usuń', icon: <IconTrash />, tone: 'danger',
+            onClick: async () => { await deleteExtraIncome(entry.id); onDeleted() },
+          },
+        ]} />
+      </td>
+    </tr>
   )
 }
 

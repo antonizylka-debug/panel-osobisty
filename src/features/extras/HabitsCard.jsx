@@ -58,7 +58,7 @@ export default function HabitsCard({ habits, logs, today, onChanged }) {
                         <span className="row-title">{h.name}</span>
                         {isRest && <span className="row-sub">Dzień odpoczynku</span>}
                       </div>
-                      {streak > 0 && <span className="habit-streak">{streak} dni</span>}
+                      {streak > 0 && <span className="badge">{streak} dni</span>}
                       <div className="habit-actions">
                         <button
                           className={'habit-act' + (done ? ' is-on' : '')}

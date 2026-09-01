@@ -237,32 +237,32 @@ export default function WorkPage() {
 
       <Card>
         <CardHead title="Średnia godzin" hint="Tylko dni, w których pracowałeś" />
-        <ul className="row-list">
-          {averages.map((a) => (
-            <li key={a.label}>
-              <div className="row-item" style={{ cursor: 'default' }}>
-                <div className="row-main">
-                  <span className="row-title">{a.label}</span>
-                  <span className="row-sub">
-                    {a.days > 0
-                      ? `${a.days} ${a.days === 1 ? 'dzień' : 'dni'} · łącznie ${formatHours(a.total)}`
-                      : 'brak dni pracujących'}
-                  </span>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span className="row-value" style={{ display: 'block' }}>
-                    {a.days > 0 ? formatHours(a.avg) : '—'}
-                  </span>
-                  {a.days > 0 && (
-                    <span className="row-sub" style={{ display: 'block' }}>
-                      śr. {formatPLN(a.avgPerWeek, { short: true })}/tydz.
-                    </span>
-                  )}
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <table className="ledger">
+          <thead>
+            <tr>
+              <th>Okres</th>
+              <th className="num">Dni</th>
+              <th className="num">Łącznie</th>
+              <th className="num">Śr. dziennie</th>
+              <th className="num">Śr. / tydzień</th>
+            </tr>
+          </thead>
+          <tbody>
+            {averages.map((a) => (
+              <tr key={a.label}>
+                <td className="ledger-main" data-label="Okres">
+                  <span className="ledger-name">{a.label}</span>
+                </td>
+                <td className="num" data-label="Dni">{a.days > 0 ? a.days : '—'}</td>
+                <td className="num" data-label="Łącznie">{a.days > 0 ? formatHours(a.total) : '—'}</td>
+                <td className="num" data-label="Śr. dziennie">{a.days > 0 ? formatHours(a.avg) : '—'}</td>
+                <td className="num" data-label="Śr. / tydzień">
+                  {a.days > 0 ? formatPLN(a.avgPerWeek, { short: true }) : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
         {averages[0].days > 0 && averages[2].days > 0 && (
           <div className="converter mt-1">
             {averages[0].avg > averages[2].avg
@@ -290,19 +290,26 @@ export default function WorkPage() {
         {pending.length === 0 ? (
           <EmptyState>Nie masz nierozliczonych dniówek.</EmptyState>
         ) : (
-          <ul className="row-list">
-            {pending.map((d) => (
-              <li key={d.id}>
-                <div className="row-item" style={{ cursor: 'default' }}>
-                  <div className="row-main">
-                    <span className="row-title">{formatDatePl(d.date)}</span>
-                    <span className="row-sub">{formatHours(d.hours_worked)}</span>
-                  </div>
-                  <span className="row-value">{formatPLN(d.pay_amount)}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <table className="ledger">
+            <thead>
+              <tr>
+                <th>Dzień</th>
+                <th className="num">Godziny</th>
+                <th className="num">Dniówka</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pending.map((d) => (
+                <tr key={d.id}>
+                  <td className="ledger-main" data-label="Dzień">
+                    <span className="ledger-name">{formatDatePl(d.date)}</span>
+                  </td>
+                  <td className="num" data-label="Godziny">{formatHours(d.hours_worked)}</td>
+                  <td className="num" data-label="Dniówka">{formatPLN(d.pay_amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </Card>
 

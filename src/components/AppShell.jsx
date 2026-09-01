@@ -8,7 +8,7 @@ import AccentMenu from './AccentMenu'
 import {
   IconStart, IconGratitude, IconExpenses, IconWorkHours, IconJournal, IconDoItNow,
   IconBody, IconSun, IconMoon, IconSearch, IconSettings, IconLogout, IconLogo, IconCollapse,
-  IconPayout,
+  IconPayout, IconMeditation,
 } from './icons'
 
 /** Zakladki pogrupowane w sekcje — jak CRM/CLIENTS/ACTIVITY w bocznym panelu Altezzy. */
@@ -30,6 +30,7 @@ const NAV_GROUPS = [
     items: [
       { to: '/wdziecznosc', label: 'Wdzięczność', Icon: IconGratitude },
       { to: '/cialo', label: 'Zdrowie', Icon: IconBody },
+      { to: '/medytacja', label: 'Medytacja', Icon: IconMeditation },
       { to: '/mysli-i-cele', label: 'Notatki', Icon: IconJournal },
     ],
   },
@@ -47,6 +48,7 @@ const PAGE_LABELS = {
   '/wydatki': 'Wydatki',
   '/godziny-pracy': 'Godziny pracy',
   '/cialo': 'Zdrowie',
+  '/medytacja': 'Medytacja',
   '/mysli-i-cele': 'Notatki',
   '/zrob-to-teraz': 'Fokus',
   '/przeglad-tygodnia': 'Przegląd tygodnia',

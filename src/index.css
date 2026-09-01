@@ -535,7 +535,7 @@ a { color: var(--accent); }
 .bottom-nav {
   flex: none;
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(9, 1fr);
   gap: .2rem;
   background: var(--surface);
   border-radius: 6px;
@@ -1230,6 +1230,93 @@ a { color: var(--accent); }
 }
 .period-custom .field { font-size: .72rem; }
 .period-custom .field input { padding: .45rem .55rem; font-size: .8rem; border-radius: 3px; }
+
+/* ---------------------------------------------------------------------------
+   MEDYTACJA
+   --------------------------------------------------------------------------- */
+.meditation-techniques {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: .4rem;
+}
+.meditation-tech {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+  text-align: left;
+  font: inherit;
+  padding: .6rem .7rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.meditation-tech:hover { border-color: var(--line-hard); background: var(--surface-2); }
+.meditation-tech.is-active {
+  border-color: var(--accent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.meditation-tech-name { font-size: .85rem; font-weight: 600; }
+.meditation-tech-hint { font-size: .72rem; color: var(--ink-faint); line-height: 1.35; }
+
+/* Sesja na pelnym ekranie — ciemna, bez rozpraszaczy. */
+.meditation-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: #14161C;
+  color: #F3F4F8;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 2rem; padding: 2rem; text-align: center;
+}
+.meditation-technique {
+  margin: 0;
+  font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: #8B8FA6;
+}
+.meditation-stage {
+  position: relative;
+  width: min(66vw, 300px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+.meditation-circle {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 26%, transparent);
+  border: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  will-change: transform;
+}
+.meditation-center {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: .3rem;
+}
+.meditation-phase {
+  font-size: .8rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  color: #A7ADB8;
+}
+.meditation-count {
+  font-size: 2.6rem; font-weight: 600; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.meditation-phase-left {
+  font-size: 1.1rem; font-weight: 600; color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.meditation-actions { display: flex; gap: .6rem; }
+.meditation-overlay .btn-ghost {
+  background: rgba(255,255,255,.1);
+  color: #F3F4F8;
+}
+.meditation-overlay .btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,.16); }
+.meditation-hint { margin: 0; font-size: .76rem; color: #6E7386; }
+
+@media (prefers-reduced-motion: reduce) {
+  .meditation-circle { transition: none !important; }
+}
 
 /* --- szybki wydatek na Pulpicie --- */
 .quick-expense { display: flex; flex-direction: column; gap: .7rem; }

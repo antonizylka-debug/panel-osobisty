@@ -199,6 +199,17 @@ export function IconCollapse(props) {
   )
 }
 
+/** Medytacja — koncentryczne kregi, jak rozchodzacy sie oddech. */
+export function IconMeditation(props) {
+  return (
+    <svg {...common} {...props}>
+      <circle cx="12" cy="12" r="2.5" />
+      <path d="M12 5.5a6.5 6.5 0 0 1 6.5 6.5" />
+      <path d="M12 18.5A6.5 6.5 0 0 1 5.5 12" />
+    </svg>
+  )
+}
+
 /** Malutka strzalka w dol — rozwijane przyciski, jak "Create Activity ▾". */
 export function IconChevronDown(props) {
   return (

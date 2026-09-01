@@ -20,6 +20,9 @@ import { PageLoader } from '../../components/FullScreenSpinner'
 import { IconWorkHours, IconPayout, IconExpenses } from '../../components/icons'
 import BudgetSplitCard from '../budget/BudgetSplitCard'
 import SavingsGoalSheet from '../budget/SavingsGoalSheet'
+import NetWorthCard from '../networth/NetWorthCard'
+import QuickAddExpense from '../expenses/QuickAddExpense'
+import { generateDueExpenses } from '../expenses/recurringApi'
 import { savingsProjection } from '../../lib/savings'
 
 function monthStart(iso) { return iso.slice(0, 8) + '01' }
@@ -32,9 +35,16 @@ export default function StartPage() {
   const [showFavoriteQuote, setShowFavoriteQuote] = useState(false)
   const [savingsOpen, setSavingsOpen] = useState(false)
   const [goalOpen, setGoalOpen] = useState(false)
+  // Wymusza przeliczenie wartosci netto po dopisaniu wydatku z Pulpitu.
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const load = useCallback(async () => {
     try {
+      // Zalegle wydatki cykliczne dopisujemy PRZED odczytem, zeby od razu
+      // weszly do bilansu miesiaca. Blad (np. brak migracji 0019) nie moze
+      // zablokowac calego Pulpitu — cykliczne sa dodatkiem, nie rdzeniem.
+      await generateDueExpenses().catch(() => {})
+
       const monthFrom = monthStart(today)
       const [
         goal, savings, quotes, habits, habitLogs, plan,
@@ -215,6 +225,17 @@ export default function StartPage() {
           </p>
         )}
       </div>
+
+      {/* Wszystkie pieniadze w jednej liczbie — najwyzej na stronie, bo to
+          jedyna wartosc, ktora sprawdza sie codziennie. */}
+      <NetWorthCard key={`nw-${refreshKey}`} />
+
+      {/* Dopisanie wydatku bez wchodzenia w Wydatki — najczestsza czynnosc
+          w calej apce, wiec dostaje miejsce na Pulpicie. */}
+      <Card>
+        <CardHead title="Szybki wydatek" hint="Dopisujesz dzisiejszą datę" />
+        <QuickAddExpense onAdded={() => { setRefreshKey((k) => k + 1); load() }} />
+      </Card>
 
       {/* Podzial 50/30/20 — cala karta, bez skracania */}
       <BudgetSplitCard income={derived.monthPay} expenses={data.expenses} />

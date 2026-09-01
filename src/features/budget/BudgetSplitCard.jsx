@@ -4,7 +4,7 @@ import {
 } from './api'
 import { fetchSavingsGoal } from '../start/api'
 import SavingsGoalSheet from './SavingsGoalSheet'
-import { CATEGORIES } from '../expenses/api'
+import { useCategories } from '../expenses/useCategories'
 import { formatPLN } from '../../lib/money'
 import { todayISO, formatDatePl } from '../../lib/date'
 import { savingsProjection } from '../../lib/savings'
@@ -273,6 +273,7 @@ function EditSheet({ open, buckets, onClose, onSaved }) {
 }
 
 function MapSheet({ open, buckets, categoryMap, onClose, onChanged }) {
+  const categories = useCategories()
   const current = new Map(categoryMap.map((m) => [m.category, m.bucket_id]))
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState('')
@@ -298,7 +299,7 @@ function MapSheet({ open, buckets, categoryMap, onClose, onChanged }) {
 
         {error && <p className="form-error" role="alert">{error}</p>}
 
-        {CATEGORIES.map((c) => (
+        {categories.map((c) => (
           <label className="field" key={c}>
             <span>{c}</span>
             <select

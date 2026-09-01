@@ -11,6 +11,7 @@ import {
 import { toCsv, downloadText } from '../../lib/csv'
 import { Card, CardHead, EmptyState, Sheet, Segmented } from '../../components/ui'
 import ReminderSettings from '../reminders/ReminderSettings'
+import { CategoriesCard, RecurringCard } from '../expenses/ManageListsCards'
 
 /* Stale wstrzykiwane przez Vite (define w vite.config.js). Czytane przez
    typeof, bo przy starym procesie dev-servera (config wczytywany raz, przy
@@ -194,6 +195,9 @@ export default function SettingsPage() {
           ))}
         </div>
       </Card>
+
+      <CategoriesCard />
+      <RecurringCard />
 
       <ReminderSettings />
 

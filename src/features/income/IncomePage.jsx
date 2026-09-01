@@ -14,6 +14,7 @@ import { IconTrash } from '../../components/icons'
 import { PageLoader } from '../../components/FullScreenSpinner'
 import PeriodPicker from '../../components/PeriodPicker'
 import CashOnHandCard from '../cash/CashOnHandCard'
+import SavingsHistoryCard from '../savings/SavingsHistoryCard'
 
 export default function IncomePage() {
   const { range, previous } = usePeriod()
@@ -122,6 +123,9 @@ export default function IncomePage() {
       {/* Gotowka w domu nie zalezy od wybranego okresu — to stan na teraz,
           nie suma z zakresu dat. */}
       <CashOnHandCard />
+
+      {/* Odkladanie tez jest stanem, nie suma z okresu. */}
+      <SavingsHistoryCard />
 
       <Card>
         <CardHead title="Jak to się rozkłada" hint="W wybranym okresie" />

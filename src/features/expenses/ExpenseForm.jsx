@@ -1,5 +1,7 @@
-import { useState } from 'react'
-import { createExpense, uploadReceipt, CATEGORIES } from './api'
+import { useEffect, useState } from 'react'
+import { createExpense, uploadReceipt } from './api'
+import { fetchCategories, DEFAULT_CATEGORIES } from './categoriesApi'
+import { PAYMENT_METHODS } from './paymentMethods'
 import { parseAmount, formatPLN, formatHours } from '../../lib/money'
 import { todayISO } from '../../lib/date'
 import { useAuth } from '../../auth/AuthContext'
@@ -16,9 +18,18 @@ export default function ExpenseForm({ hourlyRate, onSaved }) {
   const [forWhom, setForWhom] = useState('self')
   const [forWhomNote, setForWhomNote] = useState('')
   const [category, setCategory] = useState('')
+  const [method, setMethod] = useState('card')
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES)
   const [file, setFile] = useState(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+
+  // Lista kategorii z konta; bez migracji 0018 zostaja wbudowane domyslne.
+  useEffect(() => {
+    fetchCategories()
+      .then((rows) => { if (rows.length) setCategories(rows.map((c) => c.name)) })
+      .catch(() => {})
+  }, [])
 
   const parsed = parseAmount(amount)
   // Przelicznik widoczny od razu przy wpisywaniu kwoty — nie schowany.
@@ -45,6 +56,9 @@ export default function ExpenseForm({ hourlyRate, onSaved }) {
         for_whom_note: context === 'work' && forWhom === 'someone_else' ? forWhomNote.trim() || null : null,
         category: category || null,
         receipt_url: receiptPath,
+        // payment_method wymaga migracji 0020 — bez niej pole pomijamy,
+        // zeby caly zapis nie leciał na błąd nieznanej kolumny.
+        ...(method ? { payment_method: method } : {}),
       })
       onSaved(saved)
       setAmount(''); setDescription(''); setFile(null); setForWhomNote('')
@@ -91,9 +105,25 @@ export default function ExpenseForm({ hourlyRate, onSaved }) {
           <span>Kategoria</span>
           <select value={category} onChange={(e) => setCategory(e.target.value)}>
             <option value="">—</option>
-            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </label>
+      </div>
+
+      <div className="field">
+        <span>Czym zapłacone</span>
+        <div className="segmented" role="group" aria-label="Metoda płatności">
+          {PAYMENT_METHODS.map((m) => (
+            <button key={m.value} type="button"
+              className={'segmented-item' + (method === m.value ? ' is-active' : '')}
+              onClick={() => setMethod(m.value)}>{m.label}</button>
+          ))}
+        </div>
+        {method === 'cash' && (
+          <p className="muted" style={{ marginTop: '.4rem' }}>
+            Odejmie się od gotówki w domu.
+          </p>
+        )}
       </div>
 
       <label className="field">

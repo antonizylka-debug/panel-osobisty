@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  fetchCashHistory, saveCashCount, deleteCashCount,
+  fetchCashHistory, saveCashCount, deleteCashCount, fetchCashSpentSince,
   currentCash, lastChange, isMissingTable,
 } from './api'
 import { formatPLN, parseAmount } from '../../lib/money'
@@ -16,8 +16,9 @@ import { IconTrash } from '../../components/icons'
  * Przyciski "Dokładam" / "Wyjmuję" sa tylko skrotem: licza nowy stan i zapisuja
  * go jako kolejny spis.
  */
-export default function CashOnHandCard() {
+export default function CashOnHandCard({ refreshKey = 0 }) {
   const [history, setHistory] = useState([])
+  const [spentSince, setSpentSince] = useState(0)
   const [sheetMode, setSheetMode] = useState(null) // 'count' | 'add' | 'take'
   const [loading, setLoading] = useState(true)
   const [needsMigration, setNeedsMigration] = useState(false)
@@ -25,7 +26,9 @@ export default function CashOnHandCard() {
 
   const load = useCallback(async () => {
     try {
-      setHistory(await fetchCashHistory())
+      const rows = await fetchCashHistory()
+      setHistory(rows)
+      setSpentSince(rows.length ? await fetchCashSpentSince(rows[0]) : 0)
       setNeedsMigration(false)
       setError('')
     } catch (err) {
@@ -36,7 +39,9 @@ export default function CashOnHandCard() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  // refreshKey pozwala rodzicowi (Pulpit) przeladowac karte po dopisaniu
+  // wydatku gotowka, zeby stan nie byl przez chwile nieaktualny.
+  useEffect(() => { load() }, [load, refreshKey])
 
   if (loading) return null
 
@@ -52,9 +57,11 @@ export default function CashOnHandCard() {
     )
   }
 
-  const current = currentCash(history)
+  const counted = currentCash(history)
   const change = lastChange(history)
   const last = history[0]
+  // Stan "na teraz" = ostatni spis minus gotowka wydana od tego spisu.
+  const current = counted == null ? null : Math.max(0, counted - spentSince)
 
   return (
     <>
@@ -80,10 +87,21 @@ export default function CashOnHandCard() {
         ) : (
           <>
             <p className="big-number">{formatPLN(current)}</p>
-            {change != null && Math.abs(change) >= 0.01 && (
+            {spentSince > 0 ? (
+              <p className="muted" style={{ marginTop: '.3rem' }}>
+                Spisane {formatPLN(counted)} · {formatPLN(spentSince)} wydane gotówką od tamtej pory
+              </p>
+            ) : change != null && Math.abs(change) >= 0.01 ? (
               <p className="muted" style={{ marginTop: '.3rem' }}>
                 {change > 0 ? '▲ ' : '▼ '}
                 {formatPLN(Math.abs(change))} od poprzedniego spisu
+              </p>
+            ) : null}
+
+            {history.length > 1 && (
+              <p className="muted" style={{ marginTop: '.5rem', fontSize: '.8rem' }}>
+                Liczysz od {formatDatePl(history[history.length - 1].date)} ·{' '}
+                {history.length} {history.length === 1 ? 'spis' : history.length < 5 ? 'spisy' : 'spisów'}
               </p>
             )}
 

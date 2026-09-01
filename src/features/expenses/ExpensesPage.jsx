@@ -4,13 +4,14 @@ import ExpenseForm from './ExpenseForm'
 import DebtsSection from '../debts/DebtsSection'
 import CsvImportSheet from './CsvImportSheet'
 import {
-  fetchExpenses, fetchBudgets, saveBudget, deleteExpense, receiptUrl, CATEGORIES,
+  fetchExpenses, fetchBudgets, saveBudget, deleteExpense, receiptUrl,
   fetchExtraIncome, addExtraIncome, deleteExtraIncome,
 } from './api'
 import { fetchDebts, fetchPayments } from '../debts/api'
 import { fetchRealHourlyRate, fetchRange } from '../work/api'
 import { todayISO, addDaysISO, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
+import { useCategories } from './useCategories'
 import { rangeDays } from '../../lib/period'
 import { usePeriod } from '../period/PeriodContext'
 import PeriodPicker from '../../components/PeriodPicker'
@@ -30,6 +31,7 @@ export default function ExpensesPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { period, range, previous } = usePeriod()
+  const categories = useCategories()
 
   const [expenses, setExpenses] = useState([])
   const [prevExpenses, setPrevExpenses] = useState([])
@@ -457,7 +459,7 @@ export default function ExpensesPage() {
         </div>
         <div className="chip-row" style={{ marginBottom: '.75rem' }}>
           <button className={'chip' + (!category ? ' is-active' : '')} onClick={() => setCategory('')}>Każda kategoria</button>
-          {CATEGORIES.map((c) => (
+          {categories.map((c) => (
             <button key={c} className={'chip' + (category === c ? ' is-active' : '')}
               onClick={() => setCategory(category === c ? '' : c)}>{c}</button>
           ))}
@@ -544,7 +546,12 @@ function ExpenseRow({ expense, hourlyRate, onDeleted }) {
           </span>
         </td>
         <td data-label="Data">{formatDatePl(expense.date)}</td>
-        <td data-label="Kategoria">{expense.category || '—'}</td>
+        <td data-label="Kategoria">
+          {expense.category || '—'}
+          {expense.payment_method === 'cash' && (
+            <span className="badge" style={{ marginLeft: '.35rem' }}>Gotówka</span>
+          )}
+        </td>
         <td className="num" data-label="Kwota">{formatPLN(expense.amount)}</td>
         <td className="ledger-actions">
           <Kebab items={[
@@ -641,9 +648,10 @@ function ExtraIncomeForm({ onSaved }) {
 }
 
 function BudgetSheet({ open, month, budgets, onClose, onDone }) {
+  const categories = useCategories()
   const overall = budgets.find((b) => !b.category)
   const [limit, setLimit] = useState(overall ? String(overall.limit_amount) : '')
-  const [catName, setCatName] = useState(CATEGORIES[0])
+  const [catName, setCatName] = useState('')
   const [catLimit, setCatLimit] = useState('')
   const [error, setError] = useState('')
 
@@ -664,6 +672,9 @@ function BudgetSheet({ open, month, budgets, onClose, onDone }) {
   async function saveCategory(e) {
     e.preventDefault()
     const amt = parseAmount(catLimit)
+    // Pusta kategoria to w budgets limit CALEGO miesiaca (category is null),
+    // wiec zapis bez wyboru cichcem nadpisalby limit ogolny.
+    if (!catName) return setError('Wybierz kategorię.')
     if (!amt || amt <= 0) return setError('Podaj limit kategorii.')
     try {
       await saveBudget({ month, limitAmount: amt, category: catName })
@@ -688,7 +699,8 @@ function BudgetSheet({ open, month, budgets, onClose, onDone }) {
             <label className="field">
               <span>Kategoria</span>
               <select value={catName} onChange={(e) => setCatName(e.target.value)}>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                <option value="">— wybierz —</option>
+                {categories.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </label>
             <label className="field">

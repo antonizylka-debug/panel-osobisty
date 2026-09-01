@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
 import { parseCsv, parseCsvAmount, parseCsvDate, guessColumns } from '../../lib/csv'
-import { createExpensesBulk, CATEGORIES } from './api'
+import { createExpensesBulk } from './api'
+import { useCategories } from './useCategories'
 import { formatPLN } from '../../lib/money'
 import { formatDatePl } from '../../lib/date'
 import { Sheet, EmptyState } from '../../components/ui'
 
 export default function CsvImportSheet({ open, existing, onClose, onDone }) {
+  const categories = useCategories()
   const [rows, setRows] = useState(null)
   const [header, setHeader] = useState([])
   const [hasHeader, setHasHeader] = useState(true)
@@ -151,7 +153,7 @@ export default function CsvImportSheet({ open, existing, onClose, onDone }) {
                 <span>Kategoria dla wszystkich</span>
                 <select value={bulkCategory} onChange={(e) => setBulkCategory(e.target.value)}>
                   <option value="">—</option>
-                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </label>
             </div>

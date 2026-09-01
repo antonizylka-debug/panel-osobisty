@@ -50,3 +50,32 @@ export function lastChange(history) {
 export function isMissingTable(err) {
   return /cash_on_hand/.test(err?.message ?? '')
 }
+
+/**
+ * Wydatki oznaczone jako gotowkowe od dnia ostatniego spisu (wlacznie).
+ *
+ * To jest cale powiazanie wydatkow z gotowka: nie dopisujemy nic do
+ * cash_on_hand, tylko odejmujemy w locie. Dzieki temu skasowanie albo
+ * poprawienie wydatku od razu prostuje stan, a historia spisow zostaje
+ * historia spisow — patrz komentarz w migracji 0020.
+ */
+export async function fetchCashSpentSince(count) {
+  if (!count) return 0
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('amount, date, created_at')
+    .eq('payment_method', 'cash')
+    .gte('date', count.date)
+  // Brak kolumny payment_method (migracja 0020) nie moze wywalac karty.
+  if (error) {
+    if (/payment_method/.test(error.message)) return 0
+    throw error
+  }
+
+  // Granica jest punktem w czasie, nie dniem. Wydatek z DNIA spisu liczy sie
+  // tylko wtedy, gdy zostal dopisany PO spisie — inaczej odjelibysmy drugi raz
+  // to, co spis juz uwzglednil (np. "przeliczam" zaraz po zakupach).
+  return (data ?? [])
+    .filter((e) => e.date > count.date || (e.date === count.date && e.created_at > count.created_at))
+    .reduce((s, e) => s + Number(e.amount), 0)
+}

@@ -1231,6 +1231,17 @@ a { color: var(--accent); }
 .period-custom .field { font-size: .72rem; }
 .period-custom .field input { padding: .45rem .55rem; font-size: .8rem; border-radius: 3px; }
 
+/* --- szybki wydatek na Pulpicie --- */
+.quick-expense { display: flex; flex-direction: column; gap: .7rem; }
+.quick-expense-row { display: flex; gap: .6rem; flex-wrap: wrap; }
+.quick-expense-amount { flex: 1 1 120px; }
+.quick-expense-cat { flex: 2 1 160px; }
+.quick-expense .field > span {
+  font-size: .68rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.quick-expense .segmented-item { font-size: .78rem; padding: .45rem .6rem; }
+
 /* --- rzad podsumowania okresu: kilka duzych liczb obok siebie --- */
 .summary-row {
   display: grid;

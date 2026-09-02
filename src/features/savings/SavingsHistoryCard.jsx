@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  fetchDeposits, addDeposit, deleteDeposit, depositStats, setHeldIn,
+  fetchDeposits, addDeposit, deleteDeposit, depositStats, setHeldIn, setCurrentAmount,
   SOURCES, SOURCE_LABEL, isMissingTable,
 } from './api'
 import { fetchSavingsGoal } from '../start/api'
+import { fetchCashHistory, fetchCashSpentSince, currentCash } from '../cash/api'
 import { formatPLN, parseAmount } from '../../lib/money'
 import { todayISO, formatDatePl, daysBetweenISO } from '../../lib/date'
 import { Card, CardHead, EmptyState, Sheet, ProgressBar, Kebab } from '../../components/ui'
@@ -15,7 +16,9 @@ import { IconTrash } from '../../components/icons'
 export default function SavingsHistoryCard() {
   const [deposits, setDeposits] = useState([])
   const [goal, setGoal] = useState(null)
+  const [cashNow, setCashNow] = useState(null)
   const [addOpen, setAddOpen] = useState(false)
+  const [fixOpen, setFixOpen] = useState(false)
   const [missing, setMissing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -30,6 +33,16 @@ export default function SavingsHistoryCard() {
       if (isMissingTable(err)) setMissing(true)
       else setError(err.message)
     } finally { setLoading(false) }
+
+    // Realny stan gotowki — podpowiedz przy poprawianiu kwoty. Brak tabeli
+    // (migracja 0017) po prostu wylacza podpowiedz, nie psuje karty.
+    try {
+      const history = await fetchCashHistory()
+      if (history.length) {
+        const spent = await fetchCashSpentSince(history[0])
+        setCashNow(Math.max(0, currentCash(history) - spent))
+      }
+    } catch { /* brak gotowki — trudno */ }
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -60,7 +73,10 @@ export default function SavingsHistoryCard() {
           title="Odkładanie"
           hint={goal ? `Cel: ${goal.title}` : 'Nie masz ustawionego celu'}
           action={goal && (
-            <button className="chip is-active" onClick={() => setAddOpen(true)}>+ Odłożyłem</button>
+            <div className="chip-row">
+              <button className="chip" onClick={() => setFixOpen(true)}>Popraw kwotę</button>
+              <button className="chip is-active" onClick={() => setAddOpen(true)}>+ Odłożyłem</button>
+            </div>
           )}
         />
 
@@ -234,7 +250,81 @@ export default function SavingsHistoryCard() {
         onClose={() => setAddOpen(false)}
         onSaved={() => { setAddOpen(false); load() }}
       />
+
+      <FixAmountSheet
+        open={fixOpen}
+        currentAmount={current}
+        cashNow={cashNow}
+        onClose={() => setFixOpen(false)}
+        onSaved={() => { setFixOpen(false); load() }}
+      />
     </>
+  )
+}
+
+/**
+ * Sprostowanie kwoty odlozonych — gdy liczba w apce rozjechala sie z tym,
+ * co faktycznie masz. To nie jest wplata, wiec nie trafia do historii.
+ */
+function FixAmountSheet({ open, currentAmount, cashNow, onClose, onSaved }) {
+  const [amount, setAmount] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    if (open) { setAmount(String(currentAmount ?? '')); setError('') }
+  }, [open, currentAmount])
+
+  if (!open) return null
+
+  async function submit(e) {
+    e.preventDefault()
+    const value = parseAmount(amount)
+    if (value == null || value < 0) return setError('Podaj kwotę.')
+
+    setBusy(true)
+    try {
+      await setCurrentAmount(value)
+      onSaved()
+    } catch (err) {
+      setError(err.message)
+    } finally { setBusy(false) }
+  }
+
+  return (
+    <Sheet open title="Popraw odłożoną kwotę" onClose={onClose}>
+      <form className="stack" onSubmit={submit}>
+        <p className="muted">
+          Wpisz, ile <strong>naprawdę</strong> masz odłożone. To korekta liczby,
+          a nie wpłata — nie trafi do historii i nie zmieni wyliczonego tempa.
+        </p>
+
+        {cashNow != null && (
+          <div className="converter">
+            Gotówka w domu na teraz: <strong>{formatPLN(cashNow)}</strong>
+            <button type="button" className="chip" style={{ marginLeft: '.6rem' }}
+              onClick={() => setAmount(String(cashNow))}>
+              Wstaw tę kwotę
+            </button>
+          </div>
+        )}
+
+        <label className="field">
+          <span>Odłożone</span>
+          <input type="text" inputMode="decimal" autoFocus value={amount}
+            onChange={(e) => setAmount(e.target.value)} />
+        </label>
+
+        <p className="muted">
+          Teraz w apce: {formatPLN(currentAmount)}
+        </p>
+
+        {error && <p className="form-error" role="alert">{error}</p>}
+        <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
+          {busy ? 'Zapisywanie…' : 'Zapisz kwotę'}
+        </button>
+      </form>
+    </Sheet>
   )
 }
 

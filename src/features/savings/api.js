@@ -16,6 +16,21 @@ export const SOURCES = [
 
 export const SOURCE_LABEL = Object.fromEntries(SOURCES.map((s) => [s.value, s.label]))
 
+/**
+ * Ustawia stan odlozonych na konkretna kwote — korekta, nie wplata.
+ *
+ * NIE dopisuje wiersza do historii: to nie jest zdarzenie ("odlozylem 200"),
+ * tylko sprostowanie liczby, ktora byla zla. Wpisanie tego jako wplaty
+ * zafalszowaloby tempo odkladania i sredniе z depositStats().
+ */
+export async function setCurrentAmount(amount) {
+  const { error } = await supabase
+    .from('savings_goal')
+    .update({ current_amount: Math.max(0, Number(amount)) })
+    .not('user_id', 'is', null)
+  if (error) throw error
+}
+
 export async function fetchDeposits() {
   const { data, error } = await supabase
     .from('savings_deposits')

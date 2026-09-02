@@ -1367,6 +1367,32 @@ a { color: var(--accent); }
   .meditation-circle { transition: none !important; }
 }
 
+/* --- najprostsza liczba: zarobione − wydane = zostalo --- */
+.simple-balance { padding: 1rem 1.1rem; }
+.simple-balance-row {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: .5rem 1rem;
+}
+.simple-balance-part { display: flex; flex-direction: column; gap: .2rem; }
+.simple-balance-label {
+  font-size: .64rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.simple-balance-num {
+  font-size: 1.3rem; font-weight: 600; letter-spacing: -.015em;
+  font-variant-numeric: tabular-nums; line-height: 1;
+}
+.simple-balance-num.is-negative { color: var(--danger); }
+.simple-balance-op {
+  font-size: 1.1rem; color: var(--ink-faint); line-height: 1;
+  padding-bottom: .1rem;
+}
+/* Wynik ma byc najwyrazniejszy — po to sie tu patrzy. */
+.simple-balance-part.is-result { margin-left: auto; text-align: right; }
+.simple-balance-part.is-result .simple-balance-num { font-size: 1.8rem; }
+
 /* --- bilans w kilku okresach obok siebie --- */
 /* Kazdy kafelek ma wlasna ramke zamiast sztuczki z tlem i 1px odstepem —
    przy zawijaniu (4 + 1) puste miejsce w rzedzie nie zostawialoby wtedy

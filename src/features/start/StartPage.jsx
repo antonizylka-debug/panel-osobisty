@@ -22,6 +22,7 @@ import BudgetSplitCard from '../budget/BudgetSplitCard'
 import SavingsGoalSheet from '../budget/SavingsGoalSheet'
 import NetWorthCard from '../networth/NetWorthCard'
 import BalanceOverviewCard from '../balance/BalanceOverviewCard'
+import SimpleBalanceCard from '../balance/SimpleBalanceCard'
 import QuickAddExpense from '../expenses/QuickAddExpense'
 import { generateDueExpenses } from '../expenses/recurringApi'
 import { savingsProjection } from '../../lib/savings'
@@ -132,6 +133,9 @@ export default function StartPage() {
 
   return (
     <div className="page-pad">
+      {/* Jedna liczba, bez rat i okresow — pierwsza rzecz na stronie. */}
+      <SimpleBalanceCard refreshKey={refreshKey} />
+
       {/* Cytat dnia — cicha linia bez ramki, zeby nie konkurowal z pieniedzmi o uwage */}
       {shownQuote && (
         <div className="quote-line">

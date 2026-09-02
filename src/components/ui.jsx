@@ -92,6 +92,22 @@ export function EmptyState({ children }) {
 }
 
 /**
+ * Znak zapytania z wyjasnieniem, skad wzięla sie liczba.
+ *
+ * <button>, nie <span>: dymek ma sie pokazywac takze po tabulacji i po
+ * dotknieciu na telefonie, a nie tylko pod kursorem myszy. `title` zostaje
+ * jako zapasowy opis dla czytnikow ekranu.
+ */
+export function InfoTip({ text, label = 'Jak to jest liczone' }) {
+  return (
+    <button type="button" className="infotip" aria-label={label} title={text}>
+      <span aria-hidden="true">?</span>
+      <span className="infotip-bubble" role="tooltip">{text}</span>
+    </button>
+  )
+}
+
+/**
  * Rzad glownych liczb okresu.
  * `items`: [{ label, value, delta?, deltaGood?, tone? }]
  *  - delta        — zmiana wzgledem poprzedniego okresu (liczba, moze byc ujemna)
@@ -109,7 +125,10 @@ export function SummaryRow({ items }) {
 
         return (
           <div className="summary-cell" key={it.label}>
-            <span className="summary-label">{it.label}</span>
+            <span className="summary-label">
+              {it.label}
+              {it.tip && <InfoTip text={it.tip} />}
+            </span>
             <b className={'summary-value' + (it.tone === 'negative' ? ' is-negative' : '')}>
               {it.value}
             </b>

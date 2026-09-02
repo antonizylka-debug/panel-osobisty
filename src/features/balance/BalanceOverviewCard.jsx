@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { fetchBalanceData, allBalances } from './api'
 import { formatPLN } from '../../lib/money'
 import { todayISO, formatDatePl } from '../../lib/date'
-import { Card, CardHead } from '../../components/ui'
+import { Card, CardHead, InfoTip } from '../../components/ui'
 
 /**
  * Bilans w kilku okresach obok siebie + "od zawsze".
@@ -85,10 +85,22 @@ export default function BalanceOverviewCard({ refreshKey = 0 }) {
         <thead>
           <tr>
             <th>Okres</th>
-            <th className="num">Zarobione</th>
-            <th className="num">Wydane</th>
-            <th className="num">Raty</th>
-            <th className="num">Bilans</th>
+            <th className="num">
+              Zarobione
+              <InfoTip text="Dniówki z Godzin pracy plus Dodatkowa kasa, z datą mieszczącą się w tym okresie." />
+            </th>
+            <th className="num">
+              Wydane
+              <InfoTip text="Suma wydatków z datą w tym okresie — wszystkie kategorie, gotówka i karta razem. Raty są w osobnej kolumnie." />
+            </th>
+            <th className="num">
+              Raty
+              <InfoTip text="Tylko raty faktycznie odhaczone jako zapłacone. Rata liczy się do miesiąca, którego dotyczy — dlatego w krótkich okresach zwykle jest tu kreska." />
+            </th>
+            <th className="num">
+              Bilans
+              <InfoTip text="Zarobione minus wydane minus zapłacone raty." />
+            </th>
           </tr>
         </thead>
         <tbody>

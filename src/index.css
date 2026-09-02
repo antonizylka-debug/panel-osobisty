@@ -1367,6 +1367,70 @@ a { color: var(--accent); }
   .meditation-circle { transition: none !important; }
 }
 
+/* ---------------------------------------------------------------------------
+   INFOTIP — "skad ta liczba"
+   Dymek pokazuje sie na hover, na focus (tabulacja) i po kliknieciu na
+   telefonie, gdzie hover nie istnieje.
+   --------------------------------------------------------------------------- */
+.infotip {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 14px; height: 14px;
+  flex: none;
+  margin-left: .3rem;
+  padding: 0;
+  border: 1px solid var(--line-hard);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-faint);
+  font: inherit;
+  font-size: .58rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+  vertical-align: middle;
+}
+.infotip:hover, .infotip:focus-visible { border-color: var(--accent); color: var(--accent); }
+
+/* Dymek POD znaczkiem, nie nad. Etykiety, przy ktorych stoi, siedza zwykle
+   na gorze karty — dymek nad nimi wyjezdzal poza obszar przewijania i byl
+   ucinany. Pod spodem miejsce jest zawsze. */
+.infotip-bubble {
+  position: absolute;
+  top: calc(100% + .4rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  width: max-content;
+  max-width: min(78vw, 280px);
+  padding: .5rem .6rem;
+  background: var(--surface);
+  border: 1px solid var(--line-hard);
+  border-radius: 4px;
+  box-shadow: var(--shadow-card);
+  color: var(--ink-mid);
+  font-size: .72rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.infotip:hover .infotip-bubble,
+.infotip:focus .infotip-bubble,
+.infotip:focus-visible .infotip-bubble {
+  opacity: 1;
+  visibility: visible;
+}
+/* Przy prawej krawedzi karty dymek wyjechalby poza ekran — wtedy trzymamy
+   go przy prawym brzegu przycisku zamiast centrowac. */
+.infotip.is-right .infotip-bubble { left: auto; right: 0; transform: none; }
+
 /* --- najprostsza liczba: zarobione − wydane = zostalo --- */
 .simple-balance { padding: 1rem 1.1rem; }
 .simple-balance-row {

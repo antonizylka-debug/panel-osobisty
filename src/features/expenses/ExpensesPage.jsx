@@ -15,7 +15,7 @@ import { useCategories } from './useCategories'
 import { rangeDays } from '../../lib/period'
 import { usePeriod } from '../period/PeriodContext'
 import PeriodPicker from '../../components/PeriodPicker'
-import { Card, CardHead, ProgressBar, BarChart, PieChart, EmptyState, Sheet, StatRow, SummaryRow, Kebab } from '../../components/ui'
+import { Card, CardHead, ProgressBar, BarChart, PieChart, EmptyState, Sheet, StatRow, SummaryRow, Kebab, InfoTip } from '../../components/ui'
 import { IconEdit, IconTrash } from '../../components/icons'
 import { PageLoader } from '../../components/FullScreenSpinner'
 import BudgetSplitCard from '../budget/BudgetSplitCard'
@@ -215,6 +215,7 @@ export default function ExpensesPage() {
         items={[
           {
             label: 'Wydane w okresie',
+            tip: 'Suma wszystkich wydatków z datą w wybranym okresie — każda kategoria, gotówka i karta razem. Raty i oszczędności nie są tu wliczone.',
             value: formatPLN(periodTotal),
             delta: previous ? periodTotal - prevTotal : null,
             deltaGood: 'down',
@@ -224,16 +225,19 @@ export default function ExpensesPage() {
           },
           {
             label: 'Liczba wydatków',
+            tip: 'Ile pojedynczych wpisów mieści się w wybranym okresie — nie kwota, tylko sztuki.',
             value: String(inRange.length),
             hint: `${rangeDays(range)} dni w okresie`,
           },
           {
             label: 'Średnio dziennie',
+            tip: 'Wydane w okresie podzielone przez liczbę dni okresu — także te dni, w których nic nie wydałeś.',
             value: formatPLN(periodTotal / Math.max(1, rangeDays(range)), { short: true }),
             hint: hourlyRate ? `≈ ${formatHours(periodTotal / hourlyRate)} pracy` : undefined,
           },
           {
             label: 'Zostało z zarobionego',
+            tip: 'Zarobione w okresie (dniówki + dodatkowa kasa) minus wydatki minus miesięczne raty aktywnych zobowiązań.',
             value: formatPLN(left.remaining),
             tone: left.remaining < 0 ? 'negative' : undefined,
             hint: `Zarobione ${formatPLN(left.earned, { short: true })}`,
@@ -363,10 +367,10 @@ export default function ExpensesPage() {
             <thead>
               <tr>
                 <th>Kategoria</th>
-                <th className="num">Kwota</th>
-                <th className="num">Udział</th>
-                <th className="num">Limit</th>
-                {hourlyRate && <th className="num">Czas pracy</th>}
+                <th className="num">Kwota<InfoTip text="Suma wydatków tej kategorii w wybranym okresie." /></th>
+                <th className="num">Udział<InfoTip text="Ile procent wszystkich wydatków okresu stanowi ta kategoria." /></th>
+                <th className="num">Limit<InfoTip text="Miesięczny limit ustawiony dla tej kategorii w Budżecie. Kreska = brak limitu." /></th>
+                {hourlyRate && <th className="num">Czas pracy<InfoTip text="Ile godzin pracy kosztowała ta kategoria — kwota podzielona przez Twoją realną stawkę godzinową z ostatnich 30 dni." /></th>}
               </tr>
             </thead>
             <tbody>

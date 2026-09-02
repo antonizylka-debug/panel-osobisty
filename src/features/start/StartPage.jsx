@@ -15,7 +15,7 @@ import { fetchEntry, fetchMoodHistory } from '../gratitude/api'
 import { fetchDebts, fetchPayments, upcomingPayments } from '../debts/api'
 import { todayISO, addDaysISO, isoDate, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
-import { Card, CardHead, ProgressBar, EmptyState, Sheet } from '../../components/ui'
+import { Card, CardHead, ProgressBar, EmptyState, Sheet, InfoTip } from '../../components/ui'
 import { PageLoader } from '../../components/FullScreenSpinner'
 import { IconWorkHours, IconPayout, IconExpenses } from '../../components/icons'
 import BudgetSplitCard from '../budget/BudgetSplitCard'
@@ -181,15 +181,24 @@ export default function StartPage() {
 
         <div className="page-header-stats">
           <div className="page-header-stat">
-            <span>Zarobione</span>
+            <span>
+              Zarobione
+              <InfoTip text="Dniówki plus Dodatkowa kasa od 1. dnia tego miesiąca do dziś." />
+            </span>
             <b>{formatPLN(derived.monthPay, { short: true })}</b>
           </div>
           <div className="page-header-stat">
-            <span>Wydane</span>
+            <span>
+              Wydane
+              <InfoTip text="Suma wszystkich wydatków od 1. dnia tego miesiąca do dziś — każda kategoria, gotówka i karta razem. Bez rat, te są obok." />
+            </span>
             <b>{formatPLN(derived.monthSpent, { short: true })}</b>
           </div>
           <div className="page-header-stat">
-            <span>Raty</span>
+            <span>
+              Raty
+              <InfoTip text="Suma miesięcznych rat wszystkich aktywnych zobowiązań — niezależnie od tego, czy są już odhaczone jako zapłacone." />
+            </span>
             <b>{formatPLN(derived.installments, { short: true })}</b>
           </div>
         </div>
@@ -218,7 +227,10 @@ export default function StartPage() {
             <span className="mini-stat-icon"><IconExpenses /></span>
             <div>
               <b>{formatPLN(derived.weekSpent, { short: true })}</b>
-              <span className="mini-stat-label">wydatki</span>
+              <span className="mini-stat-label">
+                wydatki
+                <InfoTip text="Suma wydatków od poniedziałku do dziś. Wszystkie kategorie, gotówka i karta razem, bez rat." />
+              </span>
             </div>
           </div>
         </div>

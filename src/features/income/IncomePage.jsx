@@ -21,6 +21,9 @@ export default function IncomePage() {
   const [data, setData] = useState(null)
   const [prevData, setPrevData] = useState(null)
   const [addOpen, setAddOpen] = useState(false)
+  // Wyplata z odlozonych tworzy wydatek gotowka, wiec karta gotowki musi
+  // przeliczyc sie razem z nia — inaczej pokazuje staly, nieaktualny stan.
+  const [cashKey, setCashKey] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -122,10 +125,10 @@ export default function IncomePage() {
 
       {/* Gotowka w domu nie zalezy od wybranego okresu — to stan na teraz,
           nie suma z zakresu dat. */}
-      <CashOnHandCard />
+      <CashOnHandCard refreshKey={cashKey} />
 
       {/* Odkladanie tez jest stanem, nie suma z okresu. */}
-      <SavingsHistoryCard />
+      <SavingsHistoryCard onChanged={() => setCashKey((k) => k + 1)} />
 
       <Card>
         <CardHead title="Jak to się rozkłada" hint="W wybranym okresie" />

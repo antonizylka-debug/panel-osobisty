@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   fetchDeposits, addDeposit, deleteDeposit, depositStats, setHeldIn, setCurrentAmount,
+  withdrawWithExpense,
   SOURCES, SOURCE_LABEL, isMissingTable,
 } from './api'
 import { fetchSavingsGoal } from '../start/api'
 import { fetchCashHistory, fetchCashSpentSince, currentCash } from '../cash/api'
+import { useCategories } from '../expenses/useCategories'
 import { formatPLN, parseAmount } from '../../lib/money'
 import { todayISO, formatDatePl, daysBetweenISO } from '../../lib/date'
 import { Card, CardHead, EmptyState, Sheet, ProgressBar, Kebab } from '../../components/ui'
@@ -13,7 +15,7 @@ import { IconTrash } from '../../components/icons'
 /**
  * Odkladanie na cel: od kiedy, jak dlugo, skad i w jakim tempie.
  */
-export default function SavingsHistoryCard() {
+export default function SavingsHistoryCard({ onChanged }) {
   const [deposits, setDeposits] = useState([])
   const [goal, setGoal] = useState(null)
   const [cashNow, setCashNow] = useState(null)
@@ -248,7 +250,7 @@ export default function SavingsHistoryCard() {
         open={addOpen}
         currentAmount={current}
         onClose={() => setAddOpen(false)}
-        onSaved={() => { setAddOpen(false); load() }}
+        onSaved={() => { setAddOpen(false); load(); onChanged?.() }}
       />
 
       <FixAmountSheet
@@ -329,11 +331,13 @@ function FixAmountSheet({ open, currentAmount, cashNow, onClose, onSaved }) {
 }
 
 function DepositSheet({ open, currentAmount, onClose, onSaved }) {
+  const categories = useCategories()
   const [amount, setAmount] = useState('')
   const [source, setSource] = useState('dniowka')
   const [note, setNote] = useState('')
   const [date, setDate] = useState(todayISO())
   const [withdraw, setWithdraw] = useState(false)
+  const [category, setCategory] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -341,6 +345,7 @@ function DepositSheet({ open, currentAmount, onClose, onSaved }) {
     if (open) {
       setAmount(''); setSource('dniowka'); setNote('')
       setDate(todayISO()); setWithdraw(false); setError('')
+      setCategory('')
     }
   }, [open])
 
@@ -355,13 +360,23 @@ function DepositSheet({ open, currentAmount, onClose, onSaved }) {
 
     setBusy(true)
     try {
-      await addDeposit({
-        date,
-        amount: withdraw ? -amt : amt,
-        source,
-        note,
-        currentAmount,
-      })
+      if (withdraw) {
+        const { expenseFailed } = await withdrawWithExpense({
+          date, amount: amt, note, currentAmount, category,
+        })
+        if (expenseFailed) {
+          // Wyplata sie zapisala — mowimy wprost, czego brakuje, zamiast
+          // udawac, ze wszystko poszlo.
+          setError(
+            'Wypłatę zapisałem, ale wydatku nie udało się dopisać: '
+            + expenseFailed + ' — dodaj go ręcznie w Wydatkach.'
+          )
+          setBusy(false)
+          return
+        }
+      } else {
+        await addDeposit({ date, amount: amt, source, note, currentAmount })
+      }
       onSaved()
     } catch (err) {
       setError(err.message)
@@ -395,6 +410,24 @@ function DepositSheet({ open, currentAmount, onClose, onSaved }) {
               {SOURCES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
           </label>
+        )}
+
+        {withdraw && (
+          <>
+            <label className="field">
+              <span>Na co (kategoria wydatku)</span>
+              <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                <option value="">— bez kategorii —</option>
+                {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </label>
+
+            <div className="converter">
+              Dopiszę to od razu jako <strong>wydatek gotówką</strong>, żebyś nie
+              musiał o tym pamiętać. Jeśli kwota albo kategoria wyjdą inne —
+              popraw wpis w Wydatkach. Nie dodawaj tego zakupu drugi raz.
+            </div>
+          </>
         )}
 
         <label className="field">

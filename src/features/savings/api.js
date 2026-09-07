@@ -65,6 +65,46 @@ export async function addDeposit({ date, amount, source, note, currentAmount }) 
   return next
 }
 
+/**
+ * Wyplata z odlozonych, ktora od razu ladujе tez jako wydatek.
+ *
+ * Po co: wyjmujesz gotowke ZEBY ja wydac. Bez tego trzeba pamietac o dwoch
+ * wpisach — wyplacie i zakupie — a drugi latwo wypada z glowy.
+ *
+ * Dzieje sie ZAWSZE, bez pytania. Wydatek ladujе w zwyklej liscie Wydatkow,
+ * wiec jesli kwota albo kategoria byly inne, poprawia sie go tam jak kazdy
+ * inny wpis — to jest tansze niz decydowanie przy kazdej wyplacie.
+ *
+ * Kolejnosc: najpierw wyplata (to jest to, o co prosil uzytkownik), potem
+ * wydatek. Gdy wydatek nie przejdzie, ZWRACAMY blad zamiast go polykac —
+ * lepiej zeby uzytkownik dopisal go recznie, niz zeby zniknal po cichu.
+ *
+ * Zwraca { expenseFailed } — wyplata w tym wypadku i tak sie zapisala.
+ */
+export async function withdrawWithExpense({
+  date, amount, note, currentAmount, category,
+}) {
+  await addDeposit({ date, amount: -Math.abs(amount), source: 'inne', note, currentAmount })
+
+  try {
+    const { createExpense } = await import('../expenses/api')
+    await createExpense({
+      amount: Math.abs(amount),
+      date,
+      description: note?.trim() || 'Wypłata z oszczędności',
+      category: category || null,
+      context: 'private',
+      type: 'receipt',
+      // Gotowka, bo odlozone lezа w domu — dzieki temu stan gotowki
+      // na karcie "Gotowka w domu" tez sie o to obnizy.
+      payment_method: 'cash',
+    })
+    return { expenseFailed: null }
+  } catch (err) {
+    return { expenseFailed: err.message }
+  }
+}
+
 export async function deleteDeposit({ id, amount, currentAmount }) {
   const { error } = await supabase.from('savings_deposits').delete().eq('id', id)
   if (error) throw error

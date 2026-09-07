@@ -619,6 +619,7 @@ a { color: var(--accent); }
   box-shadow: inset 2px 0 0 var(--accent);
 }
 
+
 /* ---------------------------------------------------------------------------
    DESKTOP — nawigacja przenosi sie z dolu na bok, jako ciemny panel z
    wyszukiwarka, profilem, selektorem koloru i posortowanym menu.
@@ -2317,3 +2318,78 @@ li:last-child > .row-item--flat { border-bottom: none; }
 .muted { color: var(--ink-mid); font-size: .85rem; }
 .text-right { text-align: right; }
 .mt-1 { margin-top: 1rem; }
+
+/* ---------------------------------------------------------------------------
+   TELEFON — wszystko ponizej 560 px.
+   Domyslne rozmiary sa liczone dla szerokiej karty; na 336 px sam gorny pasek
+   potrzebowal 350 px (logo 118 + ikony 192 + marginesy 40) i sie nie miescil.
+   Ten blok sciaga elementy do rozmiarow, w ktore da sie trafic palcem, nie
+   zmieniajac niczego na desktopie.
+   --------------------------------------------------------------------------- */
+@media (max-width: 560px) {
+  /* --- gorny pasek --- */
+  .shell-top {
+    padding: calc(env(safe-area-inset-top, 0px) + .7rem) .8rem .6rem;
+    gap: .5rem;
+  }
+  .shell-brand { font-size: 1.35rem; }
+  .shell-brand-logo { width: 22px; height: 22px; }
+  .shell-top > div { gap: .35rem !important; }
+  .theme-toggle { width: 34px; height: 34px; border-radius: 3px; }
+  .theme-toggle svg { width: 17px; height: 17px; }
+  .user-avatar { width: 34px; height: 34px; font-size: .82rem; }
+
+  /* --- karty --- */
+  .page-pad { padding-left: .8rem; padding-right: .8rem; padding-top: .6rem; }
+  .card { padding: .85rem .9rem; margin-bottom: .7rem; }
+
+  /* Naglowek karty: tytul na swojej linii, przyciski pod nim w rzedzie.
+     Obok siebie tytul i akcje wypychaly sie nawzajem — podpis lamal sie
+     wtedy na trzy linijki, a przyciski ustawialy w pionie. */
+  .card-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .55rem;
+  }
+  .card-head .chip-row { justify-content: flex-start; }
+  .card-title { font-size: .95rem; }
+  .card-hint { font-size: .76rem; }
+
+  /* --- naglowek strony: tytul + akcje jedno pod drugim --- */
+  .page-head { flex-direction: column; align-items: stretch; gap: .6rem; }
+  .page-head-tools { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .page-head-tools .btn { flex: 1; min-width: 140px; }
+  .page-title { font-size: 1.45rem; }
+
+  /* --- liczby: 2 w rzedzie zamiast 1 na cala szerokosc --- */
+  .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .summary-value { font-size: 1.05rem; }
+  .balance-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .balance-value { font-size: 1rem; }
+  .balance-cell.is-total .balance-value { font-size: 1.3rem; }
+
+  /* Prosta liczba na gorze: wynik pod dzialaniem, nie obok — inaczej
+     "= 843,78 zl" laduje w drugiej linii bez etykiety. */
+  .simple-balance-row { gap: .4rem .7rem; }
+  .simple-balance-num { font-size: 1.05rem; }
+  .simple-balance-part.is-result {
+    margin-left: 0;
+    flex-basis: 100%;
+    text-align: left;
+    padding-top: .5rem;
+    border-top: 1px solid var(--line);
+  }
+  .simple-balance-part.is-result .simple-balance-num { font-size: 1.5rem; }
+
+  /* --- przelaczniki i przyciski: dosc duze, zeby trafic palcem --- */
+  .segmented-item { font-size: .76rem; padding: .5rem .4rem; }
+  .chip { padding: .45rem .7rem; }
+  .btn { min-height: 44px; }
+
+  /* --- dymek podpowiedzi nie moze wychodzic poza ekran --- */
+  .infotip-bubble { max-width: min(84vw, 260px); }
+
+  /* --- formularze --- */
+  .field-grid { grid-template-columns: 1fr; }
+  .sheet { max-height: 90dvh; }
+}

@@ -1176,6 +1176,54 @@ a { color: var(--accent); }
 .ledger tr.is-clickable:hover td { background: var(--surface-2); }
 .ledger tr.is-clickable:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
+/* Podglad wpisu po najechaniu na wiersz. Wlasny dymek zamiast natywnego
+   title: tamten czeka sekunde, nie da sie go sformatowac w tabelke
+   pole-wartosc i nie pokazuje sie po dotknieciu. */
+.ledger td.ledger-main { position: relative; }
+.daytip {
+  position: absolute;
+  top: calc(100% - .1rem);
+  left: 0;
+  z-index: 70;
+  display: grid;
+  gap: .18rem;
+  width: max-content;
+  min-width: 215px;
+  max-width: min(80vw, 300px);
+  padding: .55rem .65rem;
+  background: var(--surface);
+  border: 1px solid var(--line-hard);
+  border-radius: 4px;
+  box-shadow: var(--shadow-card);
+  font-size: .72rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.daytip-head {
+  font-weight: 700; color: var(--ink);
+  padding-bottom: .3rem; margin-bottom: .1rem;
+  border-bottom: 1px solid var(--line);
+}
+.daytip-row { display: flex; justify-content: space-between; gap: 1.2rem; color: var(--ink-faint); }
+.daytip-row strong { font-weight: 600; color: var(--ink); white-space: nowrap; }
+.daytip-foot {
+  margin-top: .25rem; padding-top: .3rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-faint); font-size: .68rem;
+}
+/* Tylko tam, gdzie kursor w ogole istnieje — na dotyku wiersz otwiera arkusz
+   i dymek zdazylby tylko mrugnac pod palcem. */
+@media (hover: hover) {
+  .ledger tr.is-clickable:hover .daytip { opacity: 1; visibility: visible; }
+}
+.ledger tr.is-clickable:focus-visible .daytip { opacity: 1; visibility: visible; }
+
 /* Rozpad tabeli zalezy od szerokosci KARTY, nie okna: na szerokim ekranie
    karty i tak ida w 2-3 kolumnach, wiec tabela bywa waska mimo szerokiego
    viewportu. Container query mierzy realnie dostepne miejsce. */

@@ -280,7 +280,7 @@ export default function WorkPage() {
                   className="is-clickable"
                   role="button"
                   tabIndex={0}
-                  title={daySummary(d)}
+                  aria-label={daySummary(d)}
                   onClick={() => setPeekDate(d.date)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPeekDate(d.date) }
@@ -289,6 +289,7 @@ export default function WorkPage() {
                   <td className="ledger-main" data-label="Dzień">
                     <span className="ledger-name">{formatDatePl(d.date)}</span>
                     <span className="ledger-sub">{DAY_TYPE_LABEL[d.day_type]}</span>
+                    <DayTip day={d} />
                   </td>
                   <td className="num" data-label="Godziny">
                     {Number(d.hours_worked ?? 0) > 0 ? formatHours(d.hours_worked) : '—'}
@@ -330,7 +331,7 @@ export default function WorkPage() {
                   className="is-clickable"
                   role="button"
                   tabIndex={0}
-                  title={daySummary(d)}
+                  aria-label={daySummary(d)}
                   onClick={() => setPeekDate(d.date)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPeekDate(d.date) }
@@ -338,6 +339,7 @@ export default function WorkPage() {
                 >
                   <td className="ledger-main" data-label="Dzień">
                     <span className="ledger-name">{formatDatePl(d.date)}</span>
+                    <DayTip day={d} />
                   </td>
                   <td className="num" data-label="Godziny">{formatHours(d.hours_worked)}</td>
                   <td className="num" data-label="Dniówka">{formatPLN(d.pay_amount)}</td>
@@ -374,17 +376,53 @@ function PayBadge({ day }) {
     : <span className="badge is-warn">Czeka</span>
 }
 
-/** Streszczenie wpisu w natywnym dymku — podglad bez otwierania arkusza. */
+/** To samo streszczenie dla czytnika ekranu — dymek jest tylko wizualny. */
 function daySummary(d) {
-  const parts = [DAY_TYPE_LABEL[d.day_type]]
+  const parts = [formatDatePl(d.date), DAY_TYPE_LABEL[d.day_type]]
   if (d.left_home_time && d.return_time) {
-    parts.push(`${d.left_home_time.slice(0, 5)}–${d.return_time.slice(0, 5)}`)
+    parts.push(`${hhmm(d.left_home_time)}–${hhmm(d.return_time)}`)
   }
   if (Number(d.hours_worked ?? 0) > 0) parts.push(formatHours(d.hours_worked))
   if (d.pay_amount != null) {
-    parts.push(`${formatPLN(d.pay_amount)} · ${d.pay_status === 'paid' ? 'rozliczone' : 'czeka na wypłatę'}`)
+    parts.push(`${formatPLN(d.pay_amount)}, ${d.pay_status === 'paid' ? 'rozliczone' : 'czeka na wypłatę'}`)
   }
-  return `${parts.join(' · ')}\nKliknij, żeby zobaczyć wszystko i poprawić`
+  return `${parts.join(', ')}. Otwórz, żeby poprawić.`
+}
+
+/**
+ * Dymek z pelnym wpisem, pokazywany po najechaniu na wiersz.
+ *
+ * Pomija pola, ktorych nie ma — pusta linia "Pobudka —" zajmuje miejsce
+ * i nic nie mowi, a dymek ma sie czytac jednym rzutem oka.
+ */
+function DayTip({ day }) {
+  const span = doorToDoorHours(day.left_home_time, day.return_time)
+  const rows = [
+    ['Rodzaj dnia', DAY_TYPE_LABEL[day.day_type]],
+    day.wake_time && ['Pobudka', hhmm(day.wake_time)],
+    (day.left_home_time || day.return_time)
+      && ['Wyjazd → powrót', `${hhmm(day.left_home_time)} → ${hhmm(day.return_time)}`],
+    day.left_base_time && ['Wyjazd z bazy', hhmm(day.left_base_time)],
+    Number(day.hours_worked ?? 0) > 0 && ['Godziny', formatHours(day.hours_worked)],
+    span > 0 && ['Od wyjazdu do powrotu', formatHours(span)],
+    day.pay_amount != null && ['Dniówka', formatPLN(day.pay_amount)],
+    day.pay_amount != null && ['Wypłata', day.pay_status === 'paid'
+      ? (day.pay_date ? `Rozliczone · ${formatDatePl(day.pay_date)}` : 'Rozliczone')
+      : 'Czeka'],
+  ].filter(Boolean)
+
+  return (
+    <span className="daytip" aria-hidden="true">
+      <span className="daytip-head">{formatDatePl(day.date)}</span>
+      {rows.map(([label, value]) => (
+        <span className="daytip-row" key={label}>
+          <span>{label}</span>
+          <strong>{value}</strong>
+        </span>
+      ))}
+      <span className="daytip-foot">Kliknij, żeby poprawić wypłatę</span>
+    </span>
+  )
 }
 
 const hhmm = (t) => (t ? t.slice(0, 5) : '—')

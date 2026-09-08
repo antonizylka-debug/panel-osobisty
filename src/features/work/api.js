@@ -54,6 +54,31 @@ export async function settlePayment({ dates, totalAmount, payDate }) {
 }
 
 /**
+ * Poprawka statusu jednego dnia: "czeka" <-> "rozliczone".
+ *
+ * Osobno od settlePayment, bo tamto rozbija jedna wyplate na kilka dni
+ * i NADPISUJE kwoty (total / liczba dni). Tutaj zmienia sie sam status —
+ * dniowka zostaje taka, jaka byla wpisana.
+ *
+ * Cofniecie do "czeka" czysci tez paid_for_dates: dzien wraca do puli
+ * nierozliczonych, wiec slad po starym zbiorczym rozliczeniu tylko mylil.
+ */
+export async function setPayStatus({ date, status, payDate }) {
+  const { data, error } = await supabase
+    .from('work_days')
+    .update({
+      pay_status: status,
+      pay_date: status === 'paid' ? (payDate || date) : null,
+      ...(status === 'pending' ? { paid_for_dates: null } : {}),
+    })
+    .eq('date', date)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+/**
  * Realna stawka godzinowa: dniowka / czas od wyjazdu z domu do powrotu.
  * Srednia z ostatnich 30 dni — zasila przelicznik "to = X godzin pracy" w Wydatkach.
  */

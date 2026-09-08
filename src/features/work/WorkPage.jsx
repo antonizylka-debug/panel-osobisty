@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import WorkDayForm from './WorkDayForm'
-import { fetchDay, fetchRange, fetchPending, settlePayment, doorToDoorHours } from './api'
-import { fetchBlocksRange } from './blocksApi'
+import {
+  fetchDay, fetchRange, fetchPending, settlePayment, setPayStatus, doorToDoorHours,
+} from './api'
+import { fetchBlocks, fetchBlocksRange } from './blocksApi'
 import { categoryLabel } from './TimeBlocks'
 import { todayISO, formatDatePl } from '../../lib/date'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { rangeDays } from '../../lib/period'
 import { usePeriod } from '../period/PeriodContext'
 import PeriodPicker from '../../components/PeriodPicker'
-import { Card, CardHead, BarChart, EmptyState, SummaryRow, Sheet } from '../../components/ui'
+import { Card, CardHead, BarChart, EmptyState, SummaryRow, Segmented, Sheet } from '../../components/ui'
 import { PageLoader } from '../../components/FullScreenSpinner'
 
 const DAY_TYPE_LABEL = { work: 'Praca', off: 'Wolne', vacation: 'Urlop', sick: 'L4' }
@@ -25,6 +27,8 @@ export default function WorkPage() {
   const [pending, setPending] = useState([])
   const [blocks, setBlocks] = useState([])
   const [settleOpen, setSettleOpen] = useState(false)
+  // Dzien otwarty do podejrzenia — null gdy arkusz zamkniety.
+  const [peekDate, setPeekDate] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -60,6 +64,15 @@ export default function WorkPage() {
   function handleSaved(saved) {
     setEntry(saved)
     setDays((prev) => [saved, ...prev.filter((d) => d.date !== saved.date)].sort((a, b) => (a.date < b.date ? 1 : -1)))
+    fetchPending().then(setPending).catch(() => {})
+  }
+
+  // Status poprawiony w podgladzie dnia. Podmieniamy wiersz w miejscu zamiast
+  // przeladowywac strone — inaczej otwarty arkusz mrugnalby na spinner.
+  // Pule "czeka na wyplate" trzeba pobrac na nowo, bo dzien z niej wypada.
+  function handleDayPatched(saved) {
+    setDays((prev) => prev.map((d) => (d.date === saved.date ? saved : d)))
+    if (saved.date === date) setEntry(saved)
     fetchPending().then(setPending).catch(() => {})
   }
 
@@ -245,6 +258,54 @@ export default function WorkPage() {
 
       <Card>
         <CardHead
+          title="Zapisane dni"
+          hint="Kliknij dzień, żeby zobaczyć wpis i poprawić wypłatę"
+        />
+        {scope.length === 0 ? (
+          <EmptyState>W tym okresie nie masz zapisanego żadnego dnia.</EmptyState>
+        ) : (
+          <table className="ledger">
+            <thead>
+              <tr>
+                <th>Dzień</th>
+                <th className="num">Godziny</th>
+                <th className="num">Dniówka</th>
+                <th className="status">Wypłata</th>
+              </tr>
+            </thead>
+            <tbody>
+              {scope.map((d) => (
+                <tr
+                  key={d.id ?? d.date}
+                  className="is-clickable"
+                  role="button"
+                  tabIndex={0}
+                  title={daySummary(d)}
+                  onClick={() => setPeekDate(d.date)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPeekDate(d.date) }
+                  }}
+                >
+                  <td className="ledger-main" data-label="Dzień">
+                    <span className="ledger-name">{formatDatePl(d.date)}</span>
+                    <span className="ledger-sub">{DAY_TYPE_LABEL[d.day_type]}</span>
+                  </td>
+                  <td className="num" data-label="Godziny">
+                    {Number(d.hours_worked ?? 0) > 0 ? formatHours(d.hours_worked) : '—'}
+                  </td>
+                  <td className="num" data-label="Dniówka">
+                    {d.pay_amount != null ? formatPLN(d.pay_amount) : '—'}
+                  </td>
+                  <td className="status" data-label="Wypłata"><PayBadge day={d} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Card>
+
+      <Card>
+        <CardHead
           title="Czeka na wypłatę"
           hint={pending.length ? `${pending.length} dni · ${formatPLN(pendingTotal)}` : 'Wszystko rozliczone'}
           action={pending.length > 0 && (
@@ -264,7 +325,17 @@ export default function WorkPage() {
             </thead>
             <tbody>
               {pending.map((d) => (
-                <tr key={d.id}>
+                <tr
+                  key={d.id}
+                  className="is-clickable"
+                  role="button"
+                  tabIndex={0}
+                  title={daySummary(d)}
+                  onClick={() => setPeekDate(d.date)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPeekDate(d.date) }
+                  }}
+                >
                   <td className="ledger-main" data-label="Dzień">
                     <span className="ledger-name">{formatDatePl(d.date)}</span>
                   </td>
@@ -283,7 +354,166 @@ export default function WorkPage() {
         onClose={() => setSettleOpen(false)}
         onDone={() => { setSettleOpen(false); load() }}
       />
+
+      {peekDate && (
+        <DayPeekSheet
+          date={peekDate}
+          onClose={() => setPeekDate(null)}
+          onChanged={handleDayPatched}
+          onEdit={(d) => { setPeekDate(null); changeDate(d) }}
+        />
+      )}
     </div>
+  )
+}
+
+function PayBadge({ day }) {
+  if (day.day_type !== 'work' || day.pay_amount == null) return <span className="muted">—</span>
+  return day.pay_status === 'paid'
+    ? <span className="badge is-success">Rozliczone</span>
+    : <span className="badge is-warn">Czeka</span>
+}
+
+/** Streszczenie wpisu w natywnym dymku — podglad bez otwierania arkusza. */
+function daySummary(d) {
+  const parts = [DAY_TYPE_LABEL[d.day_type]]
+  if (d.left_home_time && d.return_time) {
+    parts.push(`${d.left_home_time.slice(0, 5)}–${d.return_time.slice(0, 5)}`)
+  }
+  if (Number(d.hours_worked ?? 0) > 0) parts.push(formatHours(d.hours_worked))
+  if (d.pay_amount != null) {
+    parts.push(`${formatPLN(d.pay_amount)} · ${d.pay_status === 'paid' ? 'rozliczone' : 'czeka na wypłatę'}`)
+  }
+  return `${parts.join(' · ')}\nKliknij, żeby zobaczyć wszystko i poprawić`
+}
+
+const hhmm = (t) => (t ? t.slice(0, 5) : '—')
+
+/**
+ * Podglad jednego dnia: co dokladnie bylo wpisane + przelacznik wyplaty.
+ *
+ * Dociaga dzien osobno zamiast dostac gotowy wiersz z listy, bo i tak trzeba
+ * pobrac bloki czasu (siedza w innej tabeli), a przy okazji arkusz pokazuje
+ * stan z bazy, nie ze stanu strony.
+ */
+function DayPeekSheet({ date, onClose, onChanged, onEdit }) {
+  const [day, setDay] = useState(null)
+  const [blocks, setBlocks] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    setError('')
+    Promise.all([fetchDay(date), fetchBlocks(date).catch(() => [])])
+      .then(([d, b]) => { if (alive) { setDay(d); setBlocks(b) } })
+      .catch((err) => { if (alive) setError(err.message) })
+      .finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [date])
+
+  async function changeStatus(next) {
+    if (!day || next === day.pay_status) return
+    setSaving(true)
+    setError('')
+    try {
+      const saved = await setPayStatus({ date, status: next })
+      setDay(saved)
+      onChanged(saved)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const span = day ? doorToDoorHours(day.left_home_time, day.return_time) : null
+  const rows = day ? [
+    ['Rodzaj dnia', DAY_TYPE_LABEL[day.day_type]],
+    ['Pobudka', hhmm(day.wake_time)],
+    ['Wyjazd z domu', hhmm(day.left_home_time)],
+    ['Wyjazd z bazy', hhmm(day.left_base_time)],
+    ['Powrót', hhmm(day.return_time)],
+    ['Przepracowane godziny', Number(day.hours_worked ?? 0) > 0 ? formatHours(day.hours_worked) : '—'],
+    ['Od wyjazdu do powrotu', span ? formatHours(span) : '—'],
+    ['Dniówka', day.pay_amount != null ? formatPLN(day.pay_amount) : '—'],
+    ['Data wypłaty', day.pay_date ? formatDatePl(day.pay_date) : '—'],
+  ] : []
+
+  // Dzien rozliczony w paczce z innymi — bez tego kwota na dniu wyglada
+  // na wyssana z palca, bo to wyplata podzielona przez liczbe dni.
+  if (day?.paid_for_dates?.length > 1) {
+    rows.push(['Rozliczone razem z', `${day.paid_for_dates.length} dniami`])
+  }
+
+  return (
+    <Sheet open title={formatDatePl(date)} onClose={onClose}>
+      {loading ? (
+        <p className="muted">Wczytywanie…</p>
+      ) : !day ? (
+        <EmptyState>Na ten dzień nic nie jest zapisane.</EmptyState>
+      ) : (
+        <div className="stack">
+          {day.day_type === 'work' && day.pay_amount != null && (
+            <label className="field">
+              <span>Wypłata</span>
+              <Segmented
+                ariaLabel="Status wypłaty"
+                value={day.pay_status}
+                onChange={changeStatus}
+                options={[
+                  { value: 'pending', label: 'Czeka' },
+                  { value: 'paid', label: 'Rozliczone' },
+                ]}
+              />
+              <span className="muted" style={{ fontWeight: 500 }}>
+                {saving ? 'Zapisywanie…' : 'Zmiana zapisuje się od razu'}
+              </span>
+            </label>
+          )}
+
+          <table className="ledger">
+            <tbody>
+              {rows.map(([label, value]) => (
+                <tr key={label}>
+                  <td className="ledger-main" data-label="Pole">
+                    <span className="ledger-name">{label}</span>
+                  </td>
+                  <td className="num" data-label="Wpisane">{value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {blocks.length > 0 && (
+            <>
+              <p className="muted">Poza dniówką</p>
+              <table className="ledger">
+                <tbody>
+                  {blocks.map((b) => (
+                    <tr key={b.id}>
+                      <td className="ledger-main" data-label="Co">
+                        <span className="ledger-name">{b.label || categoryLabel(b.category)}</span>
+                        <span className="ledger-sub">{categoryLabel(b.category)}</span>
+                      </td>
+                      <td className="num" data-label="Czas">{formatHours(b.hours)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+
+          {error && <p className="form-error" role="alert">{error}</p>}
+
+          <button className="btn btn-block" type="button" onClick={() => onEdit(date)}>
+            Otwórz do edycji
+          </button>
+        </div>
+      )}
+    </Sheet>
   )
 }
 

@@ -1170,6 +1170,12 @@ a { color: var(--accent); }
 }
 .ledger-link:hover { color: var(--accent); }
 
+/* Caly wiersz otwiera szczegoly. Podswietlenie zamiast strzalki w osobnej
+   kolumnie — kolumna zabralaby miejsce, a niczego nie pokazuje. */
+.ledger tr.is-clickable { cursor: pointer; }
+.ledger tr.is-clickable:hover td { background: var(--surface-2); }
+.ledger tr.is-clickable:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
 /* Rozpad tabeli zalezy od szerokosci KARTY, nie okna: na szerokim ekranie
    karty i tak ida w 2-3 kolumnach, wiec tabela bywa waska mimo szerokiego
    viewportu. Container query mierzy realnie dostepne miejsce. */

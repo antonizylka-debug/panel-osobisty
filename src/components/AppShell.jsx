@@ -34,12 +34,12 @@ const NAV_GROUPS = [
       { to: '/medytacja', label: 'Medytacja', Icon: IconMeditation },
       { to: '/czytanie', label: 'Czytanie', Icon: IconBook },
       { to: '/bez-nalogu', label: 'Bez nałogu', Icon: IconShield },
-      { to: '/mysli-i-cele', label: 'Notatki', Icon: IconJournal },
+      { to: '/mysli-i-cele', label: 'Notatki i cele', Icon: IconJournal },
     ],
   },
   {
     label: 'Produktywność',
-    items: [{ to: '/zrob-to-teraz', label: 'Fokus', Icon: IconDoItNow }],
+    items: [{ to: '/zrob-to-teraz', label: 'Zrób to teraz', Icon: IconDoItNow }],
   },
 ]
 
@@ -65,8 +65,8 @@ const PAGE_LABELS = {
   '/czytanie': 'Czytanie',
   '/bez-nalogu': 'Bez nałogu',
   '/lista-rzeczy': 'Lista rzeczy',
-  '/mysli-i-cele': 'Notatki',
-  '/zrob-to-teraz': 'Fokus',
+  '/mysli-i-cele': 'Notatki i cele',
+  '/zrob-to-teraz': 'Zrób to teraz',
   '/przeglad-tygodnia': 'Przegląd tygodnia',
   '/ulubione': 'Ulubione',
   '/szukaj': 'Szukaj',

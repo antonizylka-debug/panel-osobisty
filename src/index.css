@@ -1889,6 +1889,9 @@ a { color: var(--accent); }
   display: flex; flex-direction: column;
   overflow: hidden;
 }
+/* Okno dostaje focus po otwarciu (zeby tabulator nie chodzil po tresci za
+   nim), ale samo w sobie nie jest przyciskiem — obwodka byloby mylaca. */
+.sheet:focus { outline: none; }
 .sheet-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 1.25rem 1.25rem .75rem;

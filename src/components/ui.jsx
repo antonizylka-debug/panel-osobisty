@@ -256,6 +256,17 @@ export function Segmented({ options, value, onChange, ariaLabel }) {
 }
 
 export function Sheet({ open, title, onClose, children }) {
+  const dialogRef = useRef(null)
+  const returnFocusRef = useRef(null)
+  const wasOpen = useRef(false)
+
+  // Zapamietujemy element, z ktorego przyszlismy, JESZCZE W TRAKCIE RENDEROWANIA.
+  // W efekcie jest za pozno: React ustawia autoFocus w trakcie commitu, wiec
+  // activeElement to juz pole w srodku arkusza i "powrot" wracalby do pola,
+  // ktore za chwile zniknie — a focus ladowal wtedy na <body>.
+  if (open && !wasOpen.current) returnFocusRef.current = document.activeElement
+  wasOpen.current = open
+
   useEffect(() => {
     if (!open) return
     function onKey(e) {
@@ -265,6 +276,32 @@ export function Sheet({ open, title, onClose, children }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
+  useEffect(() => {
+    if (!open) return
+
+    // Tlo nie moze sie przewijac pod otwartym arkuszem. Na telefonie
+    // przeciagniecie palcem po arkuszu przewijalo strone za nim, przez co
+    // po zamknieciu ladowales w zupelnie innym miejscu listy.
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    // Focus wchodzi do okna. Bez tego po otwarciu arkusza tabulator dalej
+    // chodzil po tresci ZA nim. Pole z autoFocus ma pierwszenstwo — jesli
+    // formularz sam ustawil focus, zostawiamy go w spokoju.
+    if (!dialogRef.current?.contains(document.activeElement)) {
+      dialogRef.current?.focus()
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      // Po zamknieciu focus wraca tam, skad przyszedl — inaczej klawiatura
+      // zaczynala nawigacje od poczatku strony. Element mogl w miedzyczasie
+      // zniknac z drzewa (lista sie przeladowala), stad sprawdzenie.
+      const back = returnFocusRef.current
+      if (back instanceof HTMLElement && document.contains(back)) back.focus()
+    }
+  }, [open])
+
   if (!open) return null
 
   // Portal do <body>: arkusz bywa wywolywany z wnetrza <tbody> (wiersz tabeli),
@@ -272,7 +309,15 @@ export function Sheet({ open, title, onClose, children }) {
   // poza tabele, niezaleznie od miejsca wywolania.
   return createPortal(
     <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+      <div
+        className="sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        ref={dialogRef}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="sheet-head">
           <h2 className="sheet-title">{title}</h2>
           <button className="sheet-close" onClick={onClose} aria-label="Zamknij">×</button>

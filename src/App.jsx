@@ -6,6 +6,7 @@ import { PeriodProvider } from './features/period/PeriodContext'
 import ProtectedRoute from './auth/ProtectedRoute'
 import GuestRoute from './auth/GuestRoute'
 import AppShell from './components/AppShell'
+import { ToastProvider } from './components/Toast'
 
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -37,6 +38,7 @@ export default function App() {
       <AuthProvider>
         <ThemeProvider>
           <SyncProvider>
+          <ToastProvider>
           <PeriodProvider>
           <Routes>
             <Route element={<GuestRoute />}>
@@ -78,6 +80,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           </PeriodProvider>
+          </ToastProvider>
           </SyncProvider>
         </ThemeProvider>
       </AuthProvider>

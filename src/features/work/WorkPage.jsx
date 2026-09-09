@@ -11,8 +11,10 @@ import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { rangeDays } from '../../lib/period'
 import { usePeriod } from '../period/PeriodContext'
 import PeriodPicker from '../../components/PeriodPicker'
-import { Card, CardHead, BarChart, EmptyState, SummaryRow, Segmented, Sheet } from '../../components/ui'
+import { Card, CardHead, BarChart, EmptyState, SummaryRow, Segmented, Sheet, RefreshHint } from '../../components/ui'
 import { PageLoader } from '../../components/FullScreenSpinner'
+import { useToast } from '../../components/Toast'
+import { describeError } from '../../lib/errors'
 
 const DAY_TYPE_LABEL = { work: 'Praca', off: 'Wolne', vacation: 'Urlop', sick: 'L4' }
 
@@ -30,10 +32,12 @@ export default function WorkPage() {
   // Dzien otwarty do podejrzenia — null gdy arkusz zamkniety.
   const [peekDate, setPeekDate] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
 
   const load = useCallback(async () => {
-    setLoading(true)
+    setRefreshing(true)
+    setError('')
     try {
       const [day, inRange, before, pend, blks] = await Promise.all([
         fetchDay(date),
@@ -51,6 +55,7 @@ export default function WorkPage() {
       setError(err.message)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }, [date, periodRange.from, periodRange.to, previous])
 
@@ -146,6 +151,7 @@ export default function WorkPage() {
     <div className="page-pad">
       <div className="page-head">
         <h1 className="page-title">Godziny pracy</h1>
+        <RefreshHint show={refreshing} />
         <div className="page-head-tools">
           <PeriodPicker />
         </div>
@@ -435,6 +441,7 @@ const hhmm = (t) => (t ? t.slice(0, 5) : '—')
  * stan z bazy, nie ze stanu strony.
  */
 function DayPeekSheet({ date, onClose, onChanged, onEdit }) {
+  const toast = useToast()
   const [day, setDay] = useState(null)
   const [blocks, setBlocks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -460,8 +467,10 @@ function DayPeekSheet({ date, onClose, onChanged, onEdit }) {
       const saved = await setPayStatus({ date, status: next })
       setDay(saved)
       onChanged(saved)
+      toast.ok(next === 'paid' ? 'Dzień oznaczony jako rozliczony' : 'Dzień wrócił do czekających na wypłatę')
     } catch (err) {
-      setError(err.message)
+      setError(describeError(err))
+      toast.error(err)
     } finally {
       setSaving(false)
     }
@@ -556,6 +565,7 @@ function DayPeekSheet({ date, onClose, onChanged, onEdit }) {
 }
 
 function SettleSheet({ open, pending, onClose, onDone }) {
+  const toast = useToast()
   const [selected, setSelected] = useState([])
   const [amount, setAmount] = useState('')
   const [payDate, setPayDate] = useState(todayISO())
@@ -584,9 +594,11 @@ function SettleSheet({ open, pending, onClose, onDone }) {
     setSaving(true)
     try {
       await settlePayment({ dates: selected, totalAmount: total, payDate })
+      toast.ok(`Rozliczone ${selected.length} ${selected.length === 1 ? 'dzień' : 'dni'} · ${formatPLN(total)}`)
       onDone()
     } catch (err) {
-      setError(err.message)
+      setError(describeError(err))
+      toast.error(err)
     } finally {
       setSaving(false)
     }

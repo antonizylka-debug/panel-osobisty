@@ -8,16 +8,19 @@ import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { todayISO, formatDatePl } from '../../lib/date'
 import { rangeDays } from '../../lib/period'
 import {
-  Card, CardHead, EmptyState, Sheet, SummaryRow, BarChart, Kebab,
+  Card, CardHead, EmptyState, Sheet, SummaryRow, BarChart, Kebab, RefreshHint,
 } from '../../components/ui'
 import { IconTrash } from '../../components/icons'
 import { PageLoader } from '../../components/FullScreenSpinner'
+import { useToast } from '../../components/Toast'
+import { describeError } from '../../lib/errors'
 import PeriodPicker from '../../components/PeriodPicker'
 import CashOnHandCard from '../cash/CashOnHandCard'
 import SavingsHistoryCard from '../savings/SavingsHistoryCard'
 
 export default function IncomePage() {
   const { range, previous } = usePeriod()
+  const toast = useToast()
   const [data, setData] = useState(null)
   const [prevData, setPrevData] = useState(null)
   const [addOpen, setAddOpen] = useState(false)
@@ -25,10 +28,11 @@ export default function IncomePage() {
   // przeliczyc sie razem z nia — inaczej pokazuje staly, nieaktualny stan.
   const [cashKey, setCashKey] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
 
   const load = useCallback(async () => {
-    setLoading(true)
+    setRefreshing(true)
     setError('')
     try {
       const [current, before] = await Promise.all([
@@ -43,6 +47,7 @@ export default function IncomePage() {
       setError(err.message)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }, [range.from, range.to, previous])
 
@@ -84,6 +89,7 @@ export default function IncomePage() {
     <div className="page-pad">
       <div className="page-head">
         <h1 className="page-title">Przychody</h1>
+        <RefreshHint show={refreshing} />
         <div className="page-head-tools">
           <PeriodPicker />
           <button className="btn btn-primary" onClick={() => setAddOpen(true)}>+ Dodaj wpływ</button>
@@ -253,8 +259,13 @@ export default function IncomePage() {
                       <Kebab items={[{
                         label: 'Usuń', icon: <IconTrash />, tone: 'danger',
                         onClick: async () => {
-                          await deleteExtraIncome(ev.id.slice(2))
-                          load()
+                          try {
+                            await deleteExtraIncome(ev.id.slice(2))
+                            toast.ok(`Usunięte: ${ev.label} · ${formatPLN(ev.amount)}`)
+                            load()
+                          } catch (err) {
+                            toast.error(err)
+                          }
                         },
                       }]} />
                     )}
@@ -274,6 +285,7 @@ export default function IncomePage() {
 }
 
 function ExtraIncomeForm({ onSaved }) {
+  const toast = useToast()
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
   const [date, setDate] = useState(todayISO())
@@ -287,9 +299,11 @@ function ExtraIncomeForm({ onSaved }) {
     setBusy(true)
     try {
       await addExtraIncome({ date, amount: amt, note })
+      toast.ok('Dopisany wpływ: ' + formatPLN(amt) + (note.trim() ? ' · ' + note.trim() : ''))
       onSaved()
     } catch (err) {
-      setError(err.message)
+      setError(describeError(err))
+      toast.error(err)
     } finally {
       setBusy(false)
     }

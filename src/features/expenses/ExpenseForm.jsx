@@ -1,24 +1,34 @@
 import { useEffect, useState } from 'react'
-import { createExpense, uploadReceipt } from './api'
+import { createExpense, updateExpense, uploadReceipt } from './api'
 import { fetchCategories, DEFAULT_CATEGORIES } from './categoriesApi'
 import { PAYMENT_METHODS } from './paymentMethods'
 import { parseAmount, formatPLN, formatHours } from '../../lib/money'
 import { todayISO } from '../../lib/date'
 import { useAuth } from '../../auth/AuthContext'
 import { Segmented } from '../../components/ui'
+import { useToast } from '../../components/Toast'
+import { describeError } from '../../lib/errors'
 
-export default function ExpenseForm({ hourlyRate, onSaved }) {
+/**
+ * Formularz wydatku — ten sam do dodawania i do poprawiania.
+ *
+ * `expense` podane => tryb edycji: pola startuja z zapisanych wartosci,
+ * a zapis leci UPDATE zamiast INSERT.
+ */
+export default function ExpenseForm({ hourlyRate, onSaved, expense = null }) {
   const { user } = useAuth()
-  const [amount, setAmount] = useState('')
-  const [date, setDate] = useState(todayISO())
-  const [description, setDescription] = useState('')
-  const [type, setType] = useState('receipt')
-  const [cycle, setCycle] = useState('monthly')
-  const [context, setContext] = useState('private')
-  const [forWhom, setForWhom] = useState('self')
-  const [forWhomNote, setForWhomNote] = useState('')
-  const [category, setCategory] = useState('')
-  const [method, setMethod] = useState('card')
+  const editing = !!expense
+  const toast = useToast()
+  const [amount, setAmount] = useState(expense ? String(expense.amount) : '')
+  const [date, setDate] = useState(expense?.date ?? todayISO())
+  const [description, setDescription] = useState(expense?.description ?? '')
+  const [type, setType] = useState(expense?.type ?? 'receipt')
+  const [cycle, setCycle] = useState(expense?.subscription_cycle ?? 'monthly')
+  const [context, setContext] = useState(expense?.context ?? 'private')
+  const [forWhom, setForWhom] = useState(expense?.for_whom ?? 'self')
+  const [forWhomNote, setForWhomNote] = useState(expense?.for_whom_note ?? '')
+  const [category, setCategory] = useState(expense?.category ?? '')
+  const [method, setMethod] = useState(expense?.payment_method ?? 'card')
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES)
   const [file, setFile] = useState(null)
   const [error, setError] = useState('')
@@ -42,10 +52,10 @@ export default function ExpenseForm({ hourlyRate, onSaved }) {
 
     setSaving(true)
     try {
-      let receiptPath = null
+      let receiptPath = expense?.receipt_url ?? null
       if (file) receiptPath = await uploadReceipt(user.id, file)
 
-      const saved = await createExpense({
+      const payload = {
         amount: parsed,
         date,
         description: description.trim() || null,
@@ -59,11 +69,22 @@ export default function ExpenseForm({ hourlyRate, onSaved }) {
         // payment_method wymaga migracji 0020 — bez niej pole pomijamy,
         // zeby caly zapis nie leciał na błąd nieznanej kolumny.
         ...(method ? { payment_method: method } : {}),
-      })
+      }
+
+      const saved = editing
+        ? await updateExpense(expense.id, payload)
+        : await createExpense(payload)
+
+      toast.ok(editing
+        ? `Poprawione: ${formatPLN(parsed)}`
+        : `Dopisane: ${formatPLN(parsed)} · ${description.trim() || category || 'wydatek'}`)
       onSaved(saved)
-      setAmount(''); setDescription(''); setFile(null); setForWhomNote('')
+      if (!editing) { setAmount(''); setDescription(''); setFile(null); setForWhomNote('') }
     } catch (err) {
-      setError(err.message)
+      // Blad zostaje TAKZE przy przycisku, nie tylko w znikajacym pasku —
+      // przy nieudanym zapisie uzytkownik patrzy na formularz, nie na rog ekranu.
+      setError(describeError(err))
+      toast.error(err)
     } finally {
       setSaving(false)
     }
@@ -195,7 +216,7 @@ export default function ExpenseForm({ hourlyRate, onSaved }) {
       {error && <p className="form-error" role="alert">{error}</p>}
 
       <button className="btn btn-primary btn-block" type="submit" disabled={saving}>
-        {saving ? 'Zapisywanie…' : 'Dodaj wydatek'}
+        {saving ? 'Zapisywanie…' : editing ? 'Zapisz zmiany' : 'Dodaj wydatek'}
       </button>
     </form>
   )

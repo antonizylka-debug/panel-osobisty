@@ -33,6 +33,24 @@ export async function createExpense(payload) {
   return data
 }
 
+/**
+ * Poprawka istniejacego wydatku.
+ *
+ * Do tej pory menu "kropki" mialo pozycje "Edytuj", ktora otwierala podglad
+ * bez jednego pola do wpisania — zeby zmienic kwote albo date, trzeba bylo
+ * usunac wpis i dodac go od nowa. Ten zapis zamyka te dziure.
+ */
+export async function updateExpense(id, payload) {
+  const { data, error } = await supabase
+    .from('expenses')
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
 export async function createExpensesBulk(rows) {
   const { data, error } = await supabase.from('expenses').insert(rows).select()
   if (error) throw error

@@ -15,9 +15,10 @@ import { useCategories } from './useCategories'
 import { rangeDays } from '../../lib/period'
 import { usePeriod } from '../period/PeriodContext'
 import PeriodPicker from '../../components/PeriodPicker'
-import { Card, CardHead, ProgressBar, BarChart, PieChart, EmptyState, Sheet, StatRow, SummaryRow, Kebab, InfoTip } from '../../components/ui'
+import { Card, CardHead, ProgressBar, BarChart, PieChart, EmptyState, Sheet, StatRow, SummaryRow, Kebab, InfoTip, RefreshHint, ConfirmButton } from '../../components/ui'
 import { IconEdit, IconTrash } from '../../components/icons'
 import { PageLoader } from '../../components/FullScreenSpinner'
+import { useToast } from '../../components/Toast'
 import BudgetSplitCard from '../budget/BudgetSplitCard'
 
 function monthStart(iso) { return iso.slice(0, 8) + '01' }
@@ -49,12 +50,14 @@ export default function ExpensesPage() {
   const [category, setCategory] = useState('')
   const [visibleCount, setVisibleCount] = useState(20)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
 
   // Wszystko pobierane w granicach wybranego okresu — zaden ekran nie tnie
   // juz danych po fakcie na "biezacy miesiac".
   const load = useCallback(async () => {
-    setLoading(true)
+    setRefreshing(true)
+    setError('')
     try {
       const [exp, prevExp, bud, dbt, pay, rate, days, extra] = await Promise.all([
         fetchExpenses({ from: range.from, to: range.to }),
@@ -75,6 +78,7 @@ export default function ExpensesPage() {
       setError(err.message)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }, [today, range.from, range.to, previous])
 
@@ -172,6 +176,8 @@ export default function ExpensesPage() {
 
   useEffect(() => { setVisibleCount(20) }, [filter, category])
 
+  const filtersOn = filter !== 'all' || !!category
+
   const budgetTone = overallBudget
     ? periodTotal / Number(overallBudget.limit_amount) >= 1 ? 'danger'
       : periodTotal / Number(overallBudget.limit_amount) >= 0.8 ? 'warn' : 'accent'
@@ -204,6 +210,7 @@ export default function ExpensesPage() {
     <div className="page-pad">
       <div className="page-head">
         <h1 className="page-title">Wydatki</h1>
+        <RefreshHint show={refreshing} />
         <div className="page-head-tools">
           <PeriodPicker />
           <button className="btn btn-primary" onClick={() => setAddOpen(true)}>+ Dodaj wydatek</button>
@@ -443,8 +450,21 @@ export default function ExpensesPage() {
       <Card>
         <CardHead
           title="Lista"
-          hint={`${visible.length} pozycji`}
-          action={<button className="chip" onClick={() => setImportOpen(true)}>Import CSV</button>}
+          /* Sama liczba "12 pozycji" nie mowila, ze reszta jest odfiltrowana —
+             przy wlaczonym filtrze wyglada to jak brakujace dane. */
+          hint={filtersOn
+            ? `${visible.length} z ${inRange.length} pozycji · filtr włączony`
+            : `${visible.length} ${visible.length === 1 ? 'pozycja' : 'pozycji'}`}
+          action={
+            <div className="chip-row">
+              {filtersOn && (
+                <button className="chip" onClick={() => { setFilter('all'); setCategory('') }}>
+                  Wyczyść filtry
+                </button>
+              )}
+              <button className="chip" onClick={() => setImportOpen(true)}>Import CSV</button>
+            </div>
+          }
         />
         <div className="tab-row" style={{ marginBottom: '.9rem' }}>
           {[
@@ -470,7 +490,19 @@ export default function ExpensesPage() {
         </div>
 
         {visible.length === 0 ? (
-          <EmptyState>Brak wydatków dla tych filtrów.</EmptyState>
+          /* Pusta lista przy wlaczonym filtrze to nie to samo, co pusty okres —
+             wczesniej oba przypadki mowily to samo i wygladalo to na utrate danych. */
+          filtersOn ? (
+            <EmptyState>
+              Nic nie pasuje do tych filtrów.{' '}
+              <button className="link-inline" onClick={() => { setFilter('all'); setCategory('') }}>
+                Wyczyść filtry
+              </button>
+              {inRange.length > 0 && `, a zobaczysz wszystkie ${inRange.length}.`}
+            </EmptyState>
+          ) : (
+            <EmptyState>W tym okresie nie masz jeszcze żadnego wydatku.</EmptyState>
+          )
         ) : (
           <>
             <table className="ledger">
@@ -490,8 +522,10 @@ export default function ExpensesPage() {
               </tbody>
             </table>
             {visible.length > visibleCount && (
-              <button className="chip mt-1" onClick={() => setVisibleCount((n) => n + 20)}>
-                Załaduj więcej ({visible.length - visibleCount})
+              /* Chip wygladal jak filtr, a nie jak "pokaz reszte listy" —
+                 i mial polowe wysokosci potrzebnej pod palec. */
+              <button className="btn btn-ghost btn-block mt-1" onClick={() => setVisibleCount((n) => n + 20)}>
+                Pokaż kolejne {Math.min(20, visible.length - visibleCount)} z {visible.length - visibleCount}
               </button>
             )}
           </>
@@ -527,11 +561,24 @@ export default function ExpensesPage() {
 function ExpenseRow({ expense, hourlyRate, onDeleted }) {
   const [open, setOpen] = useState(false)
   const [url, setUrl] = useState(null)
+  const toast = useToast()
 
   async function openDetail() {
     setOpen(true)
     if (expense.receipt_url && !url) {
       try { setUrl(await receiptUrl(expense.receipt_url)) } catch { /* podglad opcjonalny */ }
+    }
+  }
+
+  // Blad kasowania byl wczesniej polykany: przy nieudanym zapisie wiersz
+  // zostawal na ekranie bez slowa wyjasnienia, wiec wygladalo to na zwiesenie.
+  async function remove() {
+    try {
+      await deleteExpense(expense.id)
+      toast.ok(`Usunięte: ${expense.description || expense.category || 'wydatek'} · ${formatPLN(expense.amount)}`)
+      onDeleted()
+    } catch (err) {
+      toast.error(err)
     }
   }
 
@@ -560,25 +607,33 @@ function ExpenseRow({ expense, hourlyRate, onDeleted }) {
         <td className="ledger-actions">
           <Kebab items={[
             { label: 'Edytuj', icon: <IconEdit />, onClick: openDetail },
-            { label: 'Usuń', icon: <IconTrash />, tone: 'danger', onClick: async () => { await deleteExpense(expense.id); onDeleted() } },
+            { label: 'Usuń', icon: <IconTrash />, tone: 'danger', onClick: remove },
           ]} />
         </td>
       </tr>
 
       <Sheet open={open} title={expense.description || 'Wydatek'} onClose={() => setOpen(false)}>
         <div className="stack">
-          <p className="big-number">{formatPLN(expense.amount)}</p>
-          {hourlyRate && <div className="converter">≈ {formatHours(Number(expense.amount) / hourlyRate)} Twojej pracy</div>}
-          <p className="muted">
-            {formatDatePl(expense.date)}<br />
-            {label}{whom ? ` · ${whom}` : ''}{expense.for_whom_note ? ` · ${expense.for_whom_note}` : ''}<br />
-            {expense.category && `Kategoria: ${expense.category}`}
-          </p>
-          {url && <img src={url} alt="Paragon" style={{ width: '100%', borderRadius: 16 }} />}
-          <button className="btn btn-ghost btn-block" style={{ color: 'var(--danger)' }}
-            onClick={async () => { await deleteExpense(expense.id); setOpen(false); onDeleted() }}>
+          {hourlyRate && (
+            <div className="converter">
+              {formatPLN(expense.amount)} ≈ {formatHours(Number(expense.amount) / hourlyRate)} Twojej pracy
+            </div>
+          )}
+          {url && <img src={url} alt="Paragon" style={{ width: '100%', borderRadius: 4 }} />}
+
+          {/* Pelny formularz zamiast samego podgladu: pozycja menu nazywa sie
+              "Edytuj", wiec ma dac sie edytowac. Wczesniej trzeba bylo usunac
+              wpis i wystukac go od nowa, zeby poprawic literowke w kwocie. */}
+          <ExpenseForm
+            expense={expense}
+            hourlyRate={hourlyRate}
+            onSaved={() => { setOpen(false); onDeleted() }}
+          />
+
+          <ConfirmButton style={{ color: 'var(--danger)' }}
+            onConfirm={async () => { setOpen(false); await remove() }}>
             Usuń wydatek
-          </button>
+          </ConfirmButton>
         </div>
       </Sheet>
     </>

@@ -1587,6 +1587,10 @@ a { color: var(--accent); }
   margin-bottom: 1rem;
 }
 .summary-cell { background: var(--surface); padding: .8rem .9rem; }
+/* Gdy cztery liczby nie mieszcza sie w jednym rzedzie, ostatnia zostawala
+   sama, a obok niej swiecila szara dziura w tle siatki. Rozciagniecie
+   ostatniej komorki do konca rzedu domyka wiersz. */
+.summary-cell:last-child { grid-column: auto / -1; }
 .summary-label {
   display: block;
   font-size: .62rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
@@ -2265,6 +2269,15 @@ li:last-child > .row-item--flat { border-bottom: none; }
 .kebab-item svg { width: 16px; height: 16px; flex: none; }
 .kebab-item.is-danger { color: var(--danger); }
 .kebab-item.is-danger:hover { background: var(--danger-bg); }
+.kebab-item:disabled { opacity: .5; cursor: default; }
+/* Stan "pytam, czy na pewno" — wyraznie inny niz zwykla pozycja menu, zeby
+   nie dalo sie go przeoczyc i klepnac drugi raz z rozpedu. */
+.kebab-item.is-confirming {
+  background: var(--danger-bg);
+  outline: 1px solid var(--danger);
+  outline-offset: -1px;
+}
+.kebab-item.is-confirming:disabled { opacity: 1; }
 
 .accent-popover {
   position: absolute;
@@ -2367,6 +2380,142 @@ li:last-child > .row-item--flat { border-bottom: none; }
 .time-input .time-part:disabled { opacity: .5; }
 .time-sep { font-weight: 700; color: var(--ink-faint); }
 
+/* ---------------------------------------------------------------------------
+   PASEK POTWIERDZENIA — jedna odpowiedz na "co sie stalo".
+   Nad dolna nawigacja na telefonie, w prawym dolnym rogu na desktopie.
+   Nie zaslania tresci i nie lapie focusu — sam znika.
+   --------------------------------------------------------------------------- */
+.toast-stack {
+  position: fixed;
+  left: 50%;
+  /* Nad dolnym paskiem nawigacji: jego wysokosc to ikona + etykieta + padding,
+     w praktyce ~62 px, plus wlasny margines paska i bezpieczny obszar. */
+  bottom: calc(62px + env(safe-area-inset-bottom, 0px) + 1.4rem);
+  transform: translateX(-50%);
+  z-index: 120;
+  width: min(92vw, 460px);
+  pointer-events: none;
+}
+/* Od 900 px nawigacja jest kolumna z boku, wiec dol ekranu stoi pusty —
+   pasek idzie w rog, zeby nie przykrywal srodka tresci. */
+@media (min-width: 900px) {
+  .toast-stack {
+    left: auto;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    transform: none;
+    width: min(28rem, 40vw);
+  }
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .7rem .85rem;
+  background: var(--surface);
+  border: 1px solid var(--line-hard);
+  border-left: 3px solid var(--ink-faint);
+  border-radius: 4px;
+  box-shadow: var(--shadow-card);
+  color: var(--ink);
+  font-size: .85rem;
+  line-height: 1.35;
+  pointer-events: auto;
+}
+.toast.is-ok { border-left-color: #12805A; }
+.toast.is-error { border-left-color: var(--danger); }
+.toast.is-info { border-left-color: var(--accent); }
+.toast-text { flex: 1; min-width: 0; }
+.toast-action {
+  flex: none;
+  padding: .3rem .6rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line-hard);
+  border-radius: 3px;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.toast-action:hover { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.toast-close {
+  flex: none;
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  padding: 0;
+  background: none; border: none;
+  color: var(--ink-faint);
+  font-size: 1.1rem; line-height: 1;
+  cursor: pointer;
+}
+.toast-close:hover { color: var(--ink); }
+
+/* ---------------------------------------------------------------------------
+   REAKCJA NA DOTKNIECIE I KLIKNIECIE
+   Do tej pory w calym arkuszu nie bylo ani jednej reguly :active — przycisk
+   wygladal tak samo przed nacisnieciem, w trakcie i po. Na telefonie, gdzie
+   nie ma :hover, znaczylo to zero potwierdzenia, ze dotkniecie w ogole
+   zarejestrowalo sie w kliknietym miejscu.
+
+   Do tego: przegladarka na Androidzie dorzuca wlasny niebieski prostokat
+   pod palcem i czeka ~300 ms, zeby sprawdzic, czy to nie podwojne dotkniecie.
+   touch-action: manipulation wylacza to czekanie.
+   --------------------------------------------------------------------------- */
+button,
+[role='button'],
+.btn, .chip, .tab-item, .segmented-item, .bottom-nav-item,
+.row-item, .habit-row, .todo-row, .more-item, .kebab-item, .period-option {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.btn:active:not(:disabled) { transform: translateY(1px); filter: brightness(.95); }
+.chip:active:not(:disabled),
+.tab-item:active:not(:disabled),
+.segmented-item:active:not(:disabled),
+.period-option:active { transform: translateY(1px); }
+
+/* Wiersze list i kafle nawigacji nie moga sie przesuwac (podskakiwalaby cala
+   lista), wiec potwierdzaja dotkniecie przyciemnieniem tla. */
+.row-item:active, .habit-row:active, .todo-row:active,
+.more-item:active, .bottom-nav-item:active, .kebab-item:active:not(:disabled),
+.ledger tr.is-clickable:active td { background: var(--surface-2); }
+
+/* Przycisk uzbrojony do usuniecia — musi wygladac inaczej niz przed chwila,
+   inaczej drugie klikniecie pada z rozpedu, nie z decyzji. */
+.btn.is-armed {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  color: var(--danger) !important;
+}
+
+/* Przycisk udajacy link — wewnatrz zdania, gdzie osobny guzik rozbilby tekst. */
+.link-inline {
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* --- sygnal odswiezania przy tytule strony --- */
+.refresh-hint {
+  align-self: center;
+  padding: .2rem .5rem;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--surface-2);
+  color: var(--ink-faint);
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+
 /* --- pomocnicze --- */
 .stack { display: flex; flex-direction: column; gap: 1rem; }
 .muted { color: var(--ink-mid); font-size: .85rem; }
@@ -2406,13 +2555,23 @@ li:last-child > .row-item--flat { border-bottom: none; }
     gap: .55rem;
   }
   .card-head .chip-row { justify-content: flex-start; }
+  /* align-items: stretch rozciagalo pojedynczy chip akcji na cala szerokosc
+     karty — maly przycisk "Budżet" wygladal jak pole tekstowe. */
+  .card-head > :not(div:first-child) { align-self: flex-start; }
   .card-title { font-size: .95rem; }
   .card-hint { font-size: .76rem; }
 
-  /* --- naglowek strony: tytul + akcje jedno pod drugim --- */
+  /* --- naglowek strony: tytul + akcje jedno pod drugim ---
+     Obok siebie okres i przycisk dzielily 343 px na pol, przez co "+ Dodaj
+     wydatek" lamal sie na dwie linie. Kazdy dostaje wlasny rzad: caly do
+     dotkniecia i bez lamania. */
   .page-head { flex-direction: column; align-items: stretch; gap: .6rem; }
-  .page-head-tools { display: flex; flex-wrap: wrap; gap: .4rem; }
-  .page-head-tools .btn { flex: 1; min-width: 140px; }
+  .page-head-tools { display: flex; flex-direction: column; align-items: stretch; gap: .5rem; }
+  .page-head-tools > * { width: 100%; }
+  .page-head-tools .btn { min-width: 0; white-space: nowrap; }
+  .page-head-tools .period-trigger { width: 100%; }
+  /* Krzyzyk w arkuszu mial 30 px — mniej niz kciuk. */
+  .sheet-close { min-width: 40px; min-height: 40px; }
   .page-title { font-size: 1.45rem; }
 
   /* --- liczby: 2 w rzedzie zamiast 1 na cala szerokosc --- */
@@ -2446,4 +2605,24 @@ li:last-child > .row-item--flat { border-bottom: none; }
   /* --- formularze --- */
   .field-grid { grid-template-columns: 1fr; }
   .sheet { max-height: 90dvh; }
+
+  /* --- pola dotyku: zmierzone na 375 px, nie oszacowane ---
+     Kropki menu mialy 30x30, znak zapytania 14x14, a nazwa wydatku (jedyny
+     sposob otwarcia szczegolow) tylko 19 px wysokosci. Powiekszamy SAM OBSZAR
+     KLIKALNY przez nakladke ::after — ikony zostaja tej samej wielkosci, wiec
+     uklad i wyglad sie nie zmieniaja. */
+  .kebab-trigger, .infotip { position: relative; }
+  .kebab-trigger::after, .infotip::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 44px; height: 44px;
+    transform: translate(-50%, -50%);
+  }
+  .theme-toggle, .user-avatar { min-width: 40px; min-height: 40px; }
+  .chip, .tab-item { min-height: 38px; display: inline-flex; align-items: center; }
+  .ledger-link { min-height: 32px; display: flex; align-items: center; }
+  /* Wiersz tabeli w ukladzie pionowym jest calym celem dotkniecia, wiec
+     przyciski w srodku nie moga byc do niego przyklejone. */
+  .ledger td.ledger-actions { padding-top: .35rem; }
 }

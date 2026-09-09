@@ -11,6 +11,8 @@ import { formatPLN, parseAmount } from '../../lib/money'
 import { todayISO, formatDatePl, daysBetweenISO } from '../../lib/date'
 import { Card, CardHead, EmptyState, Sheet, ProgressBar, Kebab } from '../../components/ui'
 import { IconTrash } from '../../components/icons'
+import { useToast } from '../../components/Toast'
+import { describeError } from '../../lib/errors'
 
 /**
  * Odkladanie na cel: od kiedy, jak dlugo, skad i w jakim tempie.
@@ -340,6 +342,7 @@ function DepositSheet({ open, currentAmount, onClose, onSaved }) {
   const [category, setCategory] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const toast = useToast()
 
   useEffect(() => {
     if (open) {
@@ -374,12 +377,15 @@ function DepositSheet({ open, currentAmount, onClose, onSaved }) {
           setBusy(false)
           return
         }
+        toast.ok(`Wyjęte ${formatPLN(amt)} · wydatek dopisany w Wydatkach`)
       } else {
         await addDeposit({ date, amount: amt, source, note, currentAmount })
+        toast.ok(`Odłożone ${formatPLN(amt)} · razem ${formatPLN(currentAmount + amt)}`)
       }
       onSaved()
     } catch (err) {
-      setError(err.message)
+      setError(describeError(err))
+      toast.error(err)
     } finally { setBusy(false) }
   }
 

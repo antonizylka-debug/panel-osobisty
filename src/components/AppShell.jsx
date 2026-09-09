@@ -149,10 +149,12 @@ export default function AppShell() {
           >
             {resolved === 'dark' ? <IconSun /> : <IconMoon />}
           </button>
-          <Link className="theme-toggle" to="/ustawienia" aria-label="Ustawienia">
+          {/* Zebatka i awatar prowadzily w to samo miejsce. Na telefonie, gdzie
+              w pasku bylo ciasno od czterech ikon, zostaje sam awatar. */}
+          <Link className="theme-toggle desktop-only" to="/ustawienia" aria-label="Ustawienia">
             <IconSettings />
           </Link>
-          <Link className="user-avatar" to="/ustawienia" title={name}>
+          <Link className="user-avatar" to="/ustawienia" title={name} aria-label="Ustawienia i profil">
             {initial}
           </Link>
         </div>

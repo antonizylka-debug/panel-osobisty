@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createExpense } from './api'
 import { fetchCategories, DEFAULT_CATEGORIES } from './categoriesApi'
 import { PAYMENT_METHODS } from './paymentMethods'
 import { formatPLN, parseAmount } from '../../lib/money'
 import { todayISO } from '../../lib/date'
+import { useToast } from '../../components/Toast'
+import { describeError } from '../../lib/errors'
 
 /**
  * Dopisanie wydatku w trzech dotknieciach, prosto z Pulpitu.
@@ -19,7 +21,8 @@ export default function QuickAddExpense({ onAdded }) {
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [saved, setSaved] = useState(null)
+  const toast = useToast()
+  const amountRef = useRef(null)
 
   useEffect(() => {
     fetchCategories()
@@ -45,18 +48,20 @@ export default function QuickAddExpense({ onAdded }) {
         // odrzucilby cala wstawke, wiec pole leci tylko gdy jest wybrane.
         ...(method ? { payment_method: method } : {}),
       })
-      setSaved(amt)
+      toast.ok(`Dopisane: ${formatPLN(amt)}${category ? ` · ${category}` : ''}`)
       setAmount('')
       setCategory('')
-      setTimeout(() => setSaved(null), 2500)
+      // Kursor wraca do kwoty: przy kasie dopisuje sie kilka rzeczy pod rzad,
+      // a szukanie pola po kazdym zapisie kosztowalo dodatkowe dotkniecie.
+      amountRef.current?.focus()
       onAdded?.()
     } catch (err) {
       // Najczestsza przyczyna: kolumna payment_method jeszcze nie istnieje.
-      if (/payment_method/.test(err.message)) {
-        setError('Zapis bez metody płatności wymaga migracji 0020_payment_method.sql.')
-      } else {
-        setError(err.message)
-      }
+      const msg = /payment_method/.test(err.message)
+        ? 'Zapis metody płatności wymaga migracji 0020_payment_method.sql.'
+        : describeError(err)
+      setError(msg)
+      toast.error(msg)
     } finally {
       setBusy(false)
     }
@@ -67,7 +72,7 @@ export default function QuickAddExpense({ onAdded }) {
       <div className="quick-expense-row">
         <label className="field quick-expense-amount">
           <span>Kwota</span>
-          <input type="text" inputMode="decimal" value={amount} placeholder="0,00"
+          <input ref={amountRef} type="text" inputMode="decimal" value={amount} placeholder="0,00"
             onChange={(e) => setAmount(e.target.value)} />
         </label>
 
@@ -94,9 +99,6 @@ export default function QuickAddExpense({ onAdded }) {
       </div>
 
       {error && <p className="form-error" role="alert">{error}</p>}
-      {saved != null && (
-        <p className="muted">Zapisane: {formatPLN(saved)} · dzisiaj</p>
-      )}
 
       <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
         {busy ? 'Zapisywanie…' : 'Dopisz wydatek'}

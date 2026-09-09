@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { diffHours, doorToDoorHours, saveDay } from './api'
 import { formatPLN, formatHours, parseAmount } from '../../lib/money'
 import { Segmented } from '../../components/ui'
+import { useToast } from '../../components/Toast'
+import { describeError } from '../../lib/errors'
 import TimeInput from '../../components/TimeInput'
 import DurationInput from '../../components/DurationInput'
 import TimeBlocks from './TimeBlocks'
@@ -39,7 +41,7 @@ export default function WorkDayForm({ date, entry, onSaved }) {
   const [manualHours, setManualHours] = useState(false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [justSaved, setJustSaved] = useState(false)
+  const toast = useToast()
 
   useEffect(() => {
     setForm(fromEntry(entry))
@@ -86,10 +88,16 @@ export default function WorkDayForm({ date, entry, onSaved }) {
         pay_date: form.pay_status === 'paid' ? (form.pay_date || date) : null,
       })
       onSaved(saved)
-      setJustSaved(true)
-      setTimeout(() => setJustSaved(false), 2000)
+      // Nazywamy, CO sie zapisalo. "Zapisano ✓" na przycisku nie odrozniało
+      // udanego zapisu dniowki od zapisu samego typu dnia.
+      toast.ok(
+        effectiveHours > 0
+          ? `Zapisany dzień: ${formatHours(effectiveHours)}${pay ? ` · ${formatPLN(pay)}` : ''}`
+          : `Zapisany dzień: ${DAY_TYPES.find((d) => d.value === form.day_type)?.label ?? ''}`
+      )
     } catch (err) {
-      setError(err.message)
+      setError(describeError(err))
+      toast.error(err)
     } finally {
       setSaving(false)
     }
@@ -194,7 +202,7 @@ export default function WorkDayForm({ date, entry, onSaved }) {
       {error && <p className="form-error" role="alert">{error}</p>}
 
       <button className="btn btn-primary btn-block" type="submit" disabled={saving}>
-        {saving ? 'Zapisywanie…' : justSaved ? 'Zapisano ✓' : entry ? 'Zapisz zmiany' : 'Zapisz'}
+        {saving ? 'Zapisywanie…' : entry ? 'Zapisz zmiany' : 'Zapisz'}
       </button>
     </form>
   )

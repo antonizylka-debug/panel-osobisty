@@ -5,18 +5,30 @@ import { IconMore } from './icons'
 /**
  * Menu "kropki" przy elemencie listy — Edytuj/Usun itp.
  * items: [{ label, onClick, tone: 'danger'? }]
+ *
+ * Pozycje `tone: 'danger'` pytaja o potwierdzenie W MIEJSCU: pierwsze
+ * klikniecie zamienia je w "Na pewno usunąć?", drugie wykonuje. Bez tego
+ * jedno chybione dotkniecie kasowalo wpis bezpowrotnie i bez slowa.
+ * Osobne okno dialogowe kosztowaloby tyle samo klikniec, ale przykrywaloby
+ * ekran i wyrywalo z kontekstu — potwierdzenie zostaje przy elemencie.
  */
 export function Kebab({ items, ariaLabel = 'Wiecej opcji' }) {
   const [open, setOpen] = useState(false)
+  const [confirming, setConfirming] = useState(null)
+  const [busy, setBusy] = useState(null)
   const boxRef = useRef(null)
 
   useEffect(() => {
-    if (!open) return
+    if (!open) { setConfirming(null); return }
     function onPointerDown(e) {
       if (!boxRef.current?.contains(e.target)) setOpen(false)
     }
     function onKey(e) {
-      if (e.key === 'Escape') setOpen(false)
+      // Escape cofa najpierw samo potwierdzenie, dopiero potem zamyka menu —
+      // inaczej wyjscie z pytania "na pewno?" gubiloby cale menu.
+      if (e.key !== 'Escape') return
+      if (confirming) setConfirming(null)
+      else setOpen(false)
     }
     document.addEventListener('pointerdown', onPointerDown)
     document.addEventListener('keydown', onKey)
@@ -24,7 +36,18 @@ export function Kebab({ items, ariaLabel = 'Wiecej opcji' }) {
       document.removeEventListener('pointerdown', onPointerDown)
       document.removeEventListener('keydown', onKey)
     }
-  }, [open])
+  }, [open, confirming])
+
+  async function run(it) {
+    setBusy(it.label)
+    try {
+      await it.onClick()
+      setOpen(false)
+    } finally {
+      setBusy(null)
+      setConfirming(null)
+    }
+  }
 
   return (
     <div className="kebab" ref={boxRef} onClick={(e) => e.stopPropagation()}>
@@ -40,21 +63,76 @@ export function Kebab({ items, ariaLabel = 'Wiecej opcji' }) {
       {open && (
         <div className="kebab-menu" role="menu">
           <span className="kebab-menu-label">Więcej opcji</span>
-          {items.map((it) => (
-            <button
-              key={it.label}
-              type="button"
-              role="menuitem"
-              className={'kebab-item' + (it.tone === 'danger' ? ' is-danger' : '')}
-              onClick={() => { setOpen(false); it.onClick() }}
-            >
-              {it.icon}
-              {it.label}
-            </button>
-          ))}
+          {items.map((it) => {
+            const isDanger = it.tone === 'danger'
+            const asking = confirming === it.label
+            const working = busy === it.label
+
+            return (
+              <button
+                key={it.label}
+                type="button"
+                role="menuitem"
+                className={'kebab-item' + (isDanger ? ' is-danger' : '') + (asking ? ' is-confirming' : '')}
+                disabled={busy != null}
+                onClick={() => {
+                  if (isDanger && !asking) return setConfirming(it.label)
+                  if (isDanger) return run(it)
+                  setOpen(false)
+                  it.onClick()
+                }}
+              >
+                {it.icon}
+                {working ? 'Usuwanie…' : asking ? 'Na pewno usunąć?' : it.label}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * Przycisk, ktory pyta "na pewno?" sam w sobie — bez okna dialogowego.
+ *
+ * Pierwsze klikniecie uzbraja, drugie wykonuje. Uzbrojenie wygasa po pieciu
+ * sekundach: inaczej przycisk zostawalby "goracy" i przypadkowe trafienie
+ * minute pozniej kasowaloby wpis juz bez zadnego pytania.
+ */
+export function ConfirmButton({
+  children,
+  confirmLabel = 'Na pewno? Kliknij jeszcze raz',
+  busyLabel = 'Usuwanie…',
+  onConfirm,
+  className = 'btn btn-ghost btn-block',
+  ...rest
+}) {
+  const [armed, setArmed] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    if (!armed) return
+    const timer = setTimeout(() => setArmed(false), 5000)
+    return () => clearTimeout(timer)
+  }, [armed])
+
+  async function click() {
+    if (!armed) return setArmed(true)
+    setBusy(true)
+    try { await onConfirm() } finally { setBusy(false); setArmed(false) }
+  }
+
+  return (
+    <button
+      type="button"
+      className={className + (armed ? ' is-armed' : '')}
+      disabled={busy}
+      onClick={click}
+      {...rest}
+    >
+      {busy ? busyLabel : armed ? confirmLabel : children}
+    </button>
   )
 }
 
@@ -89,6 +167,19 @@ export function ProgressBar({ value, max, tone = 'accent' }) {
 
 export function EmptyState({ children }) {
   return <p className="empty-state">{children}</p>
+}
+
+/**
+ * Cichy sygnal "dociagam nowe dane".
+ *
+ * Zastepuje pelnoekranowy spinner przy KAZDYM odswiezeniu. Wczesniej zmiana
+ * okresu kasowala cala strone i podmieniala ja na kolo ladowania — przez
+ * ulamek sekundy nie bylo widac nic, wiec kazde klikniecie filtra wygladalo
+ * na wolne. Teraz stare liczby zostaja do momentu, az przyjda nowe.
+ */
+export function RefreshHint({ show }) {
+  if (!show) return null
+  return <span className="refresh-hint" role="status">Odświeżam…</span>
 }
 
 /**
